@@ -1,0 +1,6 @@
+# wofi config for waybar theme selector
+location=center
+show=dmenu
+width=300
+height=250
+always_parse_args=true

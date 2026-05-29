@@ -1,0 +1,216 @@
+# akim-dotfiles
+
+Configuration Hyprland pour **Arch Linux** (laptop, écran unique, clavier **AZERTY**), avec thème dynamique généré depuis le fond d'écran via **pywal16**.
+
+## Stack
+
+| Composant | Outil |
+|-----------|-------|
+| OS | Arch Linux |
+| Compositrice | Hyprland |
+| Terminal | Kitty |
+| Barre d'état | Waybar (4 thèmes) |
+| Lanceur | Rofi (+ Wofi pour certains menus) |
+| Menu d'alimentation | wlogout |
+| Notifications | SwayNC |
+| Fond d'écran | hyprpaper |
+| Verrouillage / veille | hyprlock + hypridle |
+| Infos système (terminal) | fastfetch |
+| Thème dynamique | pywal16 (`python-pywal16`, AUR) |
+| Thème GTK | Gruvbox-Dark + Gruvbox-Plus-Dark |
+| Curseur | Nordzy |
+| Shell | Zsh + Oh My Zsh (thème `fishy`) |
+
+## Structure du dépôt
+
+```
+akim-dotfiles/
+├── install.sh              # Installation automatique (Arch)
+├── .gitignore
+├── README.md
+├── .zshrc
+├── omz-custom/             # Thème fishy (copié vers ~/.oh-my-zsh/themes/ à l'install)
+│   └── themes/fishy.zsh-theme
+├── assets/
+│   └── akim-avatar.png     # Avatar hyprlock (copié vers ~/Pictures/)
+├── wallpapers/             # Fonds d'écran source (image1 … image8)
+└── .config/
+    ├── hypr/               # Hyprland, hyprpaper, hyprlock, hypridle
+    ├── waybar/             # Barre + thèmes + scripts
+    ├── wlogout/            # Menu d'alimentation
+    ├── kitty/              # Terminal
+    ├── rofi/               # Lanceur d'applications
+    ├── wofi/               # Menus (sélecteur de thème Waybar)
+    ├── swaync/             # Centre de notifications
+    ├── waypaper/           # Gestionnaire de fonds d'écran (GUI)
+    ├── wal/templates/      # Template pywal16 pour Hyprland
+    └── gtk-3.0/            # Thème GTK (Gruvbox-Dark)
+```
+
+> `current.jpg` n'est **pas** dans le dépôt : il est créé à l'installation dans `~/Pictures/wallpapers/` à partir de `image1.jpg` et mis à jour lors du changement de fond d'écran.
+
+## Fonds d'écran inclus
+
+| Fichier | Description |
+|---------|-------------|
+| `image1.jpg` | Dragon Ball — Goku sur Shenron (fond par défaut) |
+| `image2.jpg` | Logo Arch Linux (minimaliste) |
+| `image3.jpg` | Paysage arctique — brise-glace |
+| `image4.jpg` | Hunter × Hunter — personnages en costume |
+| `image5.jpg` | Jujutsu Kaisen — Gojo |
+| `image6.jpg` | Dark fantasy — chevalier spectral |
+| `image7.jpg` | Montagnes enneigées — Patagonie |
+| `image8.jpg` | Sword Art Online — Kirito & Asuna |
+
+## Prérequis
+
+- Arch Linux (installation fraîche ou existante)
+- Accès `sudo`
+- Connexion internet
+- Laptop avec un seul écran (config moniteur auto-détectée)
+- GPU Intel/AMD par défaut — **utilisateurs NVIDIA** : décommenter les 2 lignes `env` dans `hyprland.conf` (voir ci-dessous)
+
+## Installation
+
+### Automatique (recommandée)
+
+```bash
+git clone <url-du-repo> akim-dotfiles
+cd akim-dotfiles
+chmod +x install.sh
+./install.sh
+sudo reboot
+```
+
+Le script `install.sh` :
+
+1. Configure la locale en `en_US.UTF-8`
+2. Installe les **paquets essentiels** (Hyprland, Kitty, Waybar, hypridle, hyprlock, wlogout, etc.)
+3. Installe les **applications optionnelles** sans bloquer en cas d'échec (Firefox, Discord, VS Code, VLC, OBS…)
+4. Installe **yay** puis depuis l'AUR : **python-pywal16**, **waypaper**, thèmes Gruvbox, icônes, curseur Nordzy
+5. Installe des paquets AUR optionnels (Brave, Spotify, pipes.sh, tty-clock)
+6. Copie `image1.jpg` … `image8.jpg` vers `~/Pictures/wallpapers/`
+7. Crée `current.jpg`, déploie les configs, synchronise les noms de thèmes GTK
+8. Génère la palette pywal16 et active NetworkManager
+
+Les paquets optionnels peuvent échouer sans interrompre l'installation. Le changement de shell vers zsh affiche un avertissement si `chsh` échoue (mot de passe requis).
+
+### Manuelle (partielle)
+
+```bash
+# Prérequis : Oh My Zsh + paquets zsh (voir install.sh)
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+cp omz-custom/themes/fishy.zsh-theme ~/.oh-my-zsh/themes/
+
+cp -r .config/* ~/.config/
+cp .zshrc ~/.zshrc
+cp wallpapers/image*.* ~/Pictures/wallpapers/
+cp assets/akim-avatar.png ~/Pictures/akim-avatar.png
+cp ~/Pictures/wallpapers/image1.jpg ~/Pictures/wallpapers/current.jpg
+wal -i ~/Pictures/wallpapers/current.jpg -n --cols16
+hyprctl reload
+```
+
+### Shell (Zsh + Oh My Zsh)
+
+- **Oh My Zsh** s'installe dans `~/.oh-my-zsh` via `install.sh` (pas versionné dans le dépôt).
+- **`omz-custom/`** contient uniquement le thème `fishy` copié à l'installation.
+- **Plugins** : `git` (via OMZ) + `zsh-autosuggestions` + `zsh-syntax-highlighting` (paquets Arch, chargés dans l'ordre correct).
+- Si OMZ est absent, `.zshrc` affiche un prompt minimal et un message d'erreur.
+
+## Utilisation
+
+### Raccourcis clavier principaux (AZERTY)
+
+| Raccourci | Action |
+|-----------|--------|
+| `Super + Entrée` | Ouvrir le terminal (Kitty) |
+| `Super + Q` | Fermer la fenêtre active |
+| `Super + A` | Lanceur d'applications (Rofi) |
+| `Super + F` | Gestionnaire de fichiers (Nautilus) |
+| `Super + V` | Historique du presse-papier |
+| `Super + N` | Centre de notifications (SwayNC) |
+| `Super + D` | Discord |
+| `Super + Shift + A` | Capture d'écran (grim + slurp) |
+| `Super + Shift + E` | Menu d'alimentation (wlogout) |
+| `Super + Shift + T` | Changer le thème Waybar |
+| `Super + Alt + →` | Fond d'écran suivant + nouveau thème |
+| `Super + Alt + ←` | Fond d'écran précédent + nouveau thème |
+
+Les workspaces `Super + &`, `Super + é`, `Super + "`, etc. correspondent aux touches **1–10** sur un clavier AZERTY.
+
+### Verrouillage automatique (hypridle)
+
+| Délai | Action |
+|-------|--------|
+| 2 min 30 | Luminosité écran réduite |
+| 5 min | Verrouillage (hyprlock + avatar AKIM) |
+| 5 min 30 | Écran éteint |
+| 30 min | Mise en veille |
+
+### Menu d'alimentation (wlogout)
+
+`Super + Shift + E` ouvre wlogout avec : **Logout**, **Shutdown**, **Hibernate**, **Reboot**.
+
+> **Hibernation** : nécessite une partition **swap** configurée et activée (`swapon --show` pour vérifier). Sans swap, l'option Hibernate échouera — les autres actions restent fonctionnelles.
+
+### Thème dynamique (pywal16)
+
+pywal16 extrait une palette de 16 couleurs depuis `~/Pictures/wallpapers/current.jpg` et la propage vers :
+
+- **Hyprland** — bordures de fenêtres
+- **Kitty** — couleurs du terminal
+- **Rofi** — lanceur
+- **Hyprlock** — écran de verrouillage
+- **Cava** — visualiseur audio
+
+`Super + Alt + ←/→` régénère le thème et recharge Hyprland + Waybar.
+
+### Thèmes Waybar
+
+Quatre styles : **default**, **line**, **zen**, **experimental**.
+
+- Raccourci : `Super + Shift + T`
+- Ou : `~/.config/waybar/scripts/select.sh`
+
+### Gestionnaire de fonds d'écran (Waypaper)
+
+GUI installée via AUR (`waypaper`). Lancez `waypaper` depuis un terminal ou ajoutez un raccourci. Pointe vers `~/Pictures/wallpapers/` ; chaque changement exécute `wallpaper_script.sh` (pywal16 + rechargement).
+
+### Ajouter un fond d'écran
+
+1. Nommer le fichier `image9.jpg` (ou suivre la numérotation) dans `wallpapers/` du dépôt ou `~/Pictures/wallpapers/`
+2. Parcourir avec `Super + Alt + ←/→`
+3. Ou utiliser Waypaper
+
+## GPU NVIDIA (optionnel)
+
+Par défaut, les variables NVIDIA sont **commentées** pour Intel/AMD. Si vous avez un GPU NVIDIA, ouvrez `.config/hypr/hyprland.conf` et décommentez :
+
+```conf
+env = LIBVA_DRIVER_NAME,nvidia
+env = __GLX_VENDOR_LIBRARY_NAME,nvidia
+```
+
+Puis rechargez Hyprland : `hyprctl reload`.
+
+## Personnalisation
+
+| Fichier | À adapter |
+|---------|-----------|
+| `.config/hypr/hyprland.conf` | Variables NVIDIA (si besoin), raccourcis |
+| `.config/hypr/hypridle.conf` | Délais de verrouillage / veille |
+| `.config/gtk-3.0/settings.ini` | Thème GTK et curseur |
+| `wallpapers/` | Vos propres images |
+
+Le moniteur est configuré en `monitor=,preferred,auto,1` (auto-détection laptop). Pour un écran externe, voir la [doc Hyprland Monitors](https://wiki.hyprland.org/Configuring/Monitors/).
+
+## Notes
+
+- Ne renommez pas `current.jpg` : c'est le fond actif pour hyprpaper et pywal16 (ignoré par git via `.gitignore`).
+- Les scripts dans `.config/*/scripts/` doivent être exécutables (`chmod +x`).
+- Police unique : **JetBrains Mono Nerd Font** (Kitty, hyprlock, Waybar).
+- **pywal-discord** (sync thème Discord) : optionnel — `yay -S pywal-discord` si souhaité ; le script l'appelle uniquement s'il est installé.
+- Les noms de thèmes GTK sont **auto-détectés** à l'installation ; vérifiez `~/.config/gtk-3.0/settings.ini` si un thème ne s'applique pas.
+- Horloge Waybar : rafraîchissement toutes les **30 secondes** (compromis batterie / précision).
+- **fastfetch** : lancez `fastfetch` dans Kitty pour les infos système (installé par `install.sh`).

@@ -1,0 +1,7 @@
+# wofi config
+location=center
+show=drun
+width=400
+height=350
+always_parse_args=true
+show_personal=true

@@ -1,0 +1,12 @@
+# Active wallpaper (generated at install, not versioned)
+wallpapers/current.jpg
+
+# OS / editor
+.cursor/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# pywal cache (user-specific)
+.cache/
