@@ -139,6 +139,7 @@ echo "--> Creating configuration and cache directories..."
 mkdir -p "$HOME/.config"
 mkdir -p "$HOME/.cache/wal"
 mkdir -p "$HOME/Pictures/wallpapers"
+mkdir -p "$HOME/Pictures/Screenshots"
 
 REPO_WALLPAPERS_DIR="wallpapers"
 TARGET_WALLPAPERS_DIR="$HOME/Pictures/wallpapers"
@@ -261,6 +262,7 @@ sync_gtk_settings
 
 # 12. Make scripts executable
 echo "--> Making scripts executable..."
+chmod +x "$HOME/.config/hypr/scripts/screenshot.sh"
 chmod +x "$HOME/.config/hypr/scripts/switch-wallpaper.sh"
 chmod +x "$HOME/.config/hypr/scripts/apply-pywal-theme.sh"
 chmod +x "$HOME/.config/hypr/scripts/pywal-fallback.py"

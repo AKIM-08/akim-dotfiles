@@ -42,9 +42,8 @@ filename=$(basename "$selected")
 
 cp "$selected" "$CURRENT"
 
-hyprctl hyprpaper unload all
 hyprctl hyprpaper preload "$CURRENT"
-hyprctl hyprpaper wallpaper ",$CURRENT"
+hyprctl hyprpaper wallpaper ",$CURRENT,cover"
 
 "$APPLY_THEME" "$CURRENT"
 

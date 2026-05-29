@@ -134,7 +134,9 @@ chmod +x ~/.config/waypaper/wallpaper_script.sh ~/.config/wlogout/hibernate.sh
 | `Super + V` | Historique du presse-papier |
 | `Super + N` | Centre de notifications (SwayNC) |
 | `Super + D` | Discord |
-| `Super + Shift + A` | Capture d'écran (grim + slurp) |
+| `Super + Shift + A` | Capture zone → `~/Pictures/Screenshots/` + presse-papier |
+| `Super + Impr. écran` | Capture zone (même raccourci alternatif) |
+| `Impr. écran` | Capture écran entier → `~/Pictures/Screenshots/` |
 | `Super + Shift + E` | Menu d'alimentation (wlogout) |
 | `Super + Shift + T` | Changer le thème Waybar |
 | `Super + Alt + →` | Fond d'écran suivant + nouveau thème |
@@ -194,6 +196,14 @@ GUI installée via AUR (`waypaper`). Lancez `waypaper` depuis un terminal ou ajo
 1. Nommer le fichier `image9.jpg` (ou suivre la numérotation) dans `wallpapers/` du dépôt ou `~/Pictures/wallpapers/`
 2. Parcourir avec `Super + Alt + ←/→`
 3. Ou utiliser Waypaper
+
+### Qualité des fonds d'écran (éviter le flou)
+
+- Utilisez des images **au moins aussi grandes que votre écran** (ex. 1920×1080 ou plus pour un laptop FHD).
+- Le mode d'affichage est **`cover`** (remplit l'écran sans étirer) — ne pas utiliser `fill` dans Waypaper/hyprpaper, qui déforme et floute l'image.
+- Mettez à jour hyprpaper : `sudo pacman -Syu hyprpaper`
+- Vérifiez l'échelle du moniteur : `hyprctl monitors` — un scale > 1 (ex. 1.25) demande des images plus grandes.
+- **hyprlock** applique volontairement un flou sur l'écran de verrouillage uniquement, pas sur le bureau.
 
 ## GPU NVIDIA (optionnel)
 
