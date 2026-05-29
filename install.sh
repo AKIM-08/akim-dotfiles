@@ -54,6 +54,8 @@ sudo pacman -Syu --needed --noconfirm \
     xdg-user-dirs \
     hyprland \
     hyprpaper \
+    sddm \
+    qt6-multimedia \
     swaync \
     cliphist \
     wl-clipboard \
@@ -127,7 +129,8 @@ run_optional "Installing optional AUR packages" \
         brave-bin \
         spotify \
         pipes.sh \
-        tty-clock
+        tty-clock \
+        catppuccin-sddm-corners-mocha
 
 # 6. Cava + pywal16 integration
 echo "--> Setting up Cava color theme integration with pywal16..."
@@ -196,28 +199,10 @@ if [ "$SHELL" != "$(command -v zsh)" ]; then
     fi
 fi
 
-# 8b. Autologin on tty1 + auto-start Hyprland via ~/.zprofile
-setup_autologin() {
-    local user="${USER:-$(whoami)}"
-    local dropin_dir="/etc/systemd/system/getty@tty1.service.d"
-
-    echo "--> Configuring autologin on tty1 for $user..."
-    sudo mkdir -p "$dropin_dir"
-    sudo tee "$dropin_dir/autologin.conf" > /dev/null << EOF
-[Service]
-ExecStart=
-ExecStart=-/usr/bin/agetty --autologin ${user} --noclear - \$TERM
-EOF
-    echo "--> Autologin enabled on tty1."
-}
-
-setup_autologin
-
 # 9. Deploy configurations
 echo "--> Copying configurations to target directories..."
 cp -r .config/* "$HOME/.config/" || die "Failed to copy .config"
 cp .zshrc "$HOME/.zshrc" || die "Failed to copy .zshrc"
-cp .zprofile "$HOME/.zprofile" || die "Failed to copy .zprofile"
 
 # 10. wlogout power menu
 setup_wlogout() {
@@ -293,6 +278,68 @@ chmod +x "$HOME/.config/wlogout/hibernate.sh"
 echo "--> Generating initial color scheme from wallpaper..."
 "$HOME/.config/hypr/scripts/apply-pywal-theme.sh" "$TARGET_WALLPAPER" \
     || warn "Theme generation failed — run: ~/.config/hypr/scripts/apply-pywal-theme.sh"
+
+# 14. SDDM graphical login (avatar + password)
+setup_sddm() {
+    echo "--> Setting up SDDM login screen..."
+
+    if [ -f "$HOME/Pictures/akim-avatar.png" ]; then
+        cp "$HOME/Pictures/akim-avatar.png" "$HOME/.face"
+        cp "$HOME/Pictures/akim-avatar.png" "$HOME/.face.icon"
+        echo "--> Login avatar installed (~/.face)"
+    elif [ -f "assets/akim-avatar.png" ]; then
+        cp assets/akim-avatar.png "$HOME/.face"
+        cp assets/akim-avatar.png "$HOME/.face.icon"
+    fi
+
+    local theme=""
+    for t in catppuccin-mocha-corners Catppuccin-Mocha-Corners catppuccin-mocha; do
+        if [ -d "/usr/share/sddm/themes/$t" ]; then
+            theme="$t"
+            break
+        fi
+    done
+
+    sudo mkdir -p /etc/sddm.conf.d
+    if [ -n "$theme" ]; then
+        sudo tee /etc/sddm.conf.d/akim-dotfiles.conf > /dev/null << EOF
+[General]
+DisplayServer=wayland
+GreeterEnvironment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+
+[Theme]
+Current=${theme}
+
+[Wayland]
+SessionDir=/usr/share/wayland-sessions
+EOF
+        echo "--> SDDM theme set to: $theme"
+    else
+        sudo tee /etc/sddm.conf.d/akim-dotfiles.conf > /dev/null << 'EOF'
+[General]
+DisplayServer=wayland
+GreeterEnvironment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+
+[Wayland]
+SessionDir=/usr/share/wayland-sessions
+EOF
+    fi
+
+    if [ -f /etc/systemd/system/getty@tty1.service.d/autologin.conf ]; then
+        echo "--> Removing tty1 autologin..."
+        sudo rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
+        sudo rmdir /etc/systemd/system/getty@tty1.service.d 2>/dev/null || true
+    fi
+
+    if [ -f "$HOME/.zprofile" ] && grep -q 'exec Hyprland' "$HOME/.zprofile" 2>/dev/null; then
+        echo "--> Removing Hyprland auto-start from ~/.zprofile..."
+        rm -f "$HOME/.zprofile"
+    fi
+
+    sudo systemctl enable sddm.service 2>/dev/null || warn "Could not enable sddm.service"
+    echo "--> SDDM enabled — select Hyprland at login, then reboot."
+}
+setup_sddm
 
 echo "=========================================================================="
 echo " Installation complete!"

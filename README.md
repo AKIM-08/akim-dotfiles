@@ -7,6 +7,7 @@ Configuration Hyprland pour **Arch Linux** (laptop, écran unique, clavier **AZE
 | Composant | Outil |
 |-----------|-------|
 | OS | Arch Linux |
+| Écran de connexion | SDDM (avatar + mot de passe) |
 | Compositrice | Hyprland |
 | Terminal | Kitty |
 | Barre d'état | Waybar (4 thèmes) |
@@ -94,35 +95,41 @@ Le script `install.sh` :
 7. Copie les wallpapers, déploie les configs, configure **wlogout** et les thèmes GTK
 8. Installe Oh My Zsh + thème fishy, rend les scripts exécutables
 9. Génère le **thème dynamique** depuis `current.jpg` via `apply-pywal-theme.sh`
-10. Configure **autologin tty1** + démarrage auto de Hyprland via `.zprofile`
+10. Active **SDDM** (écran de connexion graphique avec avatar, session Hyprland)
 
 Les paquets optionnels peuvent échouer sans interrompre l'installation. Le changement de shell vers zsh affiche un avertissement si `chsh` échoue (mot de passe requis).
 
-### Démarrage automatique (Hyprland)
+### Écran de connexion (SDDM)
 
-Au boot, Arch te connecte sur **tty1** sans mot de passe, puis `.zprofile` lance **Hyprland** automatiquement.
+Au démarrage, **SDDM** affiche un écran graphique : avatar (`~/.face`), nom d'utilisateur et mot de passe. Après connexion, la session **Hyprland** démarre.
 
-Pour configurer manuellement (remplace `akim` par ton nom d'utilisateur) :
+- **hyprlock** = verrouillage *pendant* la session (Super + veille, ou hypridle)
+- **SDDM** = connexion *au boot* (remplace le TTY)
+
+Configuration manuelle :
 
 ```bash
-# 1. Auto-login sur tty1
-sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
-sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf << 'EOF'
-[Service]
-ExecStart=
-ExecStart=-/usr/bin/agetty --autologin akim --noclear - $TERM
-EOF
+# Installer SDDM
+sudo pacman -S sddm qt6-multimedia
 
-# 2. Lancer Hyprland au login (zsh)
-cp .zprofile ~/.zprofile
+# Avatar (même image que hyprlock)
+cp ~/Pictures/akim-avatar.png ~/.face
+cp ~/Pictures/akim-avatar.png ~/.face.icon
 
-# 3. Shell par défaut = zsh
-chsh -s $(command -v zsh)
+# Thème Catppuccin (optionnel)
+yay -S catppuccin-sddm-corners-mocha
+
+# Activer SDDM
+sudo systemctl enable sddm.service
+
+# Supprimer autologin TTY si configuré avant
+sudo rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
+rm -f ~/.zprofile
 
 sudo reboot
 ```
 
-Pour revenir au TTY classique (mot de passe au boot) : `sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf`
+À l'écran SDDM : choisir la session **Hyprland (Wayland)** si proposée.
 
 ### Manuelle (partielle)
 
@@ -133,7 +140,6 @@ cp omz-custom/themes/fishy.zsh-theme ~/.oh-my-zsh/themes/
 
 cp -r .config/* ~/.config/
 cp .zshrc ~/.zshrc
-cp .zprofile ~/.zprofile
 cp wallpapers/image*.* ~/Pictures/wallpapers/
 cp assets/akim-avatar.png ~/Pictures/akim-avatar.png
 cp ~/Pictures/wallpapers/image1.jpg ~/Pictures/wallpapers/current.jpg
