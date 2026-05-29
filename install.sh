@@ -196,10 +196,28 @@ if [ "$SHELL" != "$(command -v zsh)" ]; then
     fi
 fi
 
+# 8b. Autologin on tty1 + auto-start Hyprland via ~/.zprofile
+setup_autologin() {
+    local user="${USER:-$(whoami)}"
+    local dropin_dir="/etc/systemd/system/getty@tty1.service.d"
+
+    echo "--> Configuring autologin on tty1 for $user..."
+    sudo mkdir -p "$dropin_dir"
+    sudo tee "$dropin_dir/autologin.conf" > /dev/null << EOF
+[Service]
+ExecStart=
+ExecStart=-/usr/bin/agetty --autologin ${user} --noclear - \$TERM
+EOF
+    echo "--> Autologin enabled on tty1."
+}
+
+setup_autologin
+
 # 9. Deploy configurations
 echo "--> Copying configurations to target directories..."
 cp -r .config/* "$HOME/.config/" || die "Failed to copy .config"
 cp .zshrc "$HOME/.zshrc" || die "Failed to copy .zshrc"
+cp .zprofile "$HOME/.zprofile" || die "Failed to copy .zprofile"
 
 # 10. wlogout power menu
 setup_wlogout() {
