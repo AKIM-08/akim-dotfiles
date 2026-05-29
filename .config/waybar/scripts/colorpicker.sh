@@ -50,5 +50,7 @@ prevColors=$(head -n $((limit - 1)) "$loc/colors")
 echo "$color" >"$loc/colors"
 echo "$prevColors" >>"$loc/colors"
 sed -i '/^$/d' "$loc/colors"
-source ~/.cache/wal/colors.sh && notify-send "Color Picker" "This color has been selected: $color" -i "$wallpaper"
+source ~/.cache/wal/colors.sh 2>/dev/null
+notify-send "Color Picker" "This color has been selected: $color" \
+    -i "${wallpaper:-$HOME/Pictures/wallpapers/current.jpg}"
 pkill -RTMIN+1 waybar

@@ -45,7 +45,9 @@ sudo pacman -Syu --needed --noconfirm \
     hypridle \
     hyprlock \
     wlogout \
-    gtk-engine-murrine \
+    gtk3 \
+    papirus-icon-theme \
+    libnotify \
     nautilus \
     pipewire \
     wireplumber \
@@ -103,11 +105,21 @@ fi
 echo "--> Installing required AUR packages..."
 yay -S --needed --noconfirm \
     python-pywal16 \
-    gruvbox-theme-git \
-    gruvbox-plus-icon-theme \
+    catppuccin-gtk-theme-mocha \
+    papirus-folders-catppuccin-git \
     nordzy-cursors \
     waypaper \
     || die "Required AUR package installation failed"
+
+# Apply Catppuccin Mocha folder colors to Papirus icons
+if command -v papirus-folders &>/dev/null; then
+    echo "--> Applying Catppuccin Mocha colors to Papirus icon folders..."
+    papirus-folders -C cat-mocha-blue -S --once 2>/dev/null \
+        || papirus-folders -C cat-mocha-mauve -S --once 2>/dev/null \
+        || warn "Could not apply Catppuccin Mocha Papirus folder color (run: papirus-folders -l | grep mocha)"
+else
+    warn "papirus-folders not found — icon folder colors not applied"
+fi
 
 # 5. Optional AUR packages
 run_optional "Installing optional AUR packages" \
@@ -188,69 +200,79 @@ echo "--> Copying configurations to target directories..."
 cp -r .config/* "$HOME/.config/" || die "Failed to copy .config"
 cp .zshrc "$HOME/.zshrc" || die "Failed to copy .zshrc"
 
-# 10. Sync GTK theme names with installed themes
+# 10. wlogout power menu
+setup_wlogout() {
+    echo "--> Setting up wlogout power menu..."
+    command -v wlogout &>/dev/null || die "wlogout is not installed — run: sudo pacman -S wlogout"
+
+    local wdir="$HOME/.config/wlogout"
+    if [ ! -f "$wdir/layout" ]; then
+        warn "wlogout layout missing at $wdir/layout — copying from system defaults if available"
+        if [ -f /etc/wlogout/layout ]; then
+            mkdir -p "$wdir"
+            cp /etc/wlogout/layout "$wdir/layout"
+        fi
+    fi
+
+    if [ ! -f "$wdir/style.css" ] && [ -f /etc/wlogout/style.css ]; then
+        cp /etc/wlogout/style.css "$wdir/style.css"
+        warn "Copied default wlogout style.css — re-run install or restore repo config for pywal styling"
+    fi
+
+    echo "--> wlogout ready (Super+Shift+E, layer-shell protocol)"
+}
+setup_wlogout
+
+# 11. Sync GTK theme names with installed Catppuccin Mocha
 sync_gtk_settings() {
-    local settings="$HOME/.config/gtk-3.0/settings.ini"
-    local theme icon
+    local settings theme icon search_dirs
 
-    [ -f "$settings" ] || return 0
+    for settings in "$HOME/.config/gtk-3.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"; do
+        [ -f "$settings" ] || continue
 
-    theme=$(find "$HOME/.themes" -maxdepth 1 -type d -iname 'Gruvbox*Dark*' 2>/dev/null | head -1)
-    if [ -n "$theme" ]; then
-        theme=$(basename "$theme")
-        sed -i "s/^gtk-theme-name=.*/gtk-theme-name=${theme}/" "$settings"
-        echo "--> GTK theme set to: $theme"
-    else
-        warn "Gruvbox GTK theme not found in ~/.themes — check gtk-3.0/settings.ini manually"
-    fi
+        search_dirs="$HOME/.themes $HOME/.local/share/themes /usr/share/themes"
+        theme=$(find $search_dirs -maxdepth 1 -type d \( \
+            -iname 'catppuccin*mocha*blue*' -o \
+            -iname 'Catppuccin*Mocha*Blue*' \
+            \) 2>/dev/null | head -1)
+        if [ -z "$theme" ]; then
+            theme=$(find $search_dirs -maxdepth 1 -type d -iname '*catppuccin*mocha*' 2>/dev/null | head -1)
+        fi
+        if [ -n "$theme" ]; then
+            theme=$(basename "$theme")
+            sed -i "s/^gtk-theme-name=.*/gtk-theme-name=${theme}/" "$settings"
+            echo "--> GTK theme set to: $theme ($settings)"
+        else
+            warn "Catppuccin Mocha GTK theme not found — check $settings manually"
+        fi
 
-    icon=$(find "$HOME/.icons" "$HOME/.local/share/icons" -maxdepth 1 -type d -iname 'Gruvbox*Plus*Dark*' 2>/dev/null | head -1)
-    if [ -n "$icon" ]; then
-        icon=$(basename "$icon")
-        sed -i "s/^gtk-icon-theme-name=.*/gtk-icon-theme-name=${icon}/" "$settings"
-        echo "--> GTK icon theme set to: $icon"
-    else
-        warn "Gruvbox icon theme not found — check gtk-3.0/settings.ini manually"
-    fi
+        if [ "$settings" = "$HOME/.config/gtk-3.0/settings.ini" ]; then
+            icon="Papirus-Dark"
+            if [ -d "/usr/share/icons/$icon" ] || [ -d "$HOME/.icons/$icon" ] || [ -d "$HOME/.local/share/icons/$icon" ]; then
+                sed -i "s/^gtk-icon-theme-name=.*/gtk-icon-theme-name=${icon}/" "$settings"
+                echo "--> GTK icon theme set to: $icon"
+            else
+                warn "Papirus-Dark icon theme not found — check gtk-3.0/settings.ini manually"
+            fi
+        fi
+    done
 }
 sync_gtk_settings
 
-# 11. Make scripts executable
+# 12. Make scripts executable
 echo "--> Making scripts executable..."
 chmod +x "$HOME/.config/hypr/scripts/switch-wallpaper.sh"
+chmod +x "$HOME/.config/hypr/scripts/apply-pywal-theme.sh"
+chmod +x "$HOME/.config/hypr/scripts/pywal-fallback.py"
 chmod +x "$HOME/.config/waybar/scripts/"*.sh
 chmod +x "$HOME/.config/swaync/refresh.sh"
 chmod +x "$HOME/.config/waypaper/wallpaper_script.sh"
+chmod +x "$HOME/.config/wlogout/hibernate.sh"
 
-# 12. Generate pywal16 color scheme
-echo "--> Generating initial pywal16 color scheme..."
-if wal -i "$TARGET_WALLPAPER" -n --cols16; then
-    echo "--> pywal16 palette generated successfully."
-else
-    warn "pywal16 failed, injecting fallback colors for Hyprland..."
-    cat << 'EOF' > "$HOME/.cache/wal/colors-hyprland.conf"
-# Fallback colors for Hyprland (automatically updated by pywal16)
-$real_wallpaper = ~/Pictures/wallpapers/current.jpg
-$background = rgb(1e1e2e)
-$foreground = rgb(cdd6f4)
-$color0 = rgb(11111b)
-$color1 = rgb(f38ba8)
-$color2 = rgb(a6e3a1)
-$color3 = rgb(f9e2af)
-$color4 = rgb(89b4fa)
-$color5 = rgb(f5c2e7)
-$color6 = rgb(94e2d5)
-$color7 = rgb(bac2de)
-$color8 = rgb(585b70)
-$color9 = rgb(f38ba8)
-$color10 = rgb(a6e3a1)
-$color11 = rgb(f9e2af)
-$color12 = rgb(89b4fa)
-$color13 = rgb(f5c2e7)
-$color14 = rgb(94e2d5)
-$color15 = rgb(a6adc8)
-EOF
-fi
+# 13. Generate pywal16 color scheme from wallpaper (dynamic theme)
+echo "--> Generating initial color scheme from wallpaper..."
+"$HOME/.config/hypr/scripts/apply-pywal-theme.sh" "$TARGET_WALLPAPER" \
+    || warn "Theme generation failed — run: ~/.config/hypr/scripts/apply-pywal-theme.sh"
 
 echo "=========================================================================="
 echo " Installation complete!"

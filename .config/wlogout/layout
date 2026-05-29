@@ -6,17 +6,15 @@
 }
 
 {
-
-"label" : "shutdown",
-"action" : "systemctl poweroff",
-"text" : "Shutdown",
-"keybind" : "s"
-
+    "label" : "shutdown",
+    "action" : "systemctl poweroff",
+    "text" : "Shutdown",
+    "keybind" : "s"
 }
 
 {
     "label" : "hibernate",
-    "action" : "systemctl hibernate",
+    "action" : "bash ~/.config/wlogout/hibernate.sh",
     "text" : "Hibernate",
     "keybind" : "h"
 }

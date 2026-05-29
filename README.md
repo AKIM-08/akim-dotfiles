@@ -16,8 +16,8 @@ Configuration Hyprland pour **Arch Linux** (laptop, écran unique, clavier **AZE
 | Fond d'écran | hyprpaper |
 | Verrouillage / veille | hyprlock + hypridle |
 | Infos système (terminal) | fastfetch |
-| Thème dynamique | pywal16 (`python-pywal16`, AUR) |
-| Thème GTK | Gruvbox-Dark + Gruvbox-Plus-Dark |
+| Thème GTK | Catppuccin Mocha + Papirus-Dark (apps GTK uniquement) |
+| Couleurs UI | **pywal16** — extraites du fond d'écran actif |
 | Curseur | Nordzy |
 | Shell | Zsh + Oh My Zsh (thème `fishy`) |
 
@@ -44,7 +44,8 @@ akim-dotfiles/
     ├── swaync/             # Centre de notifications
     ├── waypaper/           # Gestionnaire de fonds d'écran (GUI)
     ├── wal/templates/      # Template pywal16 pour Hyprland
-    └── gtk-3.0/            # Thème GTK (Gruvbox-Dark)
+    ├── gtk-3.0/            # Thème GTK (Catppuccin Mocha)
+    └── gtk-4.0/            # Thème GTK 4 / libadwaita
 ```
 
 > `current.jpg` n'est **pas** dans le dépôt : il est créé à l'installation dans `~/Pictures/wallpapers/` à partir de `image1.jpg` et mis à jour lors du changement de fond d'écran.
@@ -85,13 +86,14 @@ sudo reboot
 Le script `install.sh` :
 
 1. Configure la locale en `en_US.UTF-8`
-2. Installe les **paquets essentiels** (Hyprland, Kitty, Waybar, hypridle, hyprlock, wlogout, etc.)
-3. Installe les **applications optionnelles** sans bloquer en cas d'échec (Firefox, Discord, VS Code, VLC, OBS…)
-4. Installe **yay** puis depuis l'AUR : **python-pywal16**, **waypaper**, thèmes Gruvbox, icônes, curseur Nordzy
-5. Installe des paquets AUR optionnels (Brave, Spotify, pipes.sh, tty-clock)
-6. Copie `image1.jpg` … `image8.jpg` vers `~/Pictures/wallpapers/`
-7. Crée `current.jpg`, déploie les configs, synchronise les noms de thèmes GTK
-8. Génère la palette pywal16 et active NetworkManager
+2. Installe les **paquets essentiels** (Hyprland, Kitty, Waybar, wlogout, GTK3, Papirus, libnotify…)
+3. Installe les **applications optionnelles** sans bloquer (Firefox, Discord, VS Code, VLC, OBS, Cava…)
+4. Active **NetworkManager**
+5. Installe **yay** puis depuis l'AUR : pywal16, Catppuccin Mocha GTK, Papirus folders, Nordzy, Waypaper
+6. Installe des paquets AUR optionnels (Brave, Spotify, pipes.sh, tty-clock)
+7. Copie les wallpapers, déploie les configs, configure **wlogout** et les thèmes GTK
+8. Installe Oh My Zsh + thème fishy, rend les scripts exécutables
+9. Génère le **thème dynamique** depuis `current.jpg` via `apply-pywal-theme.sh`
 
 Les paquets optionnels peuvent échouer sans interrompre l'installation. Le changement de shell vers zsh affiche un avertissement si `chsh` échoue (mot de passe requis).
 
@@ -107,8 +109,9 @@ cp .zshrc ~/.zshrc
 cp wallpapers/image*.* ~/Pictures/wallpapers/
 cp assets/akim-avatar.png ~/Pictures/akim-avatar.png
 cp ~/Pictures/wallpapers/image1.jpg ~/Pictures/wallpapers/current.jpg
-wal -i ~/Pictures/wallpapers/current.jpg -n --cols16
-hyprctl reload
+chmod +x ~/.config/hypr/scripts/*.sh ~/.config/hypr/scripts/pywal-fallback.py
+chmod +x ~/.config/waypaper/wallpaper_script.sh ~/.config/wlogout/hibernate.sh
+~/.config/hypr/scripts/apply-pywal-theme.sh ~/Pictures/wallpapers/current.jpg
 ```
 
 ### Shell (Zsh + Oh My Zsh)
@@ -150,21 +153,30 @@ Les workspaces `Super + &`, `Super + é`, `Super + "`, etc. correspondent aux to
 
 ### Menu d'alimentation (wlogout)
 
-`Super + Shift + E` ouvre wlogout avec : **Logout**, **Shutdown**, **Hibernate**, **Reboot**.
+`Super + Shift + E` ouvre wlogout (protocole **layer-shell**, requis sur Hyprland) avec : **Logout**, **Shutdown**, **Hibernate**, **Reboot**.
 
-> **Hibernation** : nécessite une partition **swap** configurée et activée (`swapon --show` pour vérifier). Sans swap, l'option Hibernate échouera — les autres actions restent fonctionnelles.
+> **Hibernation** : vérifie la présence d'une partition **swap** active (`swapon --show`). Sans swap, une notification s'affiche et l'action est annulée.
 
 ### Thème dynamique (pywal16)
 
-pywal16 extrait une palette de 16 couleurs depuis `~/Pictures/wallpapers/current.jpg` et la propage vers :
+Les couleurs de l'interface (Hyprland, Waybar, Kitty, Rofi, Hyprlock, SwayNC, wlogout, Cava) sont **extraites automatiquement** depuis `~/Pictures/wallpapers/current.jpg` via pywal16.
+
+Script central : `~/.config/hypr/scripts/apply-pywal-theme.sh`
+
+- Appelé à l'installation, au changement de fond (`Super + Alt + ←/→`), et par Waypaper
+- Si pywal16 échoue, `pywal-fallback.py` extrait quand même une palette depuis l'image (Pillow)
+- Catppuccin Mocha ne concerne que les **apps GTK** (Nautilus, LibreOffice…) — pas la barre ni le compositor
+
+Composants mis à jour :
 
 - **Hyprland** — bordures de fenêtres
 - **Kitty** — couleurs du terminal
 - **Rofi** — lanceur
 - **Hyprlock** — écran de verrouillage
+- **Waybar / SwayNC / wlogout** — via `colors-waybar.css`
 - **Cava** — visualiseur audio
 
-`Super + Alt + ←/→` régénère le thème et recharge Hyprland + Waybar.
+`Super + Alt + ←/→` change le fond d'écran et régénère le thème complet.
 
 ### Thèmes Waybar
 
@@ -175,7 +187,7 @@ Quatre styles : **default**, **line**, **zen**, **experimental**.
 
 ### Gestionnaire de fonds d'écran (Waypaper)
 
-GUI installée via AUR (`waypaper`). Lancez `waypaper` depuis un terminal ou ajoutez un raccourci. Pointe vers `~/Pictures/wallpapers/` ; chaque changement exécute `wallpaper_script.sh` (pywal16 + rechargement).
+GUI installée via AUR (`waypaper`). Lancez `waypaper` depuis un terminal ou ajoutez un raccourci. Pointe vers `~/Pictures/wallpapers/` ; chaque changement exécute `wallpaper_script.sh` → `apply-pywal-theme.sh`.
 
 ### Ajouter un fond d'écran
 
@@ -200,7 +212,8 @@ Puis rechargez Hyprland : `hyprctl reload`.
 |---------|-----------|
 | `.config/hypr/hyprland.conf` | Variables NVIDIA (si besoin), raccourcis |
 | `.config/hypr/hypridle.conf` | Délais de verrouillage / veille |
-| `.config/gtk-3.0/settings.ini` | Thème GTK et curseur |
+| `.config/gtk-3.0/settings.ini` | Thème GTK Catppuccin Mocha et curseur |
+| `.config/gtk-4.0/settings.ini` | Thème GTK 4 pour apps libadwaita |
 | `wallpapers/` | Vos propres images |
 
 Le moniteur est configuré en `monitor=,preferred,auto,1` (auto-détection laptop). Pour un écran externe, voir la [doc Hyprland Monitors](https://wiki.hyprland.org/Configuring/Monitors/).
@@ -211,6 +224,6 @@ Le moniteur est configuré en `monitor=,preferred,auto,1` (auto-détection lapto
 - Les scripts dans `.config/*/scripts/` doivent être exécutables (`chmod +x`).
 - Police unique : **JetBrains Mono Nerd Font** (Kitty, hyprlock, Waybar).
 - **pywal-discord** (sync thème Discord) : optionnel — `yay -S pywal-discord` si souhaité ; le script l'appelle uniquement s'il est installé.
-- Les noms de thèmes GTK sont **auto-détectés** à l'installation ; vérifiez `~/.config/gtk-3.0/settings.ini` si un thème ne s'applique pas.
+- Les noms de thèmes GTK sont **auto-détectés** à l'installation (Catppuccin Mocha) ; vérifiez `~/.config/gtk-3.0/settings.ini` si un thème ne s'applique pas.
 - Horloge Waybar : rafraîchissement toutes les **30 secondes** (compromis batterie / précision).
 - **fastfetch** : lancez `fastfetch` dans Kitty pour les infos système (installé par `install.sh`).

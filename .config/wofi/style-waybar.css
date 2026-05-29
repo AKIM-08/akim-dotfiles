@@ -1,8 +1,10 @@
+@import url("../waybar/colors-waybar.css");
+
 window {
     margin: 0px;
-    border: 2px solid #89b4fa;
+    border: 2px solid @color4;
     border-radius: 10px;
-    background-color: #1e1e2e;
+    background-color: @background;
 }
 
 #input {
@@ -10,8 +12,8 @@ window {
     padding: 8px;
     border: none;
     border-radius: 8px;
-    background-color: #313244;
-    color: #cdd6f4;
+    background-color: @color0;
+    color: @foreground;
 }
 
 #inner-box {
@@ -33,7 +35,7 @@ window {
 
 #text {
     margin: 5px;
-    color: #cdd6f4;
+    color: @foreground;
 }
 
 #entry {
@@ -44,6 +46,6 @@ window {
 }
 
 #entry:selected {
-    background-color: #45475a;
-    color: #89b4fa;
+    background-color: @color8;
+    color: @color4;
 }
