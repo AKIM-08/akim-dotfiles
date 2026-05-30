@@ -3,14 +3,53 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 THEME_NAME="akim"
 THEME_DIR="/usr/share/sddm/themes/${THEME_NAME}"
-SRC="${REPO_ROOT}/sddm/${THEME_NAME}"
 WALLPAPER="${HOME}/Pictures/wallpapers/current.jpg"
 
+want_path="sddm/${THEME_NAME}/Main.qml"
+
+is_repo_root() { [[ -f "$1/$want_path" ]]; }
+
+find_upwards() {
+    local d="$1"
+    while [[ -n "$d" && "$d" != "/" ]]; do
+        if is_repo_root "$d"; then
+            printf '%s\n' "$d"
+            return 0
+        fi
+        d="$(cd "$d/.." && pwd)"
+    done
+    return 1
+}
+
+REPO_ROOT="${AKIM_DOTFILES_REPO:-}"
+
+if [[ -z "${REPO_ROOT}" ]] && command -v git >/dev/null 2>&1; then
+    REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+fi
+
+if [[ -z "${REPO_ROOT}" ]]; then
+    REPO_ROOT="$(find_upwards "$PWD" 2>/dev/null || true)"
+fi
+
+if [[ -z "${REPO_ROOT}" ]]; then
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    REPO_ROOT="$(find_upwards "$script_dir" 2>/dev/null || true)"
+fi
+
+if [[ -z "${REPO_ROOT}" ]] && is_repo_root "${HOME}/akim-dotfiles"; then
+    REPO_ROOT="${HOME}/akim-dotfiles"
+fi
+
+SRC="${REPO_ROOT}/sddm/${THEME_NAME}"
+
 if [ ! -d "$SRC" ] || [ ! -f "$SRC/Main.qml" ]; then
-    echo "ERROR: Missing ${SRC}/Main.qml — run from akim-dotfiles repo." >&2
+    echo "ERROR: repo akim-dotfiles introuvable." >&2
+    echo "Attendu: <repo>/${want_path}" >&2
+    echo "Solutions:" >&2
+    echo "  - cd ~/akim-dotfiles && ~/.config/hypr/scripts/fix-sddm-theme.sh" >&2
+    echo "  - ou définir AKIM_DOTFILES_REPO=~/akim-dotfiles" >&2
     exit 1
 fi
 

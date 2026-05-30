@@ -1,3 +1,6 @@
+@define-color background #1e1e2e;
+@define-color foreground #cdd6f4;
+@define-color color4 #89b4fa;
 @import url("colors-waybar.css");
 
 * {
@@ -17,9 +20,9 @@ button {
   background-repeat: no-repeat;
   background-position: center;
   background-size: 32%;
-  border-radius: 14px;
-  min-width: 72px;
-  min-height: 72px;
+  border-radius: 9999px;
+  min-width: 88px;
+  min-height: 88px;
   margin: 8px;
   padding: 0;
   transition: all 0.2s ease;

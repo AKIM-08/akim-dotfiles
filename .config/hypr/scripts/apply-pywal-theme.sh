@@ -36,6 +36,9 @@ reload_ui() {
     hyprctl reload 2>/dev/null || true
     pkill waybar 2>/dev/null || true
     waybar & disown || true
+    if pgrep -x nautilus >/dev/null 2>&1; then
+        nautilus -q 2>/dev/null || pkill -x nautilus 2>/dev/null || true
+    fi
     if command -v swaync-client &>/dev/null; then
         swaync-client --reload-css 2>/dev/null || {
             pkill swaync 2>/dev/null || true

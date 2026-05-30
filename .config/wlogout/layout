@@ -1,27 +1,31 @@
 {
     "label" : "logout",
-    "action" : "loginctl terminate-user $USER",
-    "text" : "Logout",
-    "keybind" : "e"
+    "action" : "hyprctl dispatch exit",
+    "text" : "",
+    "keybind" : "e",
+    "circular" : true
 }
 
 {
     "label" : "shutdown",
     "action" : "systemctl poweroff",
-    "text" : "Shutdown",
-    "keybind" : "s"
+    "text" : "",
+    "keybind" : "s",
+    "circular" : true
 }
 
 {
     "label" : "hibernate",
     "action" : "bash ~/.config/wlogout/hibernate.sh",
-    "text" : "Hibernate",
-    "keybind" : "h"
+    "text" : "",
+    "keybind" : "h",
+    "circular" : true
 }
 
 {
     "label" : "reboot",
     "action" : "systemctl reboot",
-    "text" : "Reboot",
-    "keybind" : "r"
+    "text" : "",
+    "keybind" : "r",
+    "circular" : true
 }

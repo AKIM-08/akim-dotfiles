@@ -1,2 +1,2 @@
 pkill swaync
-swaync
+"$HOME/.config/swaync/start.sh" &

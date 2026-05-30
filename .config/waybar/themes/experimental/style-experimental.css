@@ -73,7 +73,8 @@ tooltip {
     border: none;
     background: @color1;
 }
-#workspaces button.active {
+#workspaces button.active,
+#workspaces button.focused {
     border: none;
     padding: 0px 2px;
     border-radius:10px;
@@ -94,7 +95,8 @@ tooltip {
     border: none;
     text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .5);
 }
-#workspaces button.empty.active {
+#workspaces button.empty.active,
+#workspaces button.empty.focused {
     color: rgba(0,0,0,0);
     border: none;
     text-shadow: none;
