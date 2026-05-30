@@ -284,6 +284,7 @@ chmod +x "$HOME/.config/hypr/scripts/cliphist-toggle.sh"
 chmod +x "$HOME/.config/hypr/scripts/open-browser.sh"
 chmod +x "$HOME/.config/hypr/scripts/idle-lock-screen.sh"
 chmod +x "$HOME/.config/hypr/scripts/battery-hibernate-watch.sh"
+chmod +x "$HOME/.config/hypr/scripts/fix-sddm-theme.sh"
 
 # 13. Generate pywal16 color scheme from wallpaper (dynamic theme)
 echo "--> Generating initial color scheme from wallpaper..."
@@ -332,13 +333,16 @@ setup_sddm() {
     fi
 
     sudo mkdir -p /etc/sddm.conf.d
+    sudo rm -f /etc/sddm.conf.d/akim-dotfiles-theme.conf 2>/dev/null || true
     if [ -n "$theme" ]; then
-        sudo tee /etc/sddm.conf.d/akim-dotfiles.conf > /dev/null << EOF
+        if [ -f "sddm/akim-dotfiles.conf" ]; then
+            sudo cp sddm/akim-dotfiles.conf /etc/sddm.conf.d/akim-dotfiles.conf
+            sudo sed -i "s/^Current=.*/Current=${theme}/" /etc/sddm.conf.d/akim-dotfiles.conf
+        else
+            sudo tee /etc/sddm.conf.d/akim-dotfiles.conf > /dev/null << EOF
 [General]
-DisplayServer=wayland
+DisplayServer=x11
 GreeterEnvironment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1,QML_DISABLE_DISK_CACHE=1
-HaltCommand=/usr/bin/systemctl poweroff
-RebootCommand=/usr/bin/systemctl reboot
 
 [Theme]
 Current=${theme}
@@ -346,6 +350,7 @@ Current=${theme}
 [Wayland]
 SessionDir=/usr/share/wayland-sessions
 EOF
+        fi
         echo "--> SDDM theme set to: $theme"
         echo "--> SDDM background: /usr/share/sddm/themes/${theme}/background.jpg"
         echo "    (re-run install after changing wallpaper, or copy your image there)"

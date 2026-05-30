@@ -172,6 +172,17 @@ cp ~/Pictures/akim-avatar.png ~/.face.icon
 
 À l'écran SDDM : choisir la session **Hyprland (Wayland)** si proposée.
 
+#### SDDM : « Main.qml: No such file » ou thème par défaut
+
+SDDM doit utiliser **`Current=akim`** (nom du thème), **pas** un chemin vers `~/akim-dotfiles/sddm/`.
+
+```bash
+cd ~/akim-dotfiles
+git pull
+~/.config/hypr/scripts/fix-sddm-theme.sh
+sudo reboot
+```
+
 #### SDDM ne démarre pas / écran noir
 
 1. Voir les logs : `journalctl -u sddm -b --no-pager`

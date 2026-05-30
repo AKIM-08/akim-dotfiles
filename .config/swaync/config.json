@@ -57,7 +57,7 @@
             "label": "󰃟 "
         },
         "buttons-grid": {
-            "columns": 5,
+            "columns": 3,
             "actions": [
                 {
                     "label": "󰝟",

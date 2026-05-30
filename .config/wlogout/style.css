@@ -5,25 +5,24 @@
   box-shadow: none;
 }
 
-/* Fenêtre transparente : plus de grand panneau vide à droite */
 window {
   background-color: transparent;
 }
 
 button {
   color: @foreground;
-  background: alpha(@background, 0.92);
+  background: alpha(@background, 0.75);
   outline-style: none;
-  border: 2px solid alpha(@foreground, 0.12);
+  border: 1px solid alpha(@foreground, 0.15);
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 22%;
-  border-radius: 18px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  min-width: 130px;
-  min-height: 130px;
-  margin: 12px;
-  transition: all 0.25s ease;
+  background-size: 32%;
+  border-radius: 14px;
+  min-width: 72px;
+  min-height: 72px;
+  margin: 8px;
+  padding: 0;
+  transition: all 0.2s ease;
 }
 
 button:focus,
@@ -31,7 +30,7 @@ button:hover {
   background-color: @color4;
   color: @background;
   border-color: @color4;
-  background-size: 26%;
+  background-size: 36%;
 }
 
 #logout {
