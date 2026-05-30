@@ -68,6 +68,20 @@ def write_kitty_conf(colors: list[str]) -> None:
     (WAL_DIR / "colors-kitty.conf").write_text("\n".join(lines) + "\n")
 
 
+def write_gtk_css(colors: list[str]) -> None:
+    content = f"""/* Palette extracted from wallpaper (pywal unavailable) */
+@define-color theme_bg_color #{colors[0]};
+@define-color theme_fg_color #{colors[7]};
+@define-color theme_base_color #{colors[0]};
+@define-color theme_text_color #{colors[7]};
+@define-color theme_selected_bg_color #{colors[4]};
+@define-color theme_selected_fg_color #{colors[7]};
+@define-color accent_bg_color #{colors[4]};
+@define-color accent_fg_color #{colors[0]};
+"""
+    (WAL_DIR / "colors-gtk.css").write_text(content)
+
+
 def write_rofi_dark(colors: list[str]) -> None:
     content = f"""* {{
     background-color: #{colors[0]};
@@ -113,6 +127,7 @@ def main() -> int:
     write_waybar_css(colors)
     write_kitty_conf(colors)
     write_rofi_dark(colors)
+    write_gtk_css(colors)
     write_colors_sh(colors, wallpaper)
 
     return 0

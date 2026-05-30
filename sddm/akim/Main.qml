@@ -1,0 +1,261 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import SddmComponents 2.0 as SDDM
+
+Rectangle {
+    id: root
+    width: Screen.width
+    height: Screen.height
+    color: "#0f0f17"
+
+    readonly property string wallpaperSource: config.background || "background.jpg"
+    readonly property color panelColor: "#cc0f0f17"
+    readonly property color fieldColor: "#33ffffff"
+    readonly property color accentColor: "#89b4fa"
+    readonly property color textColor: "#cdd6f4"
+
+    Image {
+        id: wallpaper
+        anchors.fill: parent
+        source: wallpaperSource
+        fillMode: Image.PreserveAspectCrop
+        cache: false
+        asynchronous: true
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        Rectangle {
+            Layout.preferredWidth: root.width * 0.38
+            Layout.fillHeight: true
+            color: panelColor
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 56
+                anchors.rightMargin: 56
+                anchors.topMargin: 64
+                anchors.bottomMargin: 48
+                spacing: 14
+
+                Item { Layout.fillHeight: true }
+
+                Text {
+                    text: "Welcome!"
+                    color: textColor
+                    font.pixelSize: 34
+                    font.weight: Font.Light
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Text {
+                    id: clockText
+                    color: textColor
+                    font.pixelSize: 56
+                    font.weight: Font.Light
+                    Layout.alignment: Qt.AlignHCenter
+
+                    Timer {
+                        interval: 1000
+                        running: true
+                        repeat: true
+                        triggeredOnStart: true
+                        onTriggered: clockText.text = Qt.formatTime(new Date(), "hh:mm")
+                    }
+                }
+
+                Text {
+                    id: dateText
+                    color: Qt.rgba(1, 1, 1, 0.75)
+                    font.pixelSize: 14
+                    Layout.alignment: Qt.AlignHCenter
+
+                    Timer {
+                        interval: 60000
+                        running: true
+                        repeat: true
+                        triggeredOnStart: true
+                        onTriggered: dateText.text = Qt.formatDate(new Date(), "dddd, d MMMM")
+                    }
+                }
+
+                Item { Layout.preferredHeight: 24 }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 48
+                    radius: 12
+                    color: fieldColor
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 10
+
+                        Text {
+                            text: "󰀄"
+                            color: textColor
+                            font.family: "JetBrainsMono Nerd Font"
+                            font.pixelSize: 16
+                        }
+
+                        TextInput {
+                            id: usernameField
+                            Layout.fillWidth: true
+                            color: textColor
+                            font.pixelSize: 14
+                            selectByMouse: true
+                            text: sddm.autologinUser || ""
+                            Keys.onReturnPressed: passwordField.forceActiveFocus()
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 48
+                    radius: 12
+                    color: fieldColor
+
+                    TextInput {
+                        id: passwordField
+                        anchors.fill: parent
+                        anchors.margins: 14
+                        color: textColor
+                        font.pixelSize: 14
+                        echoMode: TextInput.Password
+                        passwordCharacter: "•"
+                        selectByMouse: true
+                        placeholderText: "Password"
+                        Keys.onReturnPressed: loginButton.clicked()
+                    }
+                }
+
+                CheckBox {
+                    id: showPassword
+                    text: "Show Password"
+                    checked: false
+                    onCheckedChanged: passwordField.echoMode = checked ? TextInput.Normal : TextInput.Password
+
+                    contentItem: Text {
+                        text: showPassword.text
+                        color: textColor
+                        font.pixelSize: 12
+                        leftPadding: showPassword.indicator.width + showPassword.spacing
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+
+                Button {
+                    id: loginButton
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 48
+                    text: "Login"
+                    font.pixelSize: 14
+                    background: Rectangle {
+                        radius: 12
+                        color: accentColor
+                    }
+                    contentItem: Text {
+                        text: loginButton.text
+                        color: "#11111b"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: 14
+                        font.weight: Font.Medium
+                    }
+                    onClicked: {
+                        errorText.visible = !sddm.login(usernameField.text, passwordField.text, sessionSelect.currentIndex)
+                    }
+                }
+
+                ComboBox {
+                    id: sessionSelect
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    model: sessionModel
+                    textRole: "name"
+                    currentIndex: 0
+                    background: Rectangle {
+                        radius: 10
+                        color: fieldColor
+                    }
+                    contentItem: Text {
+                        leftPadding: 12
+                        text: sessionSelect.displayText
+                        color: textColor
+                        font.pixelSize: 12
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+
+                Text {
+                    id: errorText
+                    visible: false
+                    text: "Invalid username or password"
+                    color: "#f38ba8"
+                    font.pixelSize: 12
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Item { Layout.fillHeight: true }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 36
+
+                    Repeater {
+                        model: [
+                            { label: "Suspend", icon: "󰒲", action: function() { sddm.suspend() } },
+                            { label: "Reboot", icon: "󰑐", action: function() { sddm.reboot() } },
+                            { label: "Shutdown", icon: "󰐥", action: function() { sddm.powerOff() } }
+                        ]
+
+                        delegate: ColumnLayout {
+                            spacing: 6
+                            Layout.alignment: Qt.AlignHCenter
+
+                            Rectangle {
+                                width: 52
+                                height: 52
+                                radius: 26
+                                color: fieldColor
+                                border.color: Qt.rgba(1, 1, 1, 0.15)
+                                border.width: 1
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: modelData.icon
+                                    color: textColor
+                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.pixelSize: 20
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: modelData.action()
+                                }
+                            }
+
+                            Text {
+                                text: modelData.label
+                                color: Qt.rgba(1, 1, 1, 0.8)
+                                font.pixelSize: 11
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
+    }
+}

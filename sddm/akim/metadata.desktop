@@ -1,0 +1,6 @@
+[SddmGreeterTheme]
+Name=akim
+Description=Split-screen login with clock and power actions
+Author=akim-dotfiles
+Version=1.0
+Type=qtquick2

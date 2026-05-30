@@ -7,7 +7,7 @@ Configuration Hyprland pour **Arch Linux** (laptop, écran unique, clavier **AZE
 | Composant | Outil |
 |-----------|-------|
 | OS | Arch Linux |
-| Écran de connexion | SDDM (avatar + mot de passe) |
+| Écran de connexion | SDDM (thème **akim** — split-screen) |
 | Compositrice | Hyprland |
 | Terminal | Kitty |
 | Barre d'état | Waybar (4 thèmes) |
@@ -17,7 +17,7 @@ Configuration Hyprland pour **Arch Linux** (laptop, écran unique, clavier **AZE
 | Fond d'écran | hyprpaper |
 | Verrouillage / veille | hyprlock + hypridle |
 | Infos système (terminal) | fastfetch |
-| Thème GTK | Catppuccin Mocha + Papirus-Dark (apps GTK uniquement) |
+| Thème GTK | Catppuccin Mocha + accents **pywal16** (`gtk.css`) |
 | Couleurs UI | **pywal16** — extraites du fond d'écran actif |
 | Curseur | Nordzy |
 | Shell | Zsh + Oh My Zsh (thème `fishy`) |
@@ -30,26 +30,27 @@ akim-dotfiles/
 ├── .gitignore
 ├── README.md
 ├── .zshrc
+├── sddm/akim/              # Thème SDDM personnalisé (split-screen)
 ├── omz-custom/             # Thème fishy (copié vers ~/.oh-my-zsh/themes/ à l'install)
 │   └── themes/fishy.zsh-theme
 ├── assets/
 │   └── akim-avatar.png     # Avatar hyprlock (copié vers ~/Pictures/)
 ├── wallpapers/             # Fonds d'écran source (image1 … image8)
 └── .config/
-    ├── hypr/               # Hyprland, hyprpaper, hyprlock, hypridle
+    ├── hypr/               # Hyprland, hyprpaper, hyprlock, hypridle + scripts
     ├── waybar/             # Barre + thèmes + scripts
     ├── wlogout/            # Menu d'alimentation
     ├── kitty/              # Terminal
-    ├── rofi/               # Lanceur d'applications
+    ├── rofi/               # Lanceur + presse-papier (clipboard.rasi)
     ├── wofi/               # Menus (sélecteur de thème Waybar)
     ├── swaync/             # Centre de notifications
     ├── waypaper/           # Gestionnaire de fonds d'écran (GUI)
-    ├── wal/templates/      # Template pywal16 pour Hyprland
-    ├── gtk-3.0/            # Thème GTK (Catppuccin Mocha)
+    ├── wal/                # Templates pywal16 (Hyprland, GTK)
+    ├── gtk-3.0/            # Thème GTK de base (Catppuccin Mocha)
     └── gtk-4.0/            # Thème GTK 4 / libadwaita
 ```
 
-> `current.jpg` n'est **pas** dans le dépôt : il est créé à l'installation dans `~/Pictures/wallpapers/` à partir de `image1.jpg` et mis à jour lors du changement de fond d'écran.
+> `current.jpg` n'est **pas** dans le dépôt : c'est un **symlink** vers une image dans `~/Pictures/wallpapers/` (ex. `image1.jpg`), créé à l'installation. Cela évite de recopier le JPEG et de perdre en qualité.
 
 ## Fonds d'écran inclus
 
@@ -87,46 +88,83 @@ sudo reboot
 Le script `install.sh` :
 
 1. Configure la locale en `en_US.UTF-8`
-2. Installe les **paquets essentiels** (Hyprland, Kitty, Waybar, wlogout, GTK3, Papirus, libnotify…)
+2. Installe les **paquets essentiels** (Hyprland, Kitty, Waybar, wlogout, pipewire-pulse, bluez, btop…)
 3. Installe les **applications optionnelles** sans bloquer (Firefox, Discord, VS Code, VLC, OBS, Cava…)
-4. Active **NetworkManager**
+4. Active **NetworkManager** et **bluetooth**
 5. Installe **yay** puis depuis l'AUR : pywal16, Catppuccin Mocha GTK, Papirus folders, Nordzy, Waypaper
-6. Installe des paquets AUR optionnels (Brave, Spotify, pipes.sh, tty-clock)
+6. Installe des paquets AUR optionnels (Brave, Spotify, pipes.sh, tty-clock, thème SDDM Catppuccin…)
 7. Copie les wallpapers, déploie les configs, configure **wlogout** et les thèmes GTK
 8. Installe Oh My Zsh + thème fishy, rend les scripts exécutables
 9. Génère le **thème dynamique** depuis `current.jpg` via `apply-pywal-theme.sh`
-10. Active **SDDM** (écran de connexion graphique avec avatar, session Hyprland)
+10. Installe le thème SDDM **akim** et active **SDDM**
 
 Les paquets optionnels peuvent échouer sans interrompre l'installation. Le changement de shell vers zsh affiche un avertissement si `chsh` échoue (mot de passe requis).
 
-### Écran de connexion (SDDM)
+### Mise à jour après `git pull`
 
-Au démarrage, **SDDM** affiche un écran graphique : avatar (`~/.face`), nom d'utilisateur et mot de passe. Après connexion, la session **Hyprland** démarre.
-
-- **hyprlock** = verrouillage *pendant* la session (Super + veille, ou hypridle)
-- **SDDM** = connexion *au boot* (remplace le TTY)
-
-Configuration manuelle :
+Sur un PC qui a **déjà** cloné le dépôt et installé les dotfiles :
 
 ```bash
-# Installer SDDM
-sudo pacman -S sddm qt6-multimedia
+cd ~/akim-dotfiles          # adapter le chemin si besoin
+git pull
 
-# Avatar (même image que hyprlock)
+# Déployer les configs
+cp -r .config/* ~/.config/
+cp .zshrc ~/.zshrc 2>/dev/null || true
+
+# Scripts exécutables
+chmod +x ~/.config/hypr/scripts/*.sh
+chmod +x ~/.config/hypr/scripts/pywal-fallback.py
+chmod +x ~/.config/waybar/scripts/*.sh
+chmod +x ~/.config/swaync/refresh.sh
+chmod +x ~/.config/waypaper/wallpaper_script.sh
+chmod +x ~/.config/wlogout/hibernate.sh
+
+# Paquets ajoutés récemment (sans erreur si déjà installés)
+sudo pacman -S --needed --noconfirm pipewire-pulse bluez btop
+sudo systemctl enable --now bluetooth 2>/dev/null || true
+
+# Fond d'écran : symlink (qualité préservée)
+mkdir -p ~/Pictures/wallpapers
+[ -f ~/Pictures/wallpapers/image1.jpg ] && ln -sf ~/Pictures/wallpapers/image1.jpg ~/Pictures/wallpapers/current.jpg
+
+# Thème SDDM akim
+sudo mkdir -p /usr/share/sddm/themes/akim
+sudo cp -r sddm/akim/* /usr/share/sddm/themes/akim/
+sudo cp -L ~/Pictures/wallpapers/current.jpg /usr/share/sddm/themes/akim/background.jpg 2>/dev/null \
+  || sudo cp ~/Pictures/wallpapers/image1.jpg /usr/share/sddm/themes/akim/background.jpg 2>/dev/null || true
+echo -e "[Theme]\nCurrent=akim" | sudo tee /etc/sddm.conf.d/akim-dotfiles-theme.conf >/dev/null 2>&1 || \
+  sudo sed -i 's/^Current=.*/Current=akim/' /etc/sddm.conf.d/akim-dotfiles.conf 2>/dev/null || true
+
+# Régénérer le thème pywal + GTK
+~/.config/hypr/scripts/apply-pywal-theme.sh ~/Pictures/wallpapers/current.jpg
+
+# Recharger la session Hyprland
+hyprctl reload
+pkill waybar; waybar &
+swaync-client --reload-css 2>/dev/null || (pkill swaync; swaync &)
+```
+
+> **Option rapide** : relancer `./install.sh` depuis le repo fait aussi une grande partie de la mise à jour (paquets, SDDM, pywal). Les commandes ci-dessus évitent une réinstallation complète.
+
+### Écran de connexion (SDDM)
+
+Au démarrage, **SDDM** affiche le thème **akim** : panneau gauche (Welcome, horloge, login, session) et fond d'écran visible à droite.
+
+- **hyprlock** = verrouillage *pendant* la session (hypridle)
+- **SDDM** = connexion *au boot*
+
+Changer le fond SDDM :
+
+```bash
+sudo cp -L ~/Pictures/wallpapers/current.jpg /usr/share/sddm/themes/akim/background.jpg
+```
+
+Avatar (même image que hyprlock) :
+
+```bash
 cp ~/Pictures/akim-avatar.png ~/.face
 cp ~/Pictures/akim-avatar.png ~/.face.icon
-
-# Thème Catppuccin (optionnel)
-yay -S catppuccin-sddm-corners-mocha
-
-# Activer SDDM
-sudo systemctl enable sddm.service
-
-# Supprimer autologin TTY si configuré avant
-sudo rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
-rm -f ~/.zprofile
-
-sudo reboot
 ```
 
 À l'écran SDDM : choisir la session **Hyprland (Wayland)** si proposée.
@@ -134,17 +172,14 @@ sudo reboot
 ### Manuelle (partielle)
 
 ```bash
-# Prérequis : Oh My Zsh + paquets zsh (voir install.sh)
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-cp omz-custom/themes/fishy.zsh-theme ~/.oh-my-zsh/themes/
-
 cp -r .config/* ~/.config/
 cp .zshrc ~/.zshrc
-cp wallpapers/image*.* ~/Pictures/wallpapers/
-cp assets/akim-avatar.png ~/Pictures/akim-avatar.png
-cp ~/Pictures/wallpapers/image1.jpg ~/Pictures/wallpapers/current.jpg
+cp wallpapers/image*.* ~/Pictures/wallpapers/ 2>/dev/null || true
+cp assets/akim-avatar.png ~/Pictures/akim-avatar.png 2>/dev/null || true
+ln -sf ~/Pictures/wallpapers/image1.jpg ~/Pictures/wallpapers/current.jpg
 chmod +x ~/.config/hypr/scripts/*.sh ~/.config/hypr/scripts/pywal-fallback.py
-chmod +x ~/.config/waypaper/wallpaper_script.sh ~/.config/wlogout/hibernate.sh
+chmod +x ~/.config/waybar/scripts/*.sh ~/.config/waypaper/wallpaper_script.sh
+chmod +x ~/.config/wlogout/hibernate.sh
 ~/.config/hypr/scripts/apply-pywal-theme.sh ~/Pictures/wallpapers/current.jpg
 ```
 
@@ -162,52 +197,69 @@ chmod +x ~/.config/waypaper/wallpaper_script.sh ~/.config/wlogout/hibernate.sh
 | Raccourci | Action |
 |-----------|--------|
 | `Super + Entrée` | Ouvrir le terminal (Kitty) |
-| `Super + Q` | Fermer la fenêtre active |
-| `Super + A` | Lanceur d'applications (Rofi) |
+| `Super + Q` | Lanceur d'applications (Rofi) — **toggle** (ouvre / ferme) |
+| `Super + A` | Fermer la fenêtre active |
 | `Super + F` | Gestionnaire de fichiers (Nautilus) |
-| `Super + V` | Historique du presse-papier |
+| `Super + B` | Navigateur web (Firefox, Brave ou Chromium) |
+| `Super + V` | Historique du presse-papier — **toggle** |
+| `Super + P` | Capture d'écran **zone** → `~/Pictures/Screenshots/` + presse-papier |
+| `Super + Alt + P` | Capture d'écran **plein écran** |
+| `Super + Échap` | Menu d'alimentation (wlogout) |
 | `Super + N` | Centre de notifications (SwayNC) |
 | `Super + D` | Discord |
-| `Super + Shift + A` | Capture zone → `~/Pictures/Screenshots/` + presse-papier |
-| `Super + Impr. écran` | Capture zone (même raccourci alternatif) |
-| `Impr. écran` | Capture écran entier → `~/Pictures/Screenshots/` |
-| `Super + Shift + E` | Menu d'alimentation (wlogout) |
 | `Super + Shift + T` | Changer le thème Waybar |
 | `Super + Alt + →` | Fond d'écran suivant + nouveau thème |
 | `Super + Alt + ←` | Fond d'écran précédent + nouveau thème |
 
 Les workspaces `Super + &`, `Super + é`, `Super + "`, etc. correspondent aux touches **1–10** sur un clavier AZERTY.
 
+### Centre de notifications (SwayNC)
+
+Widgets : média, notifications, **volume**, **luminosité**, grille de raccourcis :
+
+| Bouton | Action |
+|--------|--------|
+| Mute sortie | `wpctl` — mute haut-parleurs |
+| Mute micro | `wpctl` — mute micro |
+| Wi‑Fi | `nmtui` (dans Kitty) |
+| Bluetooth | Active BT + ouvre Blueman |
+| Lune | Ne pas déranger (toggle) |
+| Graphique | `btop` (dans Kitty) |
+
+`Super + N` ou l'icône cloche dans Waybar ouvre / ferme le centre.
+
 ### Verrouillage automatique (hypridle)
 
 | Délai | Action |
 |-------|--------|
-| 2 min 30 | Luminosité écran réduite |
-| 5 min | Verrouillage (hyprlock + avatar AKIM) |
-| 5 min 30 | Écran éteint |
-| 30 min | Mise en veille |
+| 10 min | Luminosité écran réduite |
+| 15 min | Verrouillage (**hyprlock** + avatar AKIM) + écran éteint |
+| 20 min | Mise en veille (suspend) |
+
+**Hibernation à 1 %** (sur batterie, sans secteur) : script `battery-hibernate-watch.sh` (nécessite une partition **swap** active).
 
 ### Menu d'alimentation (wlogout)
 
-`Super + Shift + E` ouvre wlogout (protocole **layer-shell**, requis sur Hyprland) avec : **Logout**, **Shutdown**, **Hibernate**, **Reboot**.
+`Super + Échap` ouvre wlogout (protocole **layer-shell**) : **Logout**, **Shutdown**, **Hibernate**, **Reboot** (grille 2×2 centrée).
 
 > **Hibernation** : vérifie la présence d'une partition **swap** active (`swapon --show`). Sans swap, une notification s'affiche et l'action est annulée.
 
 ### Thème dynamique (pywal16)
 
-Les couleurs de l'interface (Hyprland, Waybar, Kitty, Rofi, Hyprlock, SwayNC, wlogout, Cava) sont **extraites automatiquement** depuis `~/Pictures/wallpapers/current.jpg` via pywal16.
+Les couleurs de l'interface sont **extraites automatiquement** depuis `~/Pictures/wallpapers/current.jpg` via pywal16.
 
 Script central : `~/.config/hypr/scripts/apply-pywal-theme.sh`
 
 - Appelé à l'installation, au changement de fond (`Super + Alt + ←/→`), et par Waypaper
 - Si pywal16 échoue, `pywal-fallback.py` extrait quand même une palette depuis l'image (Pillow)
-- Catppuccin Mocha ne concerne que les **apps GTK** (Nautilus, LibreOffice…) — pas la barre ni le compositor
+- **GTK** : `~/.config/gtk-3.0/gtk.css` et `gtk-4.0/gtk.css` mis à jour depuis pywal (relancer les apps GTK pour voir l'effet)
+- **Hyprland** : opacité ~0.93 sur Firefox, Brave, Discord, Telegram, Code, VLC, etc.
 
 Composants mis à jour :
 
-- **Hyprland** — bordures de fenêtres
+- **Hyprland** — bordures et opacité des fenêtres
 - **Kitty** — couleurs du terminal
-- **Rofi** — lanceur
+- **Rofi** — lanceur (icônes Papirus, largeur compacte)
 - **Hyprlock** — écran de verrouillage
 - **Waybar / SwayNC / wlogout** — via `colors-waybar.css`
 - **Cava** — visualiseur audio
@@ -220,6 +272,8 @@ Quatre styles : **default**, **line**, **zen**, **experimental**.
 
 - Raccourci : `Super + Shift + T`
 - Ou : `~/.config/waybar/scripts/select.sh`
+
+L'horloge affiche les **secondes** et se met à jour chaque seconde (`interval: 1`).
 
 ### Gestionnaire de fonds d'écran (Waypaper)
 
@@ -234,10 +288,11 @@ GUI installée via AUR (`waypaper`). Lancez `waypaper` depuis un terminal ou ajo
 ### Qualité des fonds d'écran (éviter le flou)
 
 - Utilisez des images **au moins aussi grandes que votre écran** (ex. 1920×1080 ou plus pour un laptop FHD).
-- Le mode d'affichage est **`cover`** (remplit l'écran sans étirer) — ne pas utiliser `fill` dans Waypaper/hyprpaper, qui déforme et floute l'image.
-- Mettez à jour hyprpaper : `sudo pacman -Syu hyprpaper`
-- Vérifiez l'échelle du moniteur : `hyprctl monitors` — un scale > 1 (ex. 1.25) demande des images plus grandes.
-- **hyprlock** applique volontairement un flou sur l'écran de verrouillage uniquement, pas sur le bureau.
+- `current.jpg` est un **symlink** vers le fichier source (pas de recompression).
+- Le mode d'affichage est **`cover`** (remplit l'écran sans étirer).
+- Vérifiez l'échelle du moniteur : `hyprctl monitors` — un scale > 1 demande des images plus grandes.
+- Les fenêtres **transparentes** floutent le fond derrière elles (effet Hyprland) : ce n'est pas le wallpaper qui est flou.
+- **hyprlock** applique volontairement un flou sur l'écran de verrouillage uniquement.
 
 ## GPU NVIDIA (optionnel)
 
@@ -254,20 +309,20 @@ Puis rechargez Hyprland : `hyprctl reload`.
 
 | Fichier | À adapter |
 |---------|-----------|
-| `.config/hypr/hyprland.conf` | Variables NVIDIA (si besoin), raccourcis |
+| `.config/hypr/hyprland.conf` | Raccourcis, opacité, règles fenêtres |
 | `.config/hypr/hypridle.conf` | Délais de verrouillage / veille |
 | `.config/gtk-3.0/settings.ini` | Thème GTK Catppuccin Mocha et curseur |
 | `.config/gtk-4.0/settings.ini` | Thème GTK 4 pour apps libadwaita |
+| `sddm/akim/` | Écran de connexion SDDM |
 | `wallpapers/` | Vos propres images |
 
 Le moniteur est configuré en `monitor=,preferred,auto,1` (auto-détection laptop). Pour un écran externe, voir la [doc Hyprland Monitors](https://wiki.hyprland.org/Configuring/Monitors/).
 
 ## Notes
 
-- Ne renommez pas `current.jpg` : c'est le fond actif pour hyprpaper et pywal16 (ignoré par git via `.gitignore`).
+- Ne supprimez pas `current.jpg` : symlink vers le fond actif pour hyprpaper et pywal16.
 - Les scripts dans `.config/*/scripts/` doivent être exécutables (`chmod +x`).
-- Police unique : **JetBrains Mono Nerd Font** (Kitty, hyprlock, Waybar).
-- **pywal-discord** (sync thème Discord) : optionnel — `yay -S pywal-discord` si souhaité ; le script l'appelle uniquement s'il est installé.
-- Les noms de thèmes GTK sont **auto-détectés** à l'installation (Catppuccin Mocha) ; vérifiez `~/.config/gtk-3.0/settings.ini` si un thème ne s'applique pas.
-- Horloge Waybar : rafraîchissement toutes les **30 secondes** (compromis batterie / précision).
-- **fastfetch** : lancez `fastfetch` dans Kitty pour les infos système (installé par `install.sh`).
+- Police unique : **JetBrains Mono Nerd Font** (Kitty, hyprlock, Waybar, SDDM).
+- **pywal-discord** (sync thème Discord) : optionnel — `yay -S pywal-discord` si souhaité.
+- **Bluetooth** : service `bluetooth` requis ; sans adaptateur, Blueman affichera une erreur.
+- **fastfetch** : lancez `fastfetch` dans Kitty pour les infos système.

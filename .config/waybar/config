@@ -25,7 +25,7 @@
         },
         "clock": {
             "format": "{:%I:%M:%S %p} ",
-            "interval": 30,
+            "interval": 1,
             "tooltip-format": "<tt>{calendar}</tt>",
             "calendar": {
                 "format": {

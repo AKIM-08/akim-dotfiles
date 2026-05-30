@@ -1,0 +1,45 @@
+@import "~/.cache/wal/colors-rofi-dark"
+
+configuration {
+    show-icons: false;
+    width: 28;
+    lines: 12;
+    columns: 1;
+    location: 0;
+    hide-scrollbar: true;
+    display-drun: "Clipboard";
+}
+
+window {
+    width: 420px;
+    border-radius: 12px;
+}
+
+mainbox {
+    border-radius: 12px;
+    padding: 8px;
+}
+
+inputbar {
+    padding: 8px 12px;
+    spacing: 8px;
+    children: [ prompt, entry ];
+}
+
+entry {
+    placeholder: "Search clipboard...";
+}
+
+listview {
+    lines: 12;
+    spacing: 4px;
+}
+
+element {
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+element-text {
+    vertical-align: 0.5;
+}

@@ -2,13 +2,21 @@
 @import "~/.cache/wal/colors-rofi-dark"
 
 configuration {
+    font: "JetBrainsMono Nerd Font 11";
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    drun-display-format: "{name} <span weight='light' size='small'><i>({generic})</i></span>";
+    location: 0;
+    yoffset: 0;
+    xoffset: 0;
+    fixed-num-lines: true;
+    width: 28;
+    lines: 8;
+    columns: 1;
+    hide-scrollbar: true;
+    click-to-exit: true;
+    cycle: true;
 /*	modes: "window,drun,run,ssh";*/
-/*	font: "mono 12";*/
-/*	location: 0;*/
-/*	yoffset: 0;*/
-/*	xoffset: 0;*/
-/*	fixed-num-lines: true;*/
-/*	show-icons: false;*/
 /*	preview-cmd: ;*/
 /*	terminal: "rofi-sensible-terminal";*/
 /*	ssh-client: "ssh";*/
@@ -157,4 +165,46 @@ configuration {
       directories-first: true;
       sorting-method:    "name";
   }
+}
+
+window {
+    width: 520px;
+    border-radius: 14px;
+}
+
+mainbox {
+    border-radius: 14px;
+    padding: 10px;
+}
+
+inputbar {
+    padding: 10px 14px;
+    spacing: 10px;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    text: "󰍉";
+}
+
+entry {
+    placeholder: "Search...";
+}
+
+listview {
+    lines: 8;
+    spacing: 4px;
+}
+
+element {
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+element-icon {
+    size: 28px;
+}
+
+element-text {
+    vertical-align: 0.5;
 }

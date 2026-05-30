@@ -40,11 +40,13 @@ echo "$index" > "$STATE_FILE"
 selected="${images[$index]}"
 filename=$(basename "$selected")
 
-cp "$selected" "$CURRENT"
+# Symlink avoids re-encoding JPEG and keeps full image quality
+ln -sf "$selected" "$CURRENT"
+real_current=$(readlink -f "$CURRENT")
 
-hyprctl hyprpaper preload "$CURRENT"
-hyprctl hyprpaper wallpaper ",$CURRENT,cover"
+hyprctl hyprpaper preload "$real_current"
+hyprctl hyprpaper wallpaper ",$real_current,cover"
 
-"$APPLY_THEME" "$CURRENT"
+"$APPLY_THEME" "$real_current"
 
-notify-send "Wallpaper Switcher" "Changed to: $filename ($((index+1))/$total)" -i "$CURRENT"
+notify-send "Wallpaper Switcher" "Changed to: $filename ($((index+1))/$total)" -i "$real_current"

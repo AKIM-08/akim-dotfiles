@@ -16,6 +16,14 @@ link_pywal_css() {
     done
 }
 
+apply_gtk_colors() {
+    local gtk_css="$WAL_CACHE/colors-gtk.css"
+    [ -f "$gtk_css" ] || return 0
+    mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"
+    cp "$gtk_css" "$HOME/.config/gtk-3.0/gtk.css"
+    cp "$gtk_css" "$HOME/.config/gtk-4.0/gtk.css"
+}
+
 reload_ui() {
     hyprctl reload 2>/dev/null || true
     pkill waybar 2>/dev/null || true
@@ -48,5 +56,6 @@ else
 fi
 
 link_pywal_css
+apply_gtk_colors
 command -v pywal-discord &>/dev/null && pywal-discord -t default
 reload_ui

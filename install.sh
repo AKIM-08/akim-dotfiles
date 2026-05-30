@@ -50,12 +50,15 @@ sudo pacman -Syu --needed --noconfirm \
     libnotify \
     nautilus \
     pipewire \
+    pipewire-pulse \
     wireplumber \
+    bluez \
+    btop \
     xdg-user-dirs \
     hyprland \
     hyprpaper \
     sddm \
-    qt6-multimedia \
+    qt6-multimedia-ffmpeg \
     swaync \
     cliphist \
     wl-clipboard \
@@ -94,6 +97,7 @@ run_optional "Installing optional applications" \
 xdg-user-dirs-update
 
 sudo systemctl enable --now NetworkManager 2>/dev/null || warn "Could not enable NetworkManager"
+sudo systemctl enable --now bluetooth 2>/dev/null || warn "Could not enable bluetooth (no adapter?)"
 
 # 3. Install yay (AUR helper)
 if ! command -v yay &> /dev/null; then
@@ -163,8 +167,8 @@ if [ -f "assets/akim-avatar.png" ]; then
 fi
 
 if [ -f "$TARGET_WALLPAPERS_DIR/image1.jpg" ]; then
-    echo "--> Setting image1.jpg as current.jpg (active wallpaper)..."
-    cp "$TARGET_WALLPAPERS_DIR/image1.jpg" "$TARGET_WALLPAPER"
+    echo "--> Setting image1.jpg as current.jpg (symlink, preserves quality)..."
+    ln -sf "$TARGET_WALLPAPERS_DIR/image1.jpg" "$TARGET_WALLPAPER"
 elif [ ! -f "$TARGET_WALLPAPER" ]; then
     echo "--> Generating fallback background..."
     python3 -c "
@@ -273,6 +277,11 @@ chmod +x "$HOME/.config/waybar/scripts/"*.sh
 chmod +x "$HOME/.config/swaync/refresh.sh"
 chmod +x "$HOME/.config/waypaper/wallpaper_script.sh"
 chmod +x "$HOME/.config/wlogout/hibernate.sh"
+chmod +x "$HOME/.config/hypr/scripts/rofi-toggle.sh"
+chmod +x "$HOME/.config/hypr/scripts/cliphist-toggle.sh"
+chmod +x "$HOME/.config/hypr/scripts/open-browser.sh"
+chmod +x "$HOME/.config/hypr/scripts/idle-lock-screen.sh"
+chmod +x "$HOME/.config/hypr/scripts/battery-hibernate-watch.sh"
 
 # 13. Generate pywal16 color scheme from wallpaper (dynamic theme)
 echo "--> Generating initial color scheme from wallpaper..."
@@ -292,13 +301,27 @@ setup_sddm() {
         cp assets/akim-avatar.png "$HOME/.face.icon"
     fi
 
-    local theme=""
-    for t in catppuccin-mocha-corners Catppuccin-Mocha-Corners catppuccin-mocha; do
-        if [ -d "/usr/share/sddm/themes/$t" ]; then
-            theme="$t"
-            break
+    local theme="akim"
+    if [ -d "sddm/akim" ]; then
+        echo "--> Installing custom SDDM theme (akim)..."
+        sudo mkdir -p "/usr/share/sddm/themes/$theme"
+        sudo cp -r sddm/akim/* "/usr/share/sddm/themes/$theme/"
+        if [ -f "$TARGET_WALLPAPER" ]; then
+            sudo cp -L "$TARGET_WALLPAPER" "/usr/share/sddm/themes/$theme/background.jpg" 2>/dev/null \
+                || sudo cp "$TARGET_WALLPAPER" "/usr/share/sddm/themes/$theme/background.jpg"
+        elif [ -f "$TARGET_WALLPAPERS_DIR/image1.jpg" ]; then
+            sudo cp "$TARGET_WALLPAPERS_DIR/image1.jpg" "/usr/share/sddm/themes/$theme/background.jpg"
         fi
-    done
+    else
+        warn "sddm/akim not found — falling back to Catppuccin theme if installed"
+        theme=""
+        for t in catppuccin-mocha-corners Catppuccin-Mocha-Corners catppuccin-mocha; do
+            if [ -d "/usr/share/sddm/themes/$t" ]; then
+                theme="$t"
+                break
+            fi
+        done
+    fi
 
     sudo mkdir -p /etc/sddm.conf.d
     if [ -n "$theme" ]; then
@@ -314,6 +337,8 @@ Current=${theme}
 SessionDir=/usr/share/wayland-sessions
 EOF
         echo "--> SDDM theme set to: $theme"
+        echo "--> SDDM background: /usr/share/sddm/themes/${theme}/background.jpg"
+        echo "    (re-run install after changing wallpaper, or copy your image there)"
     else
         sudo tee /etc/sddm.conf.d/akim-dotfiles.conf > /dev/null << 'EOF'
 [General]
@@ -349,11 +374,14 @@ echo " Default wallpaper: current.jpg"
 echo ""
 echo " KEY BINDINGS:"
 echo "   SUPER + Return       -> Open terminal (Kitty)"
-echo "   SUPER + Q            -> Close active window"
-echo "   SUPER + A            -> App launcher (Rofi)"
-echo "   SUPER + V            -> Clipboard history"
+echo "   SUPER + Q            -> App launcher (Rofi, toggle)"
+echo "   SUPER + A            -> Close active window"
+echo "   SUPER + V            -> Clipboard history (toggle)"
+echo "   SUPER + B            -> Web browser"
+echo "   SUPER + P            -> Screenshot (region)"
+echo "   SUPER + ALT + P      -> Screenshot (full screen)"
+echo "   SUPER + Escape       -> Power menu (wlogout)"
 echo "   SUPER + N            -> Notification center"
-echo "   SUPER + Shift + E    -> Power menu (wlogout)"
 echo "   SUPER + Shift + T    -> Waybar theme selector"
 echo "   SUPER + ALT + Right  -> Next wallpaper + theme update"
 echo "   SUPER + ALT + Left   -> Previous wallpaper + theme update"
