@@ -59,6 +59,8 @@ sudo pacman -Syu --needed --noconfirm \
     hyprpaper \
     sddm \
     qt6-multimedia-ffmpeg \
+    qt6-declarative \
+    qt6-quickcontrols2 \
     swaync \
     cliphist \
     wl-clipboard \
@@ -306,6 +308,12 @@ setup_sddm() {
         echo "--> Installing custom SDDM theme (akim)..."
         sudo mkdir -p "/usr/share/sddm/themes/$theme"
         sudo cp -r sddm/akim/* "/usr/share/sddm/themes/$theme/"
+        if command -v sddm-greeter &>/dev/null; then
+            if ! sddm-greeter --test-mode --theme "$theme" 2>/dev/null; then
+                warn "SDDM theme '$theme' test failed — check: journalctl -u sddm -b"
+                warn "Fallback: set DisplayServer=x11 in /etc/sddm.conf.d/akim-dotfiles.conf"
+            fi
+        fi
         if [ -f "$TARGET_WALLPAPER" ]; then
             sudo cp -L "$TARGET_WALLPAPER" "/usr/share/sddm/themes/$theme/background.jpg" 2>/dev/null \
                 || sudo cp "$TARGET_WALLPAPER" "/usr/share/sddm/themes/$theme/background.jpg"
@@ -328,7 +336,9 @@ setup_sddm() {
         sudo tee /etc/sddm.conf.d/akim-dotfiles.conf > /dev/null << EOF
 [General]
 DisplayServer=wayland
-GreeterEnvironment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+GreeterEnvironment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1,QML_DISABLE_DISK_CACHE=1
+HaltCommand=/usr/bin/systemctl poweroff
+RebootCommand=/usr/bin/systemctl reboot
 
 [Theme]
 Current=${theme}

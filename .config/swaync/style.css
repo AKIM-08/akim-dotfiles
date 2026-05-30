@@ -1,4 +1,10 @@
 @import url("colors-waybar.css");
+/* Fallback si pywal pas chargé */
+@define-color background #1e1e2e;
+@define-color foreground #cdd6f4;
+@define-color color4 #89b4fa;
+@define-color color7 #bac2de;
+@define-color color15 #cdd6f4;
 @define-color mpris-album-art-overlay alpha(@background, 0.55);
 @define-color mpris-button-hover alpha(@background, 0.50);
 @define-color text @color15;
@@ -267,42 +273,44 @@
     background-color: @mpris-button-hover;
 }
 .widget-buttons-grid {
-    font-family:"JetBrainsMono Nerd Font";
-    padding-left: 8px;
-    padding-right: 8px;
-    padding-bottom: 8px;
-    margin: 10px;
+    font-family: "JetBrainsMono Nerd Font";
+    padding: 8px 12px 12px 12px;
+    margin: 8px 10px 10px 10px;
     border-radius: 12px;
-    background:transparent;
+    background: alpha(@background, 0.45);
 }
 
-.widget-buttons-grid>flowbox>flowboxchild>button label {
-    font-size: 20px;
-    color: @color7;
-    transition: all .7s ease;
-}
-.widget-buttons-grid>flowbox>flowboxchild>button:hover label {
-    font-size: 20px;
-    color: @text;
-    transition: all .7s ease;
-}
 .widget-buttons-grid > flowbox > flowboxchild > button {
-    background: transparent;
+    background: alpha(@background, 0.85);
+    border: 1px solid alpha(@foreground, 0.18);
     border-radius: 12px;
-    text-shadow:none;
-    box-shadow: 0px 0px 8px rgba(255,255,255, .02);
-    transition: all .5s ease;
+    min-width: 52px;
+    min-height: 52px;
+    margin: 4px;
+    box-shadow: none;
+    transition: all 0.25s ease;
 }
+
+.widget-buttons-grid > flowbox > flowboxchild > button label {
+    font-size: 22px;
+    color: @foreground;
+    transition: all 0.25s ease;
+}
+
 .widget-buttons-grid > flowbox > flowboxchild > button:hover {
     background: @color4;
-    box-shadow: 0px 0px 2px rgba(0, 0, 0, .2);
-    transition: all .5s ease;
+    border-color: @color4;
+}
 
+.widget-buttons-grid > flowbox > flowboxchild > button:hover label {
+    color: @background;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
-    background: @mycolor;
+    background: @color4;
+    border-color: @color4;
 }
+
 .widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked label {
     color: @background;
 }

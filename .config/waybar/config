@@ -38,12 +38,14 @@
             }
         },
         "network": {
-            "format-wifi": "",
-            "format-ethernet": "",
-            "format-disconnected": "",
-            "tooltip-format-disconnected": "Error",
-            "tooltip-format-wifi": "{essid} ({signalStrength}%) ",
-            "tooltip-format-ethernet": "{ifname} 🖧 ",
+            "format-wifi": "󰖩",
+            "format-ethernet": "󰈀",
+            "format-disconnected": "󰤭",
+            "format-disabled": "󰤮",
+            "rfkill": false,
+            "tooltip-format-disconnected": "Disconnected",
+            "tooltip-format-wifi": "{essid} ({signalStrength}%)",
+            "tooltip-format-ethernet": "{ifname}",
             "on-click": "kitty nmtui"
         },
         "bluetooth": {
@@ -80,9 +82,9 @@
         },
         "custom/pacman": {
             "format": "󰅢 {}",
-            "interval": 30,   
-            "exec": "checkupdates | wc -l",
-            "exec-if": "exit 0",
+            "interval": 3600,
+            "exec": "sh -c 'checkupdates 2>/dev/null | wc -l'",
+            "exec-if": "command -v checkupdates",
             "on-click": "kitty sh -c 'yay -Syu; echo Done - Press enter to exit; read'; pkill -SIGRTMIN+8 waybar",
             "signal": 8,
             "tooltip": false,

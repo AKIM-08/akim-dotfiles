@@ -1,7 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import SddmComponents 2.0 as SDDM
 
 Rectangle {
     id: root
@@ -16,7 +15,6 @@ Rectangle {
     readonly property color textColor: "#cdd6f4"
 
     Image {
-        id: wallpaper
         anchors.fill: parent
         source: wallpaperSource
         fillMode: Image.PreserveAspectCrop
@@ -90,27 +88,15 @@ Rectangle {
                     radius: 12
                     color: fieldColor
 
-                    RowLayout {
+                    TextInput {
+                        id: usernameField
                         anchors.fill: parent
-                        anchors.margins: 12
-                        spacing: 10
-
-                        Text {
-                            text: "󰀄"
-                            color: textColor
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 16
-                        }
-
-                        TextInput {
-                            id: usernameField
-                            Layout.fillWidth: true
-                            color: textColor
-                            font.pixelSize: 14
-                            selectByMouse: true
-                            text: sddm.autologinUser || ""
-                            Keys.onReturnPressed: passwordField.forceActiveFocus()
-                        }
+                        anchors.margins: 14
+                        color: textColor
+                        font.pixelSize: 14
+                        selectByMouse: true
+                        text: sddm.autologinUser || ""
+                        Keys.onReturnPressed: passwordField.forceActiveFocus()
                     }
                 }
 
@@ -126,10 +112,9 @@ Rectangle {
                         anchors.margins: 14
                         color: textColor
                         font.pixelSize: 14
-                        echoMode: TextInput.Password
+                        echoMode: showPassword.checked ? TextInput.Normal : TextInput.Password
                         passwordCharacter: "•"
                         selectByMouse: true
-                        placeholderText: "Password"
                         Keys.onReturnPressed: loginButton.clicked()
                     }
                 }
@@ -138,7 +123,6 @@ Rectangle {
                     id: showPassword
                     text: "Show Password"
                     checked: false
-                    onCheckedChanged: passwordField.echoMode = checked ? TextInput.Normal : TextInput.Password
 
                     contentItem: Text {
                         text: showPassword.text
@@ -154,7 +138,6 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 48
                     text: "Login"
-                    font.pixelSize: 14
                     background: Rectangle {
                         radius: 12
                         color: accentColor
@@ -178,7 +161,6 @@ Rectangle {
                     Layout.preferredHeight: 36
                     model: sessionModel
                     textRole: "name"
-                    currentIndex: 0
                     background: Rectangle {
                         radius: 10
                         color: fieldColor
@@ -208,45 +190,102 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     spacing: 36
 
-                    Repeater {
-                        model: [
-                            { label: "Suspend", icon: "󰒲", action: function() { sddm.suspend() } },
-                            { label: "Reboot", icon: "󰑐", action: function() { sddm.reboot() } },
-                            { label: "Shutdown", icon: "󰐥", action: function() { sddm.powerOff() } }
-                        ]
+                    ColumnLayout {
+                        spacing: 6
+                        Layout.alignment: Qt.AlignHCenter
 
-                        delegate: ColumnLayout {
-                            spacing: 6
-                            Layout.alignment: Qt.AlignHCenter
-
-                            Rectangle {
-                                width: 52
-                                height: 52
-                                radius: 26
-                                color: fieldColor
-                                border.color: Qt.rgba(1, 1, 1, 0.15)
-                                border.width: 1
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: modelData.icon
-                                    color: textColor
-                                    font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 20
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: modelData.action()
-                                }
-                            }
+                        Rectangle {
+                            width: 52
+                            height: 52
+                            radius: 26
+                            color: fieldColor
+                            border.color: Qt.rgba(1, 1, 1, 0.15)
+                            border.width: 1
 
                             Text {
-                                text: modelData.label
-                                color: Qt.rgba(1, 1, 1, 0.8)
-                                font.pixelSize: 11
-                                Layout.alignment: Qt.AlignHCenter
+                                anchors.centerIn: parent
+                                text: "⏸"
+                                color: textColor
+                                font.pixelSize: 18
                             }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: sddm.suspend()
+                            }
+                        }
+
+                        Text {
+                            text: "Suspend"
+                            color: Qt.rgba(1, 1, 1, 0.8)
+                            font.pixelSize: 11
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 6
+                        Layout.alignment: Qt.AlignHCenter
+
+                        Rectangle {
+                            width: 52
+                            height: 52
+                            radius: 26
+                            color: fieldColor
+                            border.color: Qt.rgba(1, 1, 1, 0.15)
+                            border.width: 1
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "↻"
+                                color: textColor
+                                font.pixelSize: 18
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: sddm.reboot()
+                            }
+                        }
+
+                        Text {
+                            text: "Reboot"
+                            color: Qt.rgba(1, 1, 1, 0.8)
+                            font.pixelSize: 11
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 6
+                        Layout.alignment: Qt.AlignHCenter
+
+                        Rectangle {
+                            width: 52
+                            height: 52
+                            radius: 26
+                            color: fieldColor
+                            border.color: Qt.rgba(1, 1, 1, 0.15)
+                            border.width: 1
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "⏻"
+                                color: textColor
+                                font.pixelSize: 18
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: sddm.powerOff()
+                            }
+                        }
+
+                        Text {
+                            text: "Shutdown"
+                            color: Qt.rgba(1, 1, 1, 0.8)
+                            font.pixelSize: 11
+                            Layout.alignment: Qt.AlignHCenter
                         }
                     }
                 }

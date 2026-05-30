@@ -99,12 +99,15 @@ tooltip {
     color:@color7;
 
 }
-#network{
+#network,
+#network.wifi,
+#network.ethernet,
+#network.disconnected,
+#network.disabled {
     padding: 0px 8px 0px 5px;
     margin-right: 6px;
     transition: all .3s ease;
-    color:@color7;
-
+    color: @foreground;
 }
 #battery{
     padding: 0px 5px;

@@ -121,7 +121,7 @@ chmod +x ~/.config/waypaper/wallpaper_script.sh
 chmod +x ~/.config/wlogout/hibernate.sh
 
 # Paquets ajoutés récemment (sans erreur si déjà installés)
-sudo pacman -S --needed --noconfirm pipewire-pulse bluez btop
+sudo pacman -S --needed --noconfirm pipewire-pulse bluez btop qt6-declarative qt6-quickcontrols2
 sudo systemctl enable --now bluetooth 2>/dev/null || true
 
 # Fond d'écran : symlink (qualité préservée)
@@ -133,8 +133,11 @@ sudo mkdir -p /usr/share/sddm/themes/akim
 sudo cp -r sddm/akim/* /usr/share/sddm/themes/akim/
 sudo cp -L ~/Pictures/wallpapers/current.jpg /usr/share/sddm/themes/akim/background.jpg 2>/dev/null \
   || sudo cp ~/Pictures/wallpapers/image1.jpg /usr/share/sddm/themes/akim/background.jpg 2>/dev/null || true
-echo -e "[Theme]\nCurrent=akim" | sudo tee /etc/sddm.conf.d/akim-dotfiles-theme.conf >/dev/null 2>&1 || \
-  sudo sed -i 's/^Current=.*/Current=akim/' /etc/sddm.conf.d/akim-dotfiles.conf 2>/dev/null || true
+sudo sed -i 's/^Current=.*/Current=akim/' /etc/sddm.conf.d/akim-dotfiles.conf 2>/dev/null || true
+sudo rm -f /etc/sddm.conf.d/akim-dotfiles-theme.conf 2>/dev/null || true
+
+# Tester le thème SDDM (doit afficher "Success" ou aucune erreur QML)
+sddm-greeter --test-mode --theme akim
 
 # Régénérer le thème pywal + GTK
 ~/.config/hypr/scripts/apply-pywal-theme.sh ~/Pictures/wallpapers/current.jpg
@@ -168,6 +171,21 @@ cp ~/Pictures/akim-avatar.png ~/.face.icon
 ```
 
 À l'écran SDDM : choisir la session **Hyprland (Wayland)** si proposée.
+
+#### SDDM ne démarre pas / écran noir
+
+1. Voir les logs : `journalctl -u sddm -b --no-pager`
+2. Tester le thème : `sddm-greeter --test-mode --theme akim`
+3. Si erreur QML ou Wayland, passer en X11 dans `/etc/sddm.conf.d/akim-dotfiles.conf` :
+   ```ini
+   [General]
+   DisplayServer=x11
+   ```
+4. Réinstaller le thème :
+   ```bash
+   sudo cp -r ~/akim-dotfiles/sddm/akim/* /usr/share/sddm/themes/akim/
+   sudo systemctl restart sddm
+   ```
 
 ### Manuelle (partielle)
 
@@ -240,7 +258,9 @@ Widgets : média, notifications, **volume**, **luminosité**, grille de raccourc
 
 ### Menu d'alimentation (wlogout)
 
-`Super + Échap` ouvre wlogout (protocole **layer-shell**) : **Logout**, **Shutdown**, **Hibernate**, **Reboot** (grille 2×2 centrée).
+`Super + Échap` ouvre wlogout (protocole **layer-shell**, grille 2×2 centrée) : **Logout**, **Shutdown**, **Hibernate**, **Reboot**.
+
+> La fenêtre wlogout est **transparente** ; seuls les boutons sont visibles (plus de panneau vide sur le côté).
 
 > **Hibernation** : vérifie la présence d'une partition **swap** active (`swapon --show`). Sans swap, une notification s'affiche et l'action est annulée.
 
@@ -317,6 +337,17 @@ Puis rechargez Hyprland : `hyprctl reload`.
 | `wallpapers/` | Vos propres images |
 
 Le moniteur est configuré en `monitor=,preferred,auto,1` (auto-détection laptop). Pour un écran externe, voir la [doc Hyprland Monitors](https://wiki.hyprland.org/Configuring/Monitors/).
+
+## Dépannage rapide
+
+| Symptôme | Cause probable | Action |
+|----------|----------------|--------|
+| `misc:vfr does not exist` | Hyprland trop ancien | `git pull` puis recopier `hyprland.conf` |
+| Wi‑Fi Waybar `span color=""` | Icône réseau + couleur vide | `git pull`, recopier `waybar/config` + `style.css` |
+| `ERROR: Cannot fetch updates` | `checkupdates` / miroirs pacman | Normal hors ligne ; module pacman vérifie toutes les heures |
+| `Discharging` dans le terminal | Bruit waybar / batterie | Sans impact ; ignorable |
+| Boutons SwayNC violet clair | GTK par défaut | `apply-pywal-theme.sh` + `swaync-client --reload-css` |
+| SDDM cassé | Thème QML invalide | Voir section SDDM ci-dessus |
 
 ## Notes
 
