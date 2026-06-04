@@ -237,6 +237,10 @@ chmod +x ~/.config/wlogout/hibernate.sh
 | `Super + N` | Centre de notifications (SwayNC) |
 | `Super + D` | Discord |
 | `Super + Shift + T` | Changer le thème Waybar |
+| `Super + Tab` | Basculer flottant / tuilé |
+| `Super + T` | Flottant **centré** (toggle) |
+| `Super + S` | Afficher / cacher le **scratchpad** |
+| `Super + Shift + S` | Envoyer la fenêtre dans le scratchpad |
 | `Super + Alt + →` | Fond d'écran suivant + nouveau thème |
 | `Super + Alt + ←` | Fond d'écran précédent + nouveau thème |
 

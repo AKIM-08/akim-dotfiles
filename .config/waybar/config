@@ -9,10 +9,14 @@
         "hyprland/workspaces": {
             "format": "{icon}",
             "format-icons": {
-                "active": "",
-                "default": "",
-                "empty": ""
+                "active": "󰮯",
+                "occupied": "",
+                "default": ""
             },
+            "sort-by-number": true,
+            "on-click": "activate",
+            "tooltip": true,
+            "tooltip-format": "Workspace {name}",
             "persistent-workspaces": {
                 "*": [ 1,2,3,4,5 ]
             }

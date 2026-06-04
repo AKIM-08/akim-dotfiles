@@ -18,6 +18,12 @@ run_optional() {
     "$@" || warn "$1 failed (continuing)"
 }
 
+# Arch Linux check
+if ! command -v pacman &>/dev/null; then
+    echo "ERROR: pacman not found — ce script nécessite Arch Linux." >&2
+    exit 1
+fi
+
 echo "=========================================================================="
 echo " Starting installation of akim-dotfiles"
 echo "=========================================================================="
@@ -229,7 +235,7 @@ setup_wlogout() {
         warn "Copied default wlogout style.css — re-run install or restore repo config for pywal styling"
     fi
 
-    echo "--> wlogout ready (Super+Shift+E, layer-shell protocol)"
+    echo "--> wlogout ready (Super+Échap, layer-shell protocol)"
 }
 setup_wlogout
 

@@ -1,6 +1,6 @@
 {
     "label" : "logout",
-    "action" : "hyprctl dispatch exit",
+    "action" : "loginctl terminate-session $XDG_SESSION_ID || hyprctl dispatch exit",
     "text" : "",
     "keybind" : "e",
     "circular" : true

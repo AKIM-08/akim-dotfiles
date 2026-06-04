@@ -17,6 +17,10 @@ fi
 
 if [ -f "$STATE_FILE" ]; then
     index=$(cat "$STATE_FILE")
+    # Valider l'index : doit être un entier dans les bornes du tableau
+    if ! [[ "$index" =~ ^[0-9]+$ ]] || [ "$index" -ge "$total" ]; then
+        index=0
+    fi
 else
     index=0
 fi

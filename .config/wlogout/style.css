@@ -9,31 +9,48 @@
 }
 
 window {
+  background-color: alpha(@background, 0.55);
+  backdrop-filter: blur(16px);
+  -gtk-backdrop-filter: blur(16px);
+}
+
+box {
   background-color: transparent;
 }
 
 button {
   color: @foreground;
-  background: alpha(@background, 0.75);
+  background-color: alpha(@background, 0.6);
+  background-image: none;
   outline-style: none;
-  border: 1px solid alpha(@foreground, 0.15);
+  border: 1px solid alpha(@foreground, 0.18);
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 32%;
-  border-radius: 9999px;
-  min-width: 88px;
-  min-height: 88px;
-  margin: 8px;
+  background-size: 40%;
+  border-radius: 50%;
+  min-width: 120px;
+  min-height: 120px;
+  max-width: 120px;
+  max-height: 120px;
+  margin: 12px;
   padding: 0;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  font-size: 12px;
+  font-family: "JetBrainsMono Nerd Font";
 }
 
 button:focus,
 button:hover {
-  background-color: @color4;
-  color: @background;
+  background-color: alpha(@color4, 0.35);
   border-color: @color4;
-  background-size: 36%;
+  color: @color4;
+  background-size: 44%;
+  transform: scale(1.06);
+}
+
+button:active {
+  background-color: alpha(@color4, 0.6);
+  transform: scale(0.97);
 }
 
 #logout {

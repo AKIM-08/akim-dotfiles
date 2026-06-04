@@ -38,12 +38,15 @@ reload_ui() {
     waybar & disown || true
     if pgrep -x nautilus >/dev/null 2>&1; then
         nautilus -q 2>/dev/null || pkill -x nautilus 2>/dev/null || true
+        # Relancer nautilus avec le nouveau thème GTK (délai pour laisser le temps au CSS)
+        sleep 1 && nautilus & disown 2>/dev/null || true
     fi
     if command -v swaync-client &>/dev/null; then
-        swaync-client --reload-css 2>/dev/null || {
-            pkill swaync 2>/dev/null || true
-            swaync & disown || true
-        }
+        swaync-client --reload-css 2>/dev/null || true
+        # Redémarrer complètement swaync pour resynchroniser le widget backlight
+        pkill swaync 2>/dev/null || true
+        sleep 0.3
+        swaync & disown || true
     else
         pkill swaync 2>/dev/null || true
         swaync & disown || true

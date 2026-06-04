@@ -26,7 +26,7 @@ find_upwards() {
 REPO_ROOT="${AKIM_DOTFILES_REPO:-}"
 
 if [[ -z "${REPO_ROOT}" ]] && command -v git >/dev/null 2>&1; then
-    REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+    REPO_ROOT="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || true)"
 fi
 
 if [[ -z "${REPO_ROOT}" ]]; then
@@ -38,9 +38,17 @@ if [[ -z "${REPO_ROOT}" ]]; then
     REPO_ROOT="$(find_upwards "$script_dir" 2>/dev/null || true)"
 fi
 
-if [[ -z "${REPO_ROOT}" ]] && is_repo_root "${HOME}/akim-dotfiles"; then
-    REPO_ROOT="${HOME}/akim-dotfiles"
-fi
+# Chemins courants si le script est lancé hors du repo (ex. depuis ~/.config/hypr/scripts/)
+for fallback_path in \
+    "${HOME}/akim-dotfiles" \
+    "${HOME}/Downloads/akim-dotfiles" \
+    "${HOME}/dotfiles" \
+    "${HOME}/Documents/akim-dotfiles"; do
+    if [[ -z "${REPO_ROOT}" ]] && is_repo_root "${fallback_path}"; then
+        REPO_ROOT="${fallback_path}"
+        break
+    fi
+done
 
 SRC="${REPO_ROOT}/sddm/${THEME_NAME}"
 
