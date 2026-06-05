@@ -7,4 +7,4 @@ if pgrep -x snmenu >/dev/null; then
     exit 0
 fi
 
-exec snmenu -l "$HOME/.config/snmenu/layout" -C "$HOME/.config/snmenu/style.css"
+exec snmenu

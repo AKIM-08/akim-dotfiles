@@ -1,0 +1,44 @@
+[
+    {
+        "label": "lock",
+        "action": "hyprlock",
+        "text": "Lock",
+        "icon_char": "",
+        "show_label": true
+    },
+    {
+        "label": "suspend",
+        "action": "systemctl suspend",
+        "text": "Suspend",
+        "icon_char": "",
+        "show_label": true
+    },
+    {
+        "label": "logout",
+        "action": "loginctl terminate-session \"$XDG_SESSION_ID\" 2>/dev/null || hyprctl dispatch exit",
+        "text": "Logout",
+        "icon_char": "",
+        "show_label": true
+    },
+    {
+        "label": "shutdown",
+        "action": "systemctl poweroff",
+        "text": "Shutdown",
+        "icon_char": "",
+        "show_label": true
+    },
+    {
+        "label": "hibernate",
+        "action": "systemctl hibernate",
+        "text": "Hibernate",
+        "icon_char": "",
+        "show_label": true
+    },
+    {
+        "label": "reboot",
+        "action": "systemctl reboot",
+        "text": "Reboot",
+        "icon_char": "",
+        "show_label": true
+    }
+]
