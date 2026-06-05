@@ -73,4 +73,8 @@ fi
 link_pywal_css
 apply_gtk_colors
 command -v pywal-discord &>/dev/null && pywal-discord -t default
+
+# Recolorer les dossiers Papirus (si papirus-folders est installé)
+python3 "$SCRIPT_DIR/apply-papirus-color.py" 2>/dev/null || true
+
 reload_ui
