@@ -15,7 +15,7 @@
     },
     {
         "label": "logout",
-        "action": "loginctl terminate-session \"$XDG_SESSION_ID\" 2>/dev/null || hyprctl dispatch exit",
+        "action": "hyprctl dispatch exit",
         "text": "Logout",
         "icon_char": "",
         "show_label": true
