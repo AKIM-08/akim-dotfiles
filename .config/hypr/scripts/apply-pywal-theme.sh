@@ -10,10 +10,11 @@ WAL_CACHE="$HOME/.cache/wal"
 
 link_pywal_css() {
     local dir
-    for dir in waybar swaync wlogout; do
+    for dir in waybar swaync cpmenu; do
         mkdir -p "$HOME/.config/$dir"
-        ln -sf "$WAL_CACHE/colors-waybar.css" "$HOME/.config/$dir/colors-waybar.css"
+        ln -sf "$WAL_CACHE/colors-waybar.css" "$HOME/.config/$dir/colors-waybar.css" 2>/dev/null || true
     done
+    ln -sf "$WAL_CACHE/cpmenu-layout" "$HOME/.config/cpmenu/layout" 2>/dev/null || true
 }
 
 apply_gtk_colors() {

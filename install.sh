@@ -63,6 +63,11 @@ sudo pacman -Syu --needed --noconfirm \
     hyprland \
     hyprpaper \
     sddm \
+    qt5-quickcontrols2 \
+    qt5-graphicaleffects \
+    qt5-svg \
+    qt5-declarative \
+    qt6-wayland \
     qt6-multimedia-ffmpeg \
     qt6-declarative \
     qt6-quickcontrols2 \

@@ -110,6 +110,66 @@ def write_colors_sh(colors: list[str], wallpaper: Path) -> None:
     (WAL_DIR / "colors.sh").write_text("\n".join(lines) + "\n")
 
 
+def write_cpmenu_layout(colors: list[str]) -> None:
+    content = f"""[
+    {{
+        "label": "lock",
+        "action": "hyprlock",
+        "text": "Lock",
+        "icon_char": "",
+        "show_label": true,
+        "color": "#{colors[0]}",
+        "hover_color": "#{colors[4]}"
+    }},
+    {{
+        "label": "suspend",
+        "action": "systemctl suspend",
+        "text": "Suspend",
+        "icon_char": "",
+        "show_label": true,
+        "color": "#{colors[0]}",
+        "hover_color": "#{colors[4]}"
+    }},
+    {{
+        "label": "logout",
+        "action": "hyprctl dispatch exit",
+        "text": "Logout",
+        "icon_char": "",
+        "show_label": true,
+        "color": "#{colors[0]}",
+        "hover_color": "#{colors[4]}"
+    }},
+    {{
+        "label": "shutdown",
+        "action": "systemctl poweroff",
+        "text": "Shutdown",
+        "icon_char": "",
+        "show_label": true,
+        "color": "#{colors[0]}",
+        "hover_color": "#{colors[1]}"
+    }},
+    {{
+        "label": "hibernate",
+        "action": "systemctl hibernate",
+        "text": "Hibernate",
+        "icon_char": "",
+        "show_label": true,
+        "color": "#{colors[0]}",
+        "hover_color": "#{colors[4]}"
+    }},
+    {{
+        "label": "reboot",
+        "action": "systemctl reboot",
+        "text": "Reboot",
+        "icon_char": "",
+        "show_label": true,
+        "color": "#{colors[0]}",
+        "hover_color": "#{colors[2]}"
+    }}
+]"""
+    (WAL_DIR / "cpmenu-layout").write_text(content)
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <wallpaper>", file=sys.stderr)
@@ -129,6 +189,7 @@ def main() -> int:
     write_rofi_dark(colors)
     write_gtk_css(colors)
     write_colors_sh(colors, wallpaper)
+    write_cpmenu_layout(colors)
 
     return 0
 
