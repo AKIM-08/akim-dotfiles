@@ -54,8 +54,22 @@ if ! pgrep -x awww-daemon >/dev/null; then
     sleep 0.5
 fi
 
-# Applique l'image avec une transition élégante et un redimensionnement de haute qualité
-awww img "$real_current" \
+# Détection de la résolution de l'écran principal pour un redimensionnement parfait
+RES=$(hyprctl monitors | awk '/^[[:space:]]+[0-9]+x[0-9]+@/ {print $1}' | head -n 1 | cut -d'@' -f1)
+
+CACHE_WALL="$HOME/.cache/wal/current_wallpaper_hq.jpg"
+
+if [ -n "$RES" ] && command -v magick >/dev/null 2>&1; then
+    # Redimensionnement haute qualité (filtre Lanczos) de 4K vers la résolution native
+    # Cela empêche awww de faire un mauvais downscaling à la volée
+    magick "$real_current" -filter Lanczos -resize "${RES}^" -gravity center -crop "${RES}+0+0" +repage -quality 100 "$CACHE_WALL"
+    IMAGE_TO_SET="$CACHE_WALL"
+else
+    IMAGE_TO_SET="$real_current"
+fi
+
+# Applique l'image avec une transition élégante
+awww img "$IMAGE_TO_SET" \
     --transition-type wipe \
     --transition-angle 30 \
     --transition-step 90 \
