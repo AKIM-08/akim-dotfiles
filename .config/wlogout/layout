@@ -1,31 +1,47 @@
 {
+    "label" : "lock",
+    "action" : "hyprlock",
+    "text" : "Lock",
+    "keybind" : "l",
+    "circular" : true
+}
+
+{
     "label" : "logout",
-    "action" : "loginctl terminate-session $XDG_SESSION_ID || hyprctl dispatch exit",
-    "text" : "",
+    "action" : "loginctl terminate-session \"$XDG_SESSION_ID\" 2>/dev/null || hyprctl dispatch exit",
+    "text" : "Logout",
     "keybind" : "e",
     "circular" : true
 }
 
 {
-    "label" : "shutdown",
-    "action" : "systemctl poweroff",
-    "text" : "",
-    "keybind" : "s",
+    "label" : "suspend",
+    "action" : "systemctl suspend",
+    "text" : "Suspend",
+    "keybind" : "u",
     "circular" : true
 }
 
 {
     "label" : "hibernate",
     "action" : "bash ~/.config/wlogout/hibernate.sh",
-    "text" : "",
+    "text" : "Hibernate",
     "keybind" : "h",
+    "circular" : true
+}
+
+{
+    "label" : "shutdown",
+    "action" : "systemctl poweroff",
+    "text" : "Shutdown",
+    "keybind" : "s",
     "circular" : true
 }
 
 {
     "label" : "reboot",
     "action" : "systemctl reboot",
-    "text" : "",
+    "text" : "Reboot",
     "keybind" : "r",
     "circular" : true
 }

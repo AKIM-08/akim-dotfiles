@@ -1,56 +1,62 @@
+/* =========================================================
+   wlogout — mode circular, compatible GTK3
+   Les couleurs sont injectées par pywal16 via colors-waybar.css
+   ========================================================= */
+
+/* Fallback si pywal n'a pas encore généré le fichier */
 @define-color background #1e1e2e;
 @define-color foreground #cdd6f4;
-@define-color color4 #89b4fa;
+@define-color color1     #f38ba8;
+@define-color color4     #89b4fa;
 @import url("colors-waybar.css");
 
+/* Réinitialisation globale — INDISPENSABLE pour le mode circular */
 * {
   background-image: none;
   box-shadow: none;
+  border: none;
+  outline: none;
 }
 
+/* Fond plein écran semi-transparent */
 window {
-  background-color: alpha(@background, 0.55);
-  backdrop-filter: blur(16px);
-  -gtk-backdrop-filter: blur(16px);
+  background-color: alpha(black, 0.45);
 }
 
-box {
-  background-color: transparent;
-}
-
+/* ─── Segments circulaires ─── */
+/* wlogout positionne et découpe les segments lui-même en mode circular.
+   On stylise uniquement les couleurs et les icônes. */
 button {
-  color: @foreground;
-  background-color: alpha(@background, 0.6);
-  background-image: none;
-  outline-style: none;
-  border: 1px solid alpha(@foreground, 0.18);
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 40%;
-  border-radius: 50%;
-  min-width: 120px;
-  min-height: 120px;
-  max-width: 120px;
-  max-height: 120px;
-  margin: 12px;
-  padding: 0;
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-  font-size: 12px;
-  font-family: "JetBrainsMono Nerd Font";
+  color:                @foreground;
+  background-color:     alpha(@background, 0.55);
+  background-repeat:    no-repeat;
+  background-position:  center;
+  background-size:      30px;
+  transition:           background-color 150ms ease;
 }
 
-button:focus,
-button:hover {
-  background-color: alpha(@color4, 0.35);
-  border-color: @color4;
-  color: @color4;
-  background-size: 44%;
-  transform: scale(1.06);
+button:hover,
+button:focus {
+  background-color: alpha(@color4, 0.45);
+  color:            @foreground;
 }
 
-button:active {
-  background-color: alpha(@color4, 0.6);
-  transform: scale(0.97);
+/* Shutdown mis en évidence (rouge/rose pywal) comme dans l'image */
+#shutdown {
+  background-color: alpha(@color1, 0.55);
+}
+
+#shutdown:hover,
+#shutdown:focus {
+  background-color: alpha(@color1, 0.80);
+}
+
+/* ─── Icônes SVG/PNG ─── */
+#lock {
+  background-image: image(
+    url("/usr/share/wlogout/icons/lock.png"),
+    url("/usr/local/share/wlogout/icons/lock.png")
+  );
 }
 
 #logout {
@@ -58,6 +64,13 @@ button:active {
     url("./icons/logout.png"),
     url("/usr/share/wlogout/icons/logout.png"),
     url("/usr/local/share/wlogout/icons/logout.png")
+  );
+}
+
+#suspend {
+  background-image: image(
+    url("/usr/share/wlogout/icons/suspend.png"),
+    url("/usr/local/share/wlogout/icons/suspend.png")
   );
 }
 
