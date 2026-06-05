@@ -50,7 +50,6 @@ sudo pacman -Syu --needed --noconfirm \
     networkmanager \
     hypridle \
     hyprlock \
-    wlogout \
     gtk3 \
     papirus-icon-theme \
     libnotify \
@@ -118,6 +117,7 @@ fi
 # 4. AUR packages required by the dotfiles
 echo "--> Installing required AUR packages..."
 yay -S --needed --noconfirm \
+    snmenu \
     python-pywal16 \
     catppuccin-gtk-theme-mocha \
     papirus-folders-catppuccin-git \
@@ -216,29 +216,7 @@ echo "--> Copying configurations to target directories..."
 cp -r .config/* "$HOME/.config/" || die "Failed to copy .config"
 cp .zshrc "$HOME/.zshrc" || die "Failed to copy .zshrc"
 
-# 10. wlogout power menu
-setup_wlogout() {
-    echo "--> Setting up wlogout power menu..."
-    command -v wlogout &>/dev/null || die "wlogout is not installed — run: sudo pacman -S wlogout"
-
-    local wdir="$HOME/.config/wlogout"
-    if [ ! -f "$wdir/layout" ]; then
-        warn "wlogout layout missing at $wdir/layout — copying from system defaults if available"
-        if [ -f /etc/wlogout/layout ]; then
-            mkdir -p "$wdir"
-            cp /etc/wlogout/layout "$wdir/layout"
-        fi
-    fi
-
-    if [ ! -f "$wdir/style.css" ] && [ -f /etc/wlogout/style.css ]; then
-        cp /etc/wlogout/style.css "$wdir/style.css"
-        warn "Copied default wlogout style.css — re-run install or restore repo config for pywal styling"
-    fi
-
-    echo "--> wlogout ready (Super+Échap, layer-shell protocol)"
-}
-setup_wlogout
-
+# 10. (snmenu is installed and config is copied via .config/*)
 # 11. Sync GTK theme names with installed Catppuccin Mocha
 sync_gtk_settings() {
     local settings theme icon search_dirs
@@ -286,11 +264,10 @@ chmod +x "$HOME/.config/swaync/refresh.sh"
 chmod +x "$HOME/.config/swaync/start.sh"
 chmod +x "$HOME/.config/swaync/patch-backlight-device.py"
 chmod +x "$HOME/.config/waypaper/wallpaper_script.sh"
-chmod +x "$HOME/.config/wlogout/hibernate.sh"
 chmod +x "$HOME/.config/hypr/scripts/rofi-toggle.sh"
 chmod +x "$HOME/.config/hypr/scripts/cliphist-toggle.sh"
 chmod +x "$HOME/.config/hypr/scripts/open-browser.sh"
-chmod +x "$HOME/.config/hypr/scripts/wlogout-toggle.sh"
+chmod +x "$HOME/.config/hypr/scripts/snmenu-toggle.sh"
 chmod +x "$HOME/.config/hypr/scripts/toggle-float-center.sh"
 chmod +x "$HOME/.config/hypr/scripts/idle-lock-screen.sh"
 chmod +x "$HOME/.config/hypr/scripts/battery-hibernate-watch.sh"
@@ -405,7 +382,7 @@ echo "   SUPER + V            -> Clipboard history (toggle)"
 echo "   SUPER + B            -> Web browser"
 echo "   SUPER + P            -> Screenshot (region)"
 echo "   SUPER + ALT + P      -> Screenshot (full screen)"
-echo "   SUPER + Escape       -> Power menu (wlogout)"
+echo "   SUPER + Escape       -> Power menu (snmenu)"
 echo "   SUPER + N            -> Notification center"
 echo "   SUPER + Shift + T    -> Waybar theme selector"
 echo "   SUPER + ALT + Right  -> Next wallpaper + theme update"

@@ -233,7 +233,7 @@ chmod +x ~/.config/wlogout/hibernate.sh
 | `Super + V` | Historique du presse-papier — **toggle** |
 | `Super + P` | Capture d'écran **zone** → `~/Pictures/Screenshots/` + presse-papier |
 | `Super + Alt + P` | Capture d'écran **plein écran** |
-| `Super + Échap` | Menu d'alimentation (wlogout) |
+| `Super + Escape` | Menu d'alimentation (**snmenu**) |
 | `Super + N` | Centre de notifications (SwayNC) |
 | `Super + D` | Discord |
 | `Super + Shift + T` | Changer le thème Waybar |
@@ -271,11 +271,9 @@ Widgets : média, notifications, **volume**, **luminosité**, grille de raccourc
 
 **Hibernation à 1 %** (sur batterie, sans secteur) : script `battery-hibernate-watch.sh` (nécessite une partition **swap** active).
 
-### Menu d'alimentation (wlogout)
+### Menu d'alimentation (snmenu)
 
-`Super + Échap` ouvre wlogout (protocole **layer-shell**, grille 2×2 centrée) : **Logout**, **Shutdown**, **Hibernate**, **Reboot**.
-
-> La fenêtre wlogout est **transparente** ; seuls les boutons sont visibles (plus de panneau vide sur le côté).
+`Super + Escape` ouvre le menu circulaire **snmenu** : **Logout**, **Shutdown**, **Hibernate**, **Reboot**, **Suspend**, **Lock**.
 
 > **Hibernation** : vérifie la présence d'une partition **swap** active (`swapon --show`). Sans swap, une notification s'affiche et l'action est annulée.
 

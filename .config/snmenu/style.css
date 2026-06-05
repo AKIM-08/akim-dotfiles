@@ -1,0 +1,26 @@
+@import url("../../.cache/wal/colors-waybar.css");
+
+window {
+    background-color: alpha(@background, 0.6);
+}
+
+button {
+    color: @foreground;
+    background-color: alpha(@background, 0.85);
+    font-family: "JetBrainsMono Nerd Font";
+    font-size: 32px;
+}
+
+button:hover {
+    background-color: @color4;
+    color: @background;
+}
+
+#shutdown {
+    color: @color1;
+}
+
+#shutdown:hover {
+    background-color: @color1;
+    color: @background;
+}
