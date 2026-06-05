@@ -7,12 +7,12 @@
         "margin-bottom": 0,
         "reload_style_on_change": true,
         "modules-left": ["custom/notification","clock","custom/pacman","tray"],
-        "modules-center": ["hyprland/workspaces"],
+        "modules-center": ["hyprland/workspaces", "wlr/taskbar"],
         "modules-right": ["group/expand","bluetooth","network","battery"],
 
 
         "hyprland/workspaces": {
-            "format": "{icon}",
+            "format": "{name}",
             "format-icons": {
                 "active": "",
                 "default": "",
@@ -21,6 +21,13 @@
             "persistent-workspaces": {
                 "*": [ 1,2,3,4,5 ]
             }
+        },
+        "wlr/taskbar": {
+            "format": "{icon}",
+            "icon-size": 18,
+            "tooltip-format": "{title}",
+            "on-click": "activate",
+            "on-click-middle": "close"
         },
         "custom/notification": {
             "tooltip": false,
@@ -43,9 +50,9 @@
             }
         },
         "network": {
-            "format-wifi": "",
-            "format-ethernet":"",
-            "format-disconnected": "",
+            "format-wifi": "  ",
+            "format-ethernet":"  ",
+            "format-disconnected": "  ",
             "tooltip-format-disconnected": "Error",
             "tooltip-format-wifi": "{essid} ({signalStrength}%) ",
             "tooltip-format-ethernet": "{ifname} 🖧 ",
