@@ -48,8 +48,19 @@ filename=$(basename "$selected")
 ln -sf "$selected" "$CURRENT"
 real_current=$(readlink -f "$CURRENT")
 
-hyprctl hyprpaper preload "$real_current"
-hyprctl hyprpaper wallpaper ",$real_current,cover"
+# Initialise le démon swww s'il n'est pas lancé
+if ! pgrep -x swww-daemon >/dev/null; then
+    swww-daemon & disown
+    sleep 0.5
+fi
+
+# Applique l'image avec une transition élégante et un redimensionnement de haute qualité
+swww img "$real_current" \
+    --transition-type wipe \
+    --transition-angle 30 \
+    --transition-step 90 \
+    --transition-fps 60 \
+    --resize crop
 
 "$APPLY_THEME" "$real_current"
 
