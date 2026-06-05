@@ -48,14 +48,14 @@ filename=$(basename "$selected")
 ln -sf "$selected" "$CURRENT"
 real_current=$(readlink -f "$CURRENT")
 
-# Initialise le démon swww s'il n'est pas lancé
-if ! pgrep -x swww-daemon >/dev/null; then
-    swww-daemon & disown
+# Initialise le démon awww s'il n'est pas lancé
+if ! pgrep -x awww-daemon >/dev/null; then
+    awww-daemon & disown
     sleep 0.5
 fi
 
 # Applique l'image avec une transition élégante et un redimensionnement de haute qualité
-swww img "$real_current" \
+awww img "$real_current" \
     --transition-type wipe \
     --transition-angle 30 \
     --transition-step 90 \

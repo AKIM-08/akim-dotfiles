@@ -61,7 +61,7 @@ sudo pacman -Syu --needed --noconfirm \
     btop \
     xdg-user-dirs \
     hyprland \
-    swww \
+    awww \
     sddm \
     qt5-quickcontrols2 \
     qt5-graphicaleffects \
