@@ -22,7 +22,26 @@ apply_gtk_colors() {
     [ -f "$gtk_css" ] || return 0
     mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"
     cp "$gtk_css" "$HOME/.config/gtk-3.0/gtk.css"
-    cp "$gtk_css" "$HOME/.config/gtk-4.0/gtk.css"
+    
+    # Pour GTK4 et Libadwaita (Nautilus)
+    cat "$gtk_css" > "$HOME/.config/gtk-4.0/gtk.css"
+    cat << 'EOF' >> "$HOME/.config/gtk-4.0/gtk.css"
+@define-color window_bg_color @theme_bg_color;
+@define-color window_fg_color @theme_fg_color;
+@define-color view_bg_color @theme_base_color;
+@define-color view_fg_color @theme_text_color;
+@define-color headerbar_bg_color @theme_bg_color;
+@define-color headerbar_fg_color @theme_fg_color;
+@define-color popover_bg_color @theme_bg_color;
+@define-color popover_fg_color @theme_fg_color;
+@define-color card_bg_color alpha(@theme_fg_color, 0.08);
+@define-color card_fg_color @theme_fg_color;
+@define-color dialog_bg_color @theme_bg_color;
+@define-color dialog_fg_color @theme_fg_color;
+@define-color accent_color @theme_selected_bg_color;
+@define-color accent_bg_color @theme_selected_bg_color;
+@define-color accent_fg_color @theme_selected_fg_color;
+EOF
 
     local gtk_theme
     gtk_theme=$(grep '^gtk-theme-name=' "$HOME/.config/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)
@@ -31,6 +50,14 @@ apply_gtk_colors() {
         gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
         gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11' 2>/dev/null || true
     fi
+}
+
+apply_qt_colors() {
+    local qt_conf="$WAL_CACHE/qt-pywal.conf"
+    [ -f "$qt_conf" ] || return 0
+    mkdir -p "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
+    cp "$qt_conf" "$HOME/.config/qt5ct/colors/pywal.conf" 2>/dev/null || true
+    cp "$qt_conf" "$HOME/.config/qt6ct/colors/pywal.conf" 2>/dev/null || true
 }
 
 reload_ui() {
@@ -72,6 +99,7 @@ fi
 
 link_pywal_css
 apply_gtk_colors
+apply_qt_colors
 command -v pywal-discord &>/dev/null && pywal-discord -t default
 
 # Recolorer les dossiers Papirus (si papirus-folders est installé)
