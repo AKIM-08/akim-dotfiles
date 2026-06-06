@@ -126,6 +126,12 @@ tooltip {
     transition: all .3s ease;
 }
 
+#taskbar button {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
 #bluetooth {
     padding: 0px 5px;
     transition: all .3s ease;
