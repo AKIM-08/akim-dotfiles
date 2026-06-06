@@ -71,6 +71,9 @@ sudo pacman -Syu --needed --noconfirm \
     qt6-multimedia-ffmpeg \
     qt6-declarative \
     qt6-quickcontrols2 \
+    qt5ct \
+    qt6ct \
+    kvantum \
     swaync \
     cliphist \
     wl-clipboard \
@@ -257,6 +260,16 @@ sync_gtk_settings() {
     done
 }
 sync_gtk_settings
+
+# 11b. Install Catppuccin Kvantum theme for Qt applications
+echo "--> Setting up Kvantum theme for Qt applications..."
+if [ ! -d "$HOME/.config/Kvantum/catppuccin-mocha-blue" ]; then
+    git clone https://github.com/catppuccin/Kvantum.git /tmp/catppuccin-kvantum || warn "Failed to clone Kvantum Catppuccin theme"
+    mkdir -p "$HOME/.config/Kvantum"
+    cp -r /tmp/catppuccin-kvantum/themes/catppuccin-mocha-blue "$HOME/.config/Kvantum/" 2>/dev/null
+    rm -rf /tmp/catppuccin-kvantum
+fi
+kvantummanager --set catppuccin-mocha-blue 2>/dev/null || true
 
 # 12. Make scripts executable
 echo "--> Making scripts executable..."
