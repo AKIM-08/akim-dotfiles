@@ -57,6 +57,8 @@ sudo pacman -Syu --needed --noconfirm \
     pipewire \
     pipewire-pulse \
     wireplumber \
+    xdg-desktop-portal \
+    xdg-desktop-portal-hyprland \
     bluez \
     btop \
     xdg-user-dirs \
@@ -385,6 +387,20 @@ EOF
     echo "--> SDDM enabled — select Hyprland at login, then reboot."
 }
 setup_sddm
+
+# 15. Configure Discord desktop entry for Wayland screen sharing
+setup_discord_wayland() {
+    echo "--> Configuring Discord desktop entry for Wayland screen sharing..."
+    mkdir -p "$HOME/.local/share/applications"
+    if [ -f "/usr/share/applications/discord.desktop" ]; then
+        cp "/usr/share/applications/discord.desktop" "$HOME/.local/share/applications/"
+        sed -i 's|Exec=discord|Exec=discord --enable-features=WebRTCPipeWireCapturer|g' "$HOME/.local/share/applications/discord.desktop"
+        echo "--> Discord desktop entry copied and patched at ~/.local/share/applications/discord.desktop"
+    else
+        warn "/usr/share/applications/discord.desktop not found. If Discord is installed, copy it manually and add the flag."
+    fi
+}
+setup_discord_wayland
 
 echo "=========================================================================="
 echo " Installation complete!"
