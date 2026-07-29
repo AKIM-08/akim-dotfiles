@@ -188,9 +188,7 @@ input {
 }
 
 # Touchpad gestures
-gesture {
-    workspace_swipe = true
-}
+gesture = 3, horizontal, workspace
 
 # Example per-device config
 device {
@@ -313,7 +311,8 @@ bind = $mainMod ALT, left, exec, ~/.config/hypr/scripts/switch-wallpaper.sh prev
 ### WINDOWS AND WORKSPACES ###
 ##############################
 
-windowrulev2 = suppressEvent maximize, class:.*
-windowrulev2 = nofocus, class:^$, title:^$, xwayland:1, floating:1, fullscreen:0, pinned:0
-windowrulev2 = opacity 0.93 0.88, class:(?i)^(firefox|librewolf|Brave-browser|google-chrome|Chromium|discord|Discord|org.telegram.desktop|Telegram|code|Code|vlc|obs|Spotify)$
-windowrulev2 = opacity 1.0 1.0, class:(?i)^(org.gnome.Nautilus|nautilus)$
+windowrule = suppressEvent maximize, class:.*
+windowrule = nofocus, class:^$, title:^$, xwayland:1, floating:1, fullscreen:0, pinned:0
+windowrule = opacity 0.93 0.88, class:(?i)^(firefox|librewolf|Brave-browser|google-chrome|Chromium|discord|Discord|org.telegram.desktop|Telegram|code|Code|vlc|obs|Spotify)$
+windowrule = opacity 1.0 1.0, class:(?i)^(org.gnome.Nautilus|nautilus)$
+
