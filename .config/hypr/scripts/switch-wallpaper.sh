@@ -1,5 +1,5 @@
 #!/bin/bash
-# switch-wallpaper.sh - Cycle through wallpapers and update pywal16 theme
+# switch-wallpaper.sh - Cycle through wallpapers with ultra-smooth transitions and update pywal16 theme
 # Usage: switch-wallpaper.sh next|prev
 
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
@@ -19,7 +19,6 @@ total=${#images[@]}
 
 if [ -f "$STATE_FILE" ]; then
     index=$(cat "$STATE_FILE")
-    # Valider l'index : doit être un entier dans les bornes du tableau
     if ! [[ "$index" =~ ^[0-9]+$ ]] || [ "$index" -ge "$total" ]; then
         index=0
     fi
@@ -55,10 +54,13 @@ if ! pgrep -x awww-daemon >/dev/null; then
     sleep 0.5
 fi
 
-# Applique l'image originale haute qualité avec une transition fluide
-# awww gère nativement le rendu GPU matériel sans dégradation de qualité
+# Transitions élégantes alternées (wipe, outer, wave, grow)
+TRANSITIONS=("wipe" "outer" "wave" "grow")
+TRANS_TYPE="${TRANSITIONS[$((index % ${#TRANSITIONS[@]}))]}"
+
+# Applique l'image originale avec rendu GPU matériel HD
 awww img "$real_current" \
-    --transition-type wipe \
+    --transition-type "$TRANS_TYPE" \
     --transition-angle 30 \
     --transition-step 90 \
     --transition-fps 60 \

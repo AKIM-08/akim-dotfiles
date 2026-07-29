@@ -310,9 +310,11 @@ bind = $mainMod SHIFT, F, fullscreen
 bind = $mainMod, N, exec, swaync-client -t -sw
 bind = $mainMod SHIFT, T, exec, ~/.config/waybar/scripts/select.sh
 
-# Wallpaper cycling (SUPER + ALT + Arrow keys)
+# Wallpaper cycling (SUPER + ALT + Arrow keys & SUPER + W for Rofi picker)
+bind = $mainMod, W, exec, ~/.config/hypr/scripts/rofi-wallpaper.sh
 bind = $mainMod ALT, right, exec, ~/.config/hypr/scripts/switch-wallpaper.sh next
 bind = $mainMod ALT, left, exec, ~/.config/hypr/scripts/switch-wallpaper.sh prev
+
 
 # Caffeine Mode toggle (SUPER + SHIFT + C or SUPER + ALT + C)
 bind = $mainMod SHIFT, C, exec, ~/.config/hypr/scripts/caffeine-toggle.sh

@@ -295,6 +295,8 @@ chmod +x "$HOME/.config/hypr/scripts/idle-lock-screen.sh"
 chmod +x "$HOME/.config/hypr/scripts/battery-hibernate-watch.sh"
 chmod +x "$HOME/.config/hypr/scripts/fix-sddm-theme.sh"
 chmod +x "$HOME/.config/hypr/scripts/caffeine-toggle.sh"
+chmod +x "$HOME/.config/hypr/scripts/rofi-wallpaper.sh"
+
 
 
 # 13. Generate pywal16 color scheme from wallpaper (dynamic theme)
