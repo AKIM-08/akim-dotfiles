@@ -66,12 +66,10 @@ reload_ui() {
     waybar & disown || true
     if pgrep -x nautilus >/dev/null 2>&1; then
         nautilus -q 2>/dev/null || pkill -x nautilus 2>/dev/null || true
-        # Relancer nautilus avec le nouveau thème GTK (délai pour laisser le temps au CSS)
         sleep 1 && nautilus & disown 2>/dev/null || true
     fi
     if command -v swaync-client &>/dev/null; then
         swaync-client --reload-css 2>/dev/null || true
-        # Redémarrer complètement swaync pour resynchroniser le widget backlight
         pkill swaync 2>/dev/null || true
         sleep 0.3
         swaync & disown || true
@@ -88,13 +86,26 @@ fi
 
 mkdir -p "$WAL_CACHE"
 
-if wal -i "$WALLPAPER" -n -q --cols16; then
+# Vignette temporaire optimisée pour l'analyse des couleurs (évite le ralentissement sur les images 4K/8K)
+TMP_THUMB="/tmp/pywal_analysis_thumb.png"
+if command -v magick &>/dev/null; then
+    magick "$WALLPAPER" -resize "512x512>" "$TMP_THUMB" 2>/dev/null || TMP_THUMB="$WALLPAPER"
+else
+    TMP_THUMB="$WALLPAPER"
+fi
+
+if wal -i "$TMP_THUMB" -n -q --cols16; then
     :
-elif wal -i "$WALLPAPER" -n --cols16; then
+elif wal -i "$TMP_THUMB" -n --cols16; then
     :
 else
     echo "WARNING: pywal16 failed, extracting palette from image..." >&2
     python3 "$SCRIPT_DIR/pywal-fallback.py" "$WALLPAPER" || exit 1
+fi
+
+# Dupliquer colors-hyprland.conf vers colors-hyprland.hl pour Hyprland 0.57+
+if [ -f "$WAL_CACHE/colors-hyprland.conf" ]; then
+    cp "$WAL_CACHE/colors-hyprland.conf" "$WAL_CACHE/colors-hyprland.hl"
 fi
 
 link_pywal_css
@@ -102,7 +113,7 @@ apply_gtk_colors
 apply_qt_colors
 command -v pywal-discord &>/dev/null && pywal-discord -t default
 
-# Recolorer les dossiers Papirus (si papirus-folders est installé)
+# Recolorer les dossiers Papirus
 python3 "$SCRIPT_DIR/apply-papirus-color.py" 2>/dev/null || true
 
 reload_ui

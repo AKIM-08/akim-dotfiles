@@ -37,7 +37,9 @@ def write_hyprland_conf(colors: list[str], wallpaper: Path) -> None:
     ]
     for i, color in enumerate(colors):
         lines.append(f"$color{i} = rgb({color})")
-    (WAL_DIR / "colors-hyprland.conf").write_text("\n".join(lines) + "\n")
+    text = "\n".join(lines) + "\n"
+    (WAL_DIR / "colors-hyprland.conf").write_text(text)
+    (WAL_DIR / "colors-hyprland.hl").write_text(text)
 
 
 def write_waybar_css(colors: list[str]) -> None:
