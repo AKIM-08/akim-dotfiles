@@ -7,7 +7,7 @@ PID_FILE="$HOME/.cache/caffeine_inhibit.pid"
 mkdir -p "$HOME/.cache"
 
 if [ -f "$STATE_FILE" ]; then
-    # Mode Caféine déjà actif -> Désactivation
+    # Disable Caffeine Mode
     if [ -f "$PID_FILE" ]; then
         pid=$(cat "$PID_FILE")
         kill "$pid" 2>/dev/null || true
@@ -15,30 +15,28 @@ if [ -f "$STATE_FILE" ]; then
     fi
     pkill -f "systemd-inhibit --why=Caffeine" 2>/dev/null || true
 
-    # Relancer hypridle si non actif
+    # Restart hypridle
     if ! pgrep -x hypridle >/dev/null; then
         hypridle & disown
     fi
 
     rm -f "$STATE_FILE"
 
-    # Bannière pop-up à l'écran (OSD Hyprland en haut de l'écran + SwayNC toast)
-    hyprctl notify 1 3500 "rgb(f38ba8)" "☕ Mode Caffeine : DESACTIF (Veille normale)" 2>/dev/null || true
-    notify-send "☕ Mode Caféine : DÉSACTIVÉ" "La veille automatique et le verrouillage d'écran sont réactivés." -u critical
+    # Display clean top OSD banner only (in English, no bottom notification toast)
+    hyprctl notify 1 3000 "rgb(f38ba8)" "☕ Caffeine Mode Disabled" 2>/dev/null || true
 else
-    # Activation du Mode Caféine
+    # Enable Caffeine Mode
     rm -f "$STATE_FILE" "$PID_FILE"
 
-    # Bloquer l'inactivité système et la veille via systemd-inhibit
+    # Inhibit idle, sleep, and lid switch
     systemd-inhibit --why="Caffeine mode" --what=idle:sleep:handle-lid-switch sleep infinity &
     inhibit_pid=$!
     echo "$inhibit_pid" > "$PID_FILE"
     touch "$STATE_FILE"
 
-    # Arrêter hypridle pendant le mode caféine pour empêcher hyprlock / DPMS off
+    # Stop hypridle during Caffeine mode
     pkill -x hypridle 2>/dev/null || true
 
-    # Bannière pop-up à l'écran (OSD Hyprland en haut de l'écran + SwayNC toast)
-    hyprctl notify 2 3500 "rgb(a6e3a1)" "☕ Mode Caffeine : ACTIF (Anti-veille)" 2>/dev/null || true
-    notify-send "☕ Mode Caféine : ACTIVÉ" "Votre ordinateur ne se mettra ni en veille ni en verrouillage." -u critical
+    # Display clean top OSD banner only (in English, no bottom notification toast)
+    hyprctl notify 2 3000 "rgb(a6e3a1)" "☕ Caffeine Mode Enabled" 2>/dev/null || true
 fi
