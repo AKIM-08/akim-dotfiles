@@ -58,12 +58,13 @@ fi
 TRANSITIONS=("wipe" "outer" "wave" "grow")
 TRANS_TYPE="${TRANSITIONS[$((index % ${#TRANSITIONS[@]}))]}"
 
-# Applique l'image originale avec rendu GPU matériel HD
+# Applique l'image originale avec rendu GPU matériel HD (Filtre Lanczos pour netteté maximale)
 awww img "$real_current" \
     --transition-type "$TRANS_TYPE" \
     --transition-angle 30 \
     --transition-step 90 \
     --transition-fps 60 \
+    --filter Lanczos \
     --resize crop
 
 "$APPLY_THEME" "$real_current"

@@ -1,5 +1,11 @@
 #!/bin/bash
-# rofi-wallpaper.sh - Interactive Rofi/Wofi Wallpaper Picker with preview icons
+# rofi-wallpaper.sh - Interactive Rofi/Wofi Wallpaper Picker with preview icons & toggle support
+
+# Toggle: Si le sélecteur Rofi/Wofi est déjà ouvert, appuyer à nouveau sur SUPER+W le ferme immédiatement
+if pgrep -x rofi >/dev/null || pgrep -x wofi >/dev/null; then
+    pkill -x rofi 2>/dev/null || pkill -x wofi 2>/dev/null || true
+    exit 0
+fi
 
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 CURRENT="$WALLPAPER_DIR/current.jpg"
@@ -54,11 +60,13 @@ if ! pgrep -x awww-daemon >/dev/null; then
     sleep 0.5
 fi
 
+# Rendu haute précision avec filtre Lanczos (netteté maximale sans flou GPU)
 awww img "$real_current" \
     --transition-type outer \
     --transition-angle 30 \
     --transition-step 90 \
     --transition-fps 60 \
+    --filter Lanczos \
     --resize crop
 
 "$APPLY_THEME" "$real_current"
