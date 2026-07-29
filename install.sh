@@ -96,7 +96,9 @@ sudo pacman -Syu --needed --noconfirm \
     zsh-syntax-highlighting \
     zsh-autosuggestions \
     imagemagick \
+    luajit \
     || die "Core package installation failed"
+
 
 # 2b. Optional applications (non-blocking)
 run_optional "Installing optional applications" \
