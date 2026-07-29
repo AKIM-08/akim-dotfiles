@@ -60,13 +60,14 @@ if ! pgrep -x awww-daemon >/dev/null; then
     sleep 0.5
 fi
 
-# Rendu haute précision avec filtre Lanczos (netteté maximale sans flou GPU)
+# Rendu haute précision avec filtre Lanczos3 (netteté maximale sans flou GPU)
 awww img "$real_current" \
     --transition-type outer \
     --transition-angle 30 \
     --transition-step 90 \
     --transition-fps 60 \
-    --filter Lanczos \
+    --filter Lanczos3 \
     --resize crop
 
 "$APPLY_THEME" "$real_current"
+
