@@ -69,15 +69,14 @@ reload_ui() {
         sleep 1 && nautilus & disown 2>/dev/null || true
     fi
     if command -v swaync-client &>/dev/null; then
-        swaync-client --reload-css 2>/dev/null || true
-        pkill swaync 2>/dev/null || true
-        sleep 0.3
-        swaync & disown || true
+        swaync-client -R 2>/dev/null || swaync-client --reload-css 2>/dev/null || true
+        swaync-client -rs 2>/dev/null || true
     else
         pkill swaync 2>/dev/null || true
         swaync & disown || true
     fi
 }
+
 
 if [ ! -f "$WALLPAPER" ]; then
     notify-send "Theme" "Wallpaper not found: $WALLPAPER" -u critical 2>/dev/null || true

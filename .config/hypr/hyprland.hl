@@ -349,9 +349,10 @@ windowrule {
 }
 
 windowrule {
-    name = nautilus-solid
+    name = nautilus-opacity
     match:class = (?i)^(org.gnome.Nautilus|nautilus)$
-    opacity = 1.0 1.0
+    opacity = 0.90 0.82
 }
+
 
 
