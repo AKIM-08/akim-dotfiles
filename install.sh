@@ -292,6 +292,8 @@ chmod +x "$HOME/.config/hypr/scripts/toggle-float-center.sh"
 chmod +x "$HOME/.config/hypr/scripts/idle-lock-screen.sh"
 chmod +x "$HOME/.config/hypr/scripts/battery-hibernate-watch.sh"
 chmod +x "$HOME/.config/hypr/scripts/fix-sddm-theme.sh"
+chmod +x "$HOME/.config/hypr/scripts/caffeine-toggle.sh"
+
 
 # 13. Generate pywal16 color scheme from wallpaper (dynamic theme)
 echo "--> Generating initial color scheme from wallpaper..."
