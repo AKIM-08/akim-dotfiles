@@ -11,8 +11,8 @@ exec-once = hyprctl setcursor Nordzy-cursors 28
 exec-once = wl-paste --type text --watch cliphist store
 exec-once = wl-paste --type image --watch cliphist store
 exec-once = ~/.config/hypr/scripts/battery-hibernate-watch.sh
-source = ~/.cache/wal/colors-hyprland.hl
-source = ~/.cache/wal/colors-hyprland.conf
+source = ~/.cache/wal/colors-hyprland.hl*
+source = ~/.cache/wal/colors-hyprland.conf*
 
 
 # Configuration personnalisée — akim-dotfiles
