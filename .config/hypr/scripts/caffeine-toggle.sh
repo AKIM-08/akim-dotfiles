@@ -21,7 +21,10 @@ if [ -f "$STATE_FILE" ]; then
     fi
 
     rm -f "$STATE_FILE"
-    notify-send "☕ Mode Caféine : DÉSACTIVÉ" "La veille automatique et le verrouillage d'écran sont réactivés." -u low
+
+    # Bannière pop-up à l'écran (OSD Hyprland en haut de l'écran + SwayNC toast)
+    hyprctl notify 1 3500 "rgb(f38ba8)" "☕ Mode Caffeine : DESACTIF (Veille normale)" 2>/dev/null || true
+    notify-send "☕ Mode Caféine : DÉSACTIVÉ" "La veille automatique et le verrouillage d'écran sont réactivés." -u critical
 else
     # Activation du Mode Caféine
     rm -f "$STATE_FILE" "$PID_FILE"
@@ -35,5 +38,7 @@ else
     # Arrêter hypridle pendant le mode caféine pour empêcher hyprlock / DPMS off
     pkill -x hypridle 2>/dev/null || true
 
-    notify-send "☕ Mode Caféine : ACTIVÉ" "Votre ordinateur ne se mettra ni en veille ni en verrouillage." -u normal
+    # Bannière pop-up à l'écran (OSD Hyprland en haut de l'écran + SwayNC toast)
+    hyprctl notify 2 3500 "rgb(a6e3a1)" "☕ Mode Caffeine : ACTIF (Anti-veille)" 2>/dev/null || true
+    notify-send "☕ Mode Caféine : ACTIVÉ" "Votre ordinateur ne se mettra ni en veille ni en verrouillage." -u critical
 fi
