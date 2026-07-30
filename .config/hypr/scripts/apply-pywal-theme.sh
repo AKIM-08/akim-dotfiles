@@ -62,21 +62,12 @@ apply_qt_colors() {
 
 reload_ui() {
     hyprctl reload 2>/dev/null || true
-    pkill waybar 2>/dev/null || true
-    waybar & disown || true
-    if pgrep -x nautilus >/dev/null 2>&1; then
-        nautilus -q 2>/dev/null || pkill -x nautilus 2>/dev/null || true
-        sleep 1 && nautilus & disown 2>/dev/null || true
-    fi
+    pkill -SIGUSR2 waybar 2>/dev/null || true
     if command -v swaync-client &>/dev/null; then
         swaync-client -R 2>/dev/null || swaync-client --reload-css 2>/dev/null || true
         swaync-client -rs 2>/dev/null || true
-    else
-        pkill swaync 2>/dev/null || true
-        swaync & disown || true
     fi
 }
-
 
 if [ ! -f "$WALLPAPER" ]; then
     notify-send "Theme" "Wallpaper not found: $WALLPAPER" -u critical 2>/dev/null || true
@@ -85,20 +76,13 @@ fi
 
 mkdir -p "$WAL_CACHE"
 
-# Vignette temporaire optimisée pour l'analyse des couleurs (évite le ralentissement sur les images 4K/8K)
-TMP_THUMB="/tmp/pywal_analysis_thumb.png"
-if command -v magick &>/dev/null; then
-    magick "$WALLPAPER" -resize "512x512>" "$TMP_THUMB" 2>/dev/null || TMP_THUMB="$WALLPAPER"
-else
-    TMP_THUMB="$WALLPAPER"
-fi
-
-if wal -i "$TMP_THUMB" -n -q --cols16; then
+# Extraction des couleurs directement depuis l'image de fond d'écran active
+if wal -i "$WALLPAPER" -n -q --cols16 2>/dev/null; then
     :
-elif wal -i "$TMP_THUMB" -n --cols16; then
+elif wal -i "$WALLPAPER" -n --cols16 2>/dev/null; then
     :
 else
-    echo "WARNING: pywal16 failed, extracting palette from image..." >&2
+    echo "WARNING: pywal16 failed, extracting palette via fallback..." >&2
     python3 "$SCRIPT_DIR/pywal-fallback.py" "$WALLPAPER" || exit 1
 fi
 
@@ -112,7 +96,7 @@ apply_gtk_colors
 apply_qt_colors
 command -v pywal-discord &>/dev/null && pywal-discord -t default
 
-# Recolorer les dossiers Papirus
+# Recolorer les dossiers Papirus silencieusement sans bloquer
 python3 "$SCRIPT_DIR/apply-papirus-color.py" 2>/dev/null || true
 
 reload_ui

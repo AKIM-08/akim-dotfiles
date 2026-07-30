@@ -57,13 +57,12 @@ def main():
             min_dist = dist
             closest_color_name = name
 
-    # Appliquer avec papirus-folders
+    # Appliquer avec papirus-folders (silencieusement)
     try:
-        subprocess.run(["papirus-folders", "-C", closest_color_name, "--theme", "Papirus-Dark"], check=True)
-    except FileNotFoundError:
-        pass # papirus-folders non installé
-    except Exception as e:
-        print(f"Error applying papirus color: {e}")
+        subprocess.run(["papirus-folders", "-C", closest_color_name, "--theme", "Papirus-Dark"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
 
 if __name__ == "__main__":
     main()
