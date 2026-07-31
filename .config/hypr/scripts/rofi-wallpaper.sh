@@ -27,22 +27,25 @@ for img in "${images[@]}"; do
     options+="${filename}\x00icon\x1f${img}\n"
 done
 
-if command -v rofi &>/dev/null; then
+QML_SCRIPT="$HOME/.config/hypr/scripts/hex-wallpaper-picker.qml"
+selected_file=""
+
+if command -v qmlscene &>/dev/null; then
+    OUTPUT=$(qmlscene "$QML_SCRIPT" 2>&1)
+    selected_file=$(echo "$OUTPUT" | grep -oP 'SELECTED:\K.*')
+elif command -v qml6 &>/dev/null; then
+    OUTPUT=$(qml6 "$QML_SCRIPT" 2>&1)
+    selected_file=$(echo "$OUTPUT" | grep -oP 'SELECTED:\K.*')
+elif command -v rofi &>/dev/null; then
     selected_name=$(echo -e -n "$options" | rofi -dmenu -i -p "󰸉 Select Wallpaper" -theme-str 'window {width: 480px;} listview {lines: 9;}')
+    [ -n "$selected_name" ] && selected_file="$WALLPAPER_DIR/$selected_name"
 elif command -v wofi &>/dev/null; then
     selected_name=$(echo -e -n "$options" | wofi --dmenu --prompt "Select Wallpaper")
-else
-    selected_name=""
+    [ -n "$selected_name" ] && selected_file="$WALLPAPER_DIR/$selected_name"
 fi
 
-if [ -z "$selected_name" ]; then
+if [ -z "$selected_file" ] || [ ! -f "$selected_file" ]; then
     exit 0
-fi
-
-selected_file="$WALLPAPER_DIR/$selected_name"
-
-if [ ! -f "$selected_file" ]; then
-    exit 1
 fi
 
 for i in "${!images[@]}"; do

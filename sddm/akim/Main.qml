@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtGraphicalEffects 1.15
 
 Rectangle {
     id: root
@@ -15,6 +16,7 @@ Rectangle {
     readonly property color textColor: "#cdd6f4"
 
     Image {
+        id: bgImage
         anchors.fill: parent
         source: wallpaperSource
         fillMode: Image.PreserveAspectCrop
@@ -26,10 +28,25 @@ Rectangle {
         anchors.fill: parent
         spacing: 0
 
-        Rectangle {
-            Layout.preferredWidth: root.width * 0.38
+        Item {
+            Layout.preferredWidth: 350
             Layout.fillHeight: true
-            color: panelColor
+
+            ShaderEffectSource {
+                id: blurSource
+                sourceItem: bgImage
+                sourceRect: Qt.rect(0, 0, parent.width, parent.height)
+            }
+
+            FastBlur {
+                anchors.fill: parent
+                source: blurSource
+                radius: 64
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: panelColor
 
             ColumnLayout {
                 anchors.fill: parent
@@ -95,7 +112,9 @@ Rectangle {
                         color: textColor
                         font.pixelSize: 14
                         selectByMouse: true
-                        text: sddm.autologinUser || ""
+                        readOnly: true
+                        text: sddm.autologinUser || "marci"
+                        verticalAlignment: Text.AlignVCenter
                         Keys.onReturnPressed: passwordField.forceActiveFocus()
                     }
                 }
@@ -115,6 +134,8 @@ Rectangle {
                         echoMode: showPassword.checked ? TextInput.Normal : TextInput.Password
                         passwordCharacter: "•"
                         selectByMouse: true
+                        focus: true
+                        verticalAlignment: Text.AlignVCenter
                         Keys.onReturnPressed: loginButton.clicked()
                     }
                 }
@@ -151,12 +172,22 @@ Rectangle {
                         font.weight: Font.Medium
                     }
                     onClicked: {
-                        errorText.visible = !sddm.login(usernameField.text, passwordField.text, sessionSelect.currentIndex)
+                        sddm.login(usernameField.text, passwordField.text, sessionSelect.currentIndex)
+                    }
+                }
+
+                Connections {
+                    target: sddm
+                    function onLoginFailed() {
+                        errorText.visible = true
+                        passwordField.text = ""
+                        passwordField.forceActiveFocus()
                     }
                 }
 
                 ComboBox {
                     id: sessionSelect
+                    visible: false
                     Layout.fillWidth: true
                     Layout.preferredHeight: 36
                     model: sessionModel
