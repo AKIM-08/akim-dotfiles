@@ -30,11 +30,19 @@ done
 QML_SCRIPT="$HOME/.config/hypr/scripts/hex-wallpaper-picker.qml"
 selected_file=""
 
+sed -i "s|folder: \"file://.*\"|folder: \"file://$WALLPAPER_DIR\"|" "$QML_SCRIPT"
+
 if command -v qmlscene &>/dev/null; then
     OUTPUT=$(qmlscene "$QML_SCRIPT" 2>&1)
+    if [ $? -ne 0 ]; then
+        notify-send "QML Error" "$OUTPUT"
+    fi
     selected_file=$(echo "$OUTPUT" | grep -oP 'SELECTED:\K.*')
 elif command -v qml6 &>/dev/null; then
     OUTPUT=$(qml6 "$QML_SCRIPT" 2>&1)
+    if [ $? -ne 0 ]; then
+        notify-send "QML Error" "$OUTPUT"
+    fi
     selected_file=$(echo "$OUTPUT" | grep -oP 'SELECTED:\K.*')
 elif command -v rofi &>/dev/null; then
     selected_name=$(echo -e -n "$options" | rofi -dmenu -i -p "󰸉 Select Wallpaper" -theme-str 'window {width: 480px;} listview {lines: 9;}')

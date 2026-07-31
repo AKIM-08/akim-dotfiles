@@ -3,7 +3,6 @@ import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import Qt.labs.folderlistmodel 2.15
 import QtGraphicalEffects 1.15
-import QtCore 5.15
 
 Window {
     id: root
@@ -30,7 +29,7 @@ Window {
 
     FolderListModel {
         id: folderModel
-        folder: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0] + "/wallpapers"
+        folder: "file://WALLPAPER_DIR_PLACEHOLDER"
         nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp"]
         showDirs: false
     }
