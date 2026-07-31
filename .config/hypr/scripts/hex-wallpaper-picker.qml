@@ -3,14 +3,20 @@ import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import Qt.labs.folderlistmodel 2.15
 import QtGraphicalEffects 1.15
+import QtCore 5.15
 
 Window {
     id: root
     width: Screen.width
     height: Screen.height
-    color: "#d9000000" // 85% opacity black
+    color: "transparent" // Required for Wayland transparency
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Popup
     visibility: Window.FullScreen
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#d9000000"
+    }
 
     Shortcut {
         sequence: "Escape"
@@ -24,9 +30,17 @@ Window {
 
     FolderListModel {
         id: folderModel
-        folder: "file:///home/marci/Pictures/wallpapers"
+        folder: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0] + "/wallpapers"
         nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp"]
         showDirs: false
+    }
+
+    Text {
+        anchors.centerIn: parent
+        text: "Loading wallpapers..."
+        color: "white"
+        font.pixelSize: 24
+        visible: folderModel.count === 0
     }
 
     property real hexWidth: 200
@@ -67,7 +81,7 @@ Window {
                 Image {
                     id: mask
                     anchors.fill: parent
-                    source: "hexagon.svg" // relative to the qml file
+                    source: Qt.resolvedUrl("hexagon.svg")
                     sourceSize: Qt.size(width, height)
                     visible: false
                 }
