@@ -12,9 +12,23 @@ Window {
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Popup
     visibility: Window.FullScreen
 
+    Image {
+        id: bgImage
+        anchors.fill: parent
+        source: "file://WALLPAPER_DIR_PLACEHOLDER/current.jpg"
+        fillMode: Image.PreserveAspectCrop
+        visible: false
+    }
+
+    FastBlur {
+        anchors.fill: parent
+        source: bgImage
+        radius: 64
+    }
+
     Rectangle {
         anchors.fill: parent
-        color: "#d9000000"
+        color: "#99000000" // 60% opacity black
     }
 
     Shortcut {
