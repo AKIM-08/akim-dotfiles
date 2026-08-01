@@ -15,7 +15,7 @@ Window {
     Image {
         id: bgImage
         anchors.fill: parent
-        source: "file://WALLPAPER_DIR_PLACEHOLDER/current.jpg"
+        source: folderModel.folder.toString() + "/current.jpg"
         fillMode: Image.PreserveAspectCrop
         visible: false
     }
