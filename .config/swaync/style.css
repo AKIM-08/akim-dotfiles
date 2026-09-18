@@ -1,18 +1,17 @@
 @import url("colors-waybar.css");
 
-@define-color text #ffffff;
-@define-color text-muted rgba(255, 255, 255, 0.65);
-@define-color bg rgba(20, 20, 32, 0.60);
-@define-color bg-glass rgba(255, 255, 255, 0.08);
-@define-color bg-glass-hover rgba(255, 255, 255, 0.18);
-@define-color bg-glass-active @color4;
+@define-color text @foreground;
+@define-color text-muted @color7;
+@define-color bg alpha(@background, 0.88);
+@define-color bg-card alpha(@foreground, 0.06);
+@define-color bg-card-hover alpha(@color4, 0.25);
 @define-color accent @color4;
-@define-color glass-border rgba(255, 255, 255, 0.18);
-@define-color glass-border-glow rgba(255, 255, 255, 0.35);
+@define-color border-card alpha(@color4, 0.20);
+@define-color border-glow alpha(@color4, 0.40);
 
 * {
     outline: none;
-    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', sans-serif;
 }
 
 .blank-window {
@@ -30,224 +29,215 @@ window.control-center {
     background-color: transparent !important;
 }
 
-/* Apple iOS "Liquid Glass" Control Center Window */
+/* Control Center Container */
 .control-center {
     background: @bg;
     color: @text;
-    border-radius: 28px;
-    border: 1.5px solid @glass-border;
-    box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.55), inset 0 1px 2px 0 rgba(255, 255, 255, 0.35);
-    padding: 10px;
-    margin: 6px;
+    border-radius: 20px;
+    border: 2px solid @border-glow;
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.70);
+    padding: 8px;
+    margin: 4px;
 }
 
-/* Header / Title Bar */
+/* Title bar widget */
 .widget-title {
-    padding: 10px 16px 6px 16px;
+    padding: 10px 14px 4px 14px;
     margin: 0px;
 }
 
 .widget-title > label {
-    font-size: 1.2rem;
-    font-weight: 800;
+    font-size: 1.15rem;
+    font-weight: 700;
     color: @text;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .widget-title > button {
     all: unset;
-    font-size: 15px;
-    font-weight: bold;
-    color: @text;
-    background: rgba(255, 75, 75, 0.22);
-    border: 1px solid rgba(255, 75, 75, 0.45);
-    border-radius: 12px;
-    padding: 6px 14px;
-    box-shadow: 0 2px 8px rgba(255, 75, 75, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-    transition: all 0.25s ease;
+    font-size: 14px;
+    color: @color1;
+    background: alpha(@color1, 0.18);
+    border: 1px solid alpha(@color1, 0.35);
+    border-radius: 10px;
+    padding: 5px 12px;
+    transition: all 0.2s ease;
 }
 
 .widget-title > button:hover {
-    background: rgba(255, 60, 60, 0.85);
-    color: #ffffff;
-    box-shadow: 0 0 16px rgba(255, 60, 60, 0.6);
+    background: @color1;
+    color: @background;
+    box-shadow: 0 0 12px alpha(@color1, 0.5);
 }
 
-/* MPRIS Music Player — iOS Glass Card */
+/* MPRIS Media Player Widget */
 .widget-mpris {
-    padding: 4px;
-    margin: 2px 0px;
+    padding: 2px;
+    margin: 2px 0;
 }
 
 .widget-mpris .widget-mpris-player {
-    padding: 14px;
-    margin: 6px 12px;
-    background: @bg-glass;
-    border-radius: 22px;
-    border: 1px solid @glass-border;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    padding: 12px;
+    margin: 6px 8px;
+    background: @bg-card;
+    border-radius: 16px;
+    border: 1px solid @border-card;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .widget-mpris .widget-mpris-player .widget-mpris-album-art {
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .widget-mpris .widget-mpris-player .widget-mpris-title {
-    font-weight: 800;
-    font-size: 1.15rem;
+    font-weight: 700;
+    font-size: 1.05rem;
     color: @text;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .widget-mpris .widget-mpris-player .widget-mpris-subtitle {
-    font-size: 0.95rem;
+    font-size: 0.90rem;
     color: @text-muted;
 }
 
 .widget-mpris .widget-mpris-player button {
     all: unset;
     color: @text;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid @glass-border;
-    border-radius: 14px;
-    padding: 8px 18px;
-    margin: 4px;
-    font-size: 18px;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
-    transition: all 0.25s ease;
+    background: alpha(@foreground, 0.08);
+    border: 1px solid @border-card;
+    border-radius: 10px;
+    padding: 6px 14px;
+    margin: 3px;
+    font-size: 16px;
+    transition: all 0.2s ease;
 }
 
 .widget-mpris .widget-mpris-player button:hover {
-    background: @bg-glass-hover;
-    border-color: @glass-border-glow;
-    box-shadow: 0 0 14px rgba(255, 255, 255, 0.35);
+    background: @bg-card-hover;
+    border-color: @accent;
+    color: @text;
+    box-shadow: 0 0 10px alpha(@accent, 0.35);
 }
 
-/* Notification Cards */
+/* Notifications list */
 .control-center .notification-row {
     background-color: transparent;
     padding: 2px 0;
 }
 
 .control-center .notification-row .notification-background .notification {
-    margin: 5px 12px;
-    padding: 10px 14px;
-    border-radius: 20px;
-    background: @bg-glass;
-    border: 1px solid @glass-border;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2);
-    transition: all 0.25s ease;
+    margin: 4px 8px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: @bg-card;
+    border: 1px solid @border-card;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: all 0.2s ease;
 }
 
 .control-center .notification-row .notification-background .notification:hover {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: @glass-border-glow;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    background: alpha(@foreground, 0.10);
+    border-color: @border-glow;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
 .floating-notifications .notification-row .notification-background .notification {
-    margin: 10px 16px;
-    padding: 12px 16px;
-    border-radius: 24px;
+    margin: 8px 14px;
+    padding: 10px 14px;
+    border-radius: 16px;
     background: @bg;
-    border: 1.5px solid @glass-border;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+    border: 2px solid @border-glow;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 .notification-content {
-    padding: 4px;
+    padding: 2px;
 }
 
 .notification .notification-content .summary {
-    font-size: 1.02rem;
-    font-weight: 800;
+    font-size: 0.96rem;
+    font-weight: 700;
     color: @accent;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 .notification .notification-content .time {
-    font-size: 0.82rem;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 400;
     color: @text-muted;
-    margin-right: 8px;
+    margin-right: 6px;
 }
 
 .notification .notification-content .body {
-    font-size: 0.90rem;
+    font-size: 0.86rem;
     font-weight: 400;
     color: @text;
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
 .notification-row .close-button {
     all: unset;
     color: @text-muted;
     border-radius: 50%;
-    padding: 6px;
-    min-width: 22px;
-    min-height: 22px;
+    padding: 4px;
+    min-width: 20px;
+    min-height: 20px;
     transition: all 0.2s ease;
 }
 
 .notification-row .close-button:hover {
-    background: rgba(255, 80, 80, 0.35);
-    color: #ff5555;
+    background: alpha(@color1, 0.3);
+    color: @color1;
 }
 
-/* iOS Glass Sliders (Volume & Backlight) */
+/* Sliders: Volume and Backlight */
 .widget-volume,
 .widget-backlight {
-    background-color: @bg-glass;
-    padding: 10px 18px;
-    margin: 5px 12px;
-    border-radius: 22px;
-    border: 1px solid @glass-border;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18);
+    background-color: @bg-card;
+    padding: 8px 14px;
+    margin: 4px 8px;
+    border-radius: 14px;
+    border: 1px solid @border-card;
 }
 
 .widget-volume > box > label,
 .widget-backlight > box > label {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: bold;
-    color: #ffffff;
-    margin-right: 14px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    color: @accent;
+    margin-right: 10px;
 }
 
 scale trough {
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.14);
-    min-height: 14px;
+    border-radius: 8px;
+    background: alpha(@foreground, 0.12);
+    min-height: 8px;
     min-width: 180px;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 scale trough highlight {
     background: @accent;
-    border-radius: 12px;
-    box-shadow: 0 0 14px alpha(@accent, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+    box-shadow: 0px 0px 8px alpha(@accent, 0.4);
 }
 
 scale trough slider {
-    background: #ffffff;
+    background: @foreground;
     border-radius: 50%;
-    min-width: 20px;
-    min-height: 20px;
+    min-width: 16px;
+    min-height: 16px;
     border: 2px solid @accent;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.45);
 }
 
-/* iOS Liquid Glass Button Grid (Row 1 & Row 2) */
+/* Buttons Grid: 3x2 Action Rows */
 .widget-buttons-grid,
 .row1,
 .row2 {
-    background-color: @bg-glass;
-    padding: 6px;
-    margin: 4px 12px;
-    border-radius: 22px;
-    border: 1px solid @glass-border;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.16);
+    background-color: @bg-card;
+    padding: 4px;
+    margin: 3px 8px;
+    border-radius: 14px;
+    border: 1px solid @border-card;
 }
 
 .widget-buttons-grid > flowbox,
@@ -267,44 +257,48 @@ scale trough slider {
 .widget-buttons-grid > flowbox > flowboxchild > button,
 .row1 > flowbox > flowboxchild > button,
 .row2 > flowbox > flowboxchild > button {
-    background: rgba(255, 255, 255, 0.10);
-    border-radius: 18px;
-    border: 1.2px solid rgba(255, 255, 255, 0.20);
+    background: alpha(@foreground, 0.08);
+    border-radius: 12px;
+    border: 1px solid alpha(@foreground, 0.12);
     min-width: 104px;
-    min-height: 60px;
-    padding: 10px;
+    min-height: 52px;
+    padding: 8px;
     margin: 0px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.30);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+    transition: all 0.2s ease;
 }
 
+.widget-buttons-grid > flowbox > flowboxchild > button label,
+.row1 > flowbox > flowboxchild > button label,
+.row2 > flowbox > flowboxchild > button label,
 .widget-buttons-grid button label,
 .row1 button label,
 .row2 button label,
 .widget-buttons-grid label,
 .row1 label,
 .row2 label {
-    font-size: 26px;
-    font-weight: 900;
-    color: #ffffff;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', sans-serif !important;
+    font-size: 26px !important;
+    font-weight: 900 !important;
+    color: @foreground !important;
+    -gtk-icon-size: 26px;
     margin: 0;
     padding: 0;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover,
 .row1 > flowbox > flowboxchild > button:hover,
 .row2 > flowbox > flowboxchild > button:hover {
-    background: rgba(255, 255, 255, 0.22);
-    border-color: rgba(255, 255, 255, 0.45);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    background: @bg-card-hover;
+    border: 1px solid @accent;
+    box-shadow: 0 0 12px alpha(@accent, 0.40);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover label,
 .row1 > flowbox > flowboxchild > button:hover label,
 .row2 > flowbox > flowboxchild > button:hover label {
-    color: #ffffff;
+    color: @foreground !important;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.active,
@@ -314,8 +308,8 @@ scale trough slider {
 .row2 > flowbox > flowboxchild > button.active,
 .row2 > flowbox > flowboxchild > button.toggle:checked {
     background: @accent;
-    border: 1.2px solid alpha(@accent, 0.85);
-    box-shadow: 0 0 20px alpha(@accent, 0.75), inset 0 1px 2px rgba(255, 255, 255, 0.45);
+    border: 1px solid @accent;
+    box-shadow: 0 0 16px alpha(@accent, 0.60);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.active label,
@@ -324,5 +318,5 @@ scale trough slider {
 .row1 > flowbox > flowboxchild > button.toggle:checked label,
 .row2 > flowbox > flowboxchild > button.active label,
 .row2 > flowbox > flowboxchild > button.toggle:checked label {
-    color: #ffffff;
+    color: @background !important;
 }

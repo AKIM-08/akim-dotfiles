@@ -9,14 +9,14 @@
     "layer-shell": true,
     "cssPriority": "user",
     "ignore-gtk-theme": true,
-    "control-center-width": 380,
-    "control-center-margin-top": 12,
-    "control-center-margin-bottom": 12,
+    "control-center-width": 360,
+    "control-center-margin-top": 10,
+    "control-center-margin-bottom": 10,
     "control-center-margin-right": 0,
-    "control-center-margin-left": 12,
+    "control-center-margin-left": 10,
     "notification-2fa-action": true,
     "notification-inline-replies": true,
-    "notification-window-width": 350,
+    "notification-window-width": 340,
     "notification-icon-size": 60,
     "notification-body-image-height":  180,
     "notification-body-image-width": 180,
@@ -51,7 +51,7 @@
         },
         "mpris": {
             "image-size": 80,
-            "image-radius": 14
+            "image-radius": 12
         },
         "volume": {
             "label": " ",
@@ -63,17 +63,17 @@
         "buttons-grid#row1": {
             "actions": [
                 {
-                    "label": "  ",
+                    "label": "",
                     "command": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
                     "type": "toggle"
                 },
                 {
-                    "label": "  ",
+                    "label": "",
                     "command": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
                     "type": "toggle"
                 },
                 {
-                    "label": "  ",
+                    "label": "",
                     "command": "kitty -e nmtui"
                 }
             ]
@@ -81,16 +81,16 @@
         "buttons-grid#row2": {
             "actions": [
                 {
-                    "label": "  ",
+                    "label": "",
                     "command": "bash -c 'rfkill unblock bluetooth 2>/dev/null; bluetoothctl power on 2>/dev/null; blueman-manager'"
                 },
                 {
-                    "label": "  ",
+                    "label": "",
                     "command": "swaync-client -d -sw",
                     "type": "toggle"
                 },
                 {
-                    "label": "  ",
+                    "label": "",
                     "command": "kitty -e btop"
                 }
             ]
