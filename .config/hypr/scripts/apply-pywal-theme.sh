@@ -70,8 +70,9 @@ reload_ui() {
     if pgrep -x swaync >/dev/null 2>&1 && command -v swaync-client &>/dev/null; then
         timeout 2 swaync-client --reload-css 2>/dev/null || true
     fi
-    if pgrep -x kitty >/dev/null 2>&1 && command -v kitty &>/dev/null; then
-        kitty @ set-colors --all --configured "$WAL_CACHE/colors-kitty.conf" 2>/dev/null || true
+    if pgrep -x kitty >/dev/null 2>&1; then
+        pkill -SIGUSR1 kitty 2>/dev/null || true
+        command -v kitty &>/dev/null && kitty @ set-colors --all --configured "$WAL_CACHE/colors-kitty.conf" 2>/dev/null || true
     fi
 }
 
