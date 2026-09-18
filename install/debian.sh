@@ -241,16 +241,15 @@ Keywords=tiling;wm;windowmanager;window;manager;
 EOF
 fi
 
-# 7. Configure PAM for hyprlock (essential for Debian keyboard unlock)
+# 7. Configure PAM for hyprlock (essential for Debian authentication)
 echo "--> Configuring PAM for hyprlock..."
-if [ ! -f /etc/pam.d/hyprlock ]; then
-    sudo tee /etc/pam.d/hyprlock > /dev/null << 'EOF'
-auth include login
-account include login
-password include login
-session include login
+sudo tee /etc/pam.d/hyprlock > /dev/null << 'EOF'
+#%PAM-1.0
+@include common-auth
+@include common-account
+@include common-password
+@include common-session
 EOF
-fi
 
 # 8. Add user to input and video groups (for keyboard/mouse access under Wayland)
 echo "--> Ensuring user is in input and video groups..."
