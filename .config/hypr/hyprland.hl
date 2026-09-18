@@ -382,14 +382,4 @@ layerrule = blur on, match:namespace swaync-control-center
 layerrule = blur on, match:namespace swaync-notification-window
 layerrule = ignore_alpha 0.5, match:namespace swaync-control-center
 layerrule = ignore_alpha 0.5, match:namespace swaync-notification-window
-layerrule = noanim, match:namespace snmenu
 
-windowrule {
-    name = snmenu-rules
-    match:class = ^(snmenu)$
-    float = true
-    fullscreen = true
-    noborder = true
-    noshadow = true
-    no_anim = true
-}

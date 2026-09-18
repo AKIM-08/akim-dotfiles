@@ -4,8 +4,8 @@
 set -euo pipefail
 
 # If snmenu or wlogout is already running, toggle it off
-if pgrep -x snmenu >/dev/null; then
-    pkill -x snmenu
+if pgrep -f snmenu >/dev/null; then
+    pkill -f snmenu
     exit 0
 fi
 if pgrep -x wlogout >/dev/null; then
