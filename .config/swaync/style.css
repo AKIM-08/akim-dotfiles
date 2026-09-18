@@ -28,10 +28,16 @@
     outline:none;
 }
 .blank-window {
-    background: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
+}
+window {
+    background: transparent !important;
+    background-color: transparent !important;
 }
 window.control-center {
-    background: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 .control-center .notification-row {
     background-color: unset;
