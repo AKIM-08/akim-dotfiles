@@ -8,7 +8,7 @@ exec-once = gnome-keyring-daemon --start --components=secrets,ssh,pkcs11 2>/dev/
 exec-once = awww-daemon
 exec-once = ~/.config/swaync/start.sh
 exec-once = waybar
-exec-once = hypridle
+exec-once = sh -c 'sleep 30 && hypridle'
 exec-once = hyprctl setcursor Nordzy-cursors 28
 exec-once = wl-paste --type text --watch cliphist store
 exec-once = wl-paste --type image --watch cliphist store
