@@ -4,10 +4,10 @@
 @define-color text-muted @color7;
 @define-color bg alpha(@background, 0.88);
 @define-color bg-card alpha(@foreground, 0.06);
-@define-color bg-card-hover alpha(@color4, 0.25);
-@define-color accent @color4;
-@define-color border-card alpha(@color4, 0.20);
-@define-color border-glow alpha(@color4, 0.40);
+@define-color bg-card-hover alpha(@color9, 0.25);
+@define-color accent @color9;
+@define-color border-card alpha(@color9, 0.20);
+@define-color border-glow alpha(@color9, 0.40);
 
 * {
     outline: none;
@@ -285,9 +285,9 @@ scale trough slider {
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover,
 .widget-buttons-grid button:hover {
-    background: alpha(@color4, 0.25);
-    border: 1px solid @color4;
-    box-shadow: 0 0 12px alpha(@color4, 0.40);
+    background: alpha(@accent, 0.25);
+    border: 1px solid @accent;
+    box-shadow: 0 0 12px alpha(@accent, 0.40);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover label,

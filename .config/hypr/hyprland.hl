@@ -81,7 +81,9 @@ general {
     # no_border_on_floating = true
 	   
     # Set to true enable resizing windows by clicking and dragging on borders and gaps
-    resize_on_border = false
+    resize_on_border = true
+    extend_border_grab_area = 15
+    hover_icon_on_border = true
 
     # Please see https://wiki.hyprland.org/Configuring/Tearing/ before you turn this on
     allow_tearing = false
@@ -230,6 +232,16 @@ bind = $mainMod SHIFT, left, movewindow, l
 bind = $mainMod SHIFT, right, movewindow, r
 bind = $mainMod SHIFT, up, movewindow, u
 bind = $mainMod SHIFT, down, movewindow, d
+
+# Resize active window with mainMod + CTRL + arrow keys or HJKL
+binde = $mainMod CTRL, left, resizeactive, -40 0
+binde = $mainMod CTRL, right, resizeactive, 40 0
+binde = $mainMod CTRL, up, resizeactive, 0 -40
+binde = $mainMod CTRL, down, resizeactive, 0 40
+binde = $mainMod CTRL, h, resizeactive, -40 0
+binde = $mainMod CTRL, l, resizeactive, 40 0
+binde = $mainMod CTRL, k, resizeactive, 0 -40
+binde = $mainMod CTRL, j, resizeactive, 0 40
 
 
 # Switch workspaces with mainMod + AZERTY keys
