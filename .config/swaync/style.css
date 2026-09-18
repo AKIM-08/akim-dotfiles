@@ -202,9 +202,11 @@ window.control-center {
 
 .widget-volume > box > label,
 .widget-backlight > box > label {
-    font-size: 18px;
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif;
+    font-size: 20px;
+    font-weight: bold;
     color: @accent;
-    margin-right: 10px;
+    margin-right: 12px;
 }
 
 scale trough {
@@ -232,7 +234,7 @@ scale trough slider {
 /* Buttons Grid: 3x2 sleek action tiles */
 .widget-buttons-grid {
     padding: 8px;
-    margin: 6px 12px 12px 12px;
+    margin: 6px 12px 14px 12px;
     border-radius: 16px;
     background: @bg-card;
     border: 1px solid @border-color;
@@ -250,27 +252,32 @@ scale trough slider {
 
 .widget-buttons-grid > flowbox > flowboxchild > button {
     background: alpha(@foreground, 0.08);
-    border-radius: 12px;
+    border-radius: 14px;
     border: 1px solid @border-color;
-    min-width: 102px;
-    min-height: 52px;
+    min-width: 104px;
+    min-height: 56px;
     padding: 8px;
     margin: 0px;
     box-shadow: none;
     transition: all 0.2s ease;
 }
 
-.widget-buttons-grid > flowbox > flowboxchild > button label {
-    font-size: 24px;
+.widget-buttons-grid > flowbox > flowboxchild > button label,
+.widget-buttons-grid button label,
+.widget-buttons-grid label {
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', sans-serif;
+    font-size: 26px;
     font-weight: bold;
     color: @text;
+    margin: 0;
+    padding: 0;
     transition: all 0.2s ease;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover {
     background: @bg-hover;
     border: 1px solid @accent;
-    box-shadow: 0 0 12px alpha(@accent, 0.45);
+    box-shadow: 0 0 14px alpha(@accent, 0.45);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover label {
@@ -281,7 +288,7 @@ scale trough slider {
 .widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
     background: @accent;
     border: 1px solid @accent;
-    box-shadow: 0 0 14px alpha(@accent, 0.6);
+    box-shadow: 0 0 16px alpha(@accent, 0.65);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.active label,
