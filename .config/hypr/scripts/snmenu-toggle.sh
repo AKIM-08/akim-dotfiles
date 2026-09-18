@@ -27,6 +27,9 @@ fi
 if [ -x "$HOME/.local/bin/snmenu" ]; then
     exec "$HOME/.local/bin/snmenu"
 fi
+if [ -x "/usr/local/bin/snmenu" ]; then
+    exec /usr/local/bin/snmenu
+fi
 
 # 2. wlogout if installed
 if command -v wlogout &>/dev/null; then
