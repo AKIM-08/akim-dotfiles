@@ -70,9 +70,13 @@ def main():
             )
         
         # Rafraichir le cache des icones GTK
-        for p in [Path.home() / ".local/share/icons/Papirus-Dark", Path.home() / ".local/share/icons/Papirus"]:
+        for p in [Path("/usr/share/icons/Papirus-Dark"), Path("/usr/share/icons/Papirus"), Path.home() / ".local/share/icons/Papirus-Dark", Path.home() / ".local/share/icons/Papirus"]:
             if p.exists():
                 subprocess.run(["gtk-update-icon-cache", "-f", "-t", str(p)], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
+        
+        # Forcer GSettings a rafraichir les icones de Nautilus instantanement
+        subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", "Papirus"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
+        subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", "Papirus-Dark"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
     except Exception:
         pass
 
