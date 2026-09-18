@@ -47,7 +47,7 @@ elif command -v qml6 &>/dev/null; then
     fi
     selected_file=$(echo "$OUTPUT" | grep -oP 'SELECTED:\K.*')
 elif command -v rofi &>/dev/null; then
-    selected_name=$(echo -e -n "$options" | rofi -dmenu -i -p "󰸉 Select Wallpaper" -theme-str 'window {width: 480px;} listview {lines: 9;}')
+    selected_name=$(echo -e -n "$options" | rofi -dmenu -i -theme "$HOME/.config/rofi/wallpaper.rasi")
     [ -n "$selected_name" ] && selected_file="$WALLPAPER_DIR/$selected_name"
 elif command -v wofi &>/dev/null; then
     selected_name=$(echo -e -n "$options" | wofi --dmenu --prompt "Select Wallpaper")

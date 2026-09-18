@@ -59,13 +59,20 @@ def main():
 
     # Appliquer avec papirus-folders (silencieusement, non bloquant)
     try:
-        subprocess.run(
-            ["papirus-folders", "-C", closest_color_name, "--theme", "Papirus-Dark"],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            timeout=2,
-        )
+        # Appliquer sur Papirus-Dark et Papirus
+        for theme in ["Papirus-Dark", "Papirus"]:
+            subprocess.run(
+                ["papirus-folders", "-C", closest_color_name, "--theme", theme],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=4,
+            )
+        
+        # Rafraichir le cache des icones GTK
+        for p in [Path.home() / ".local/share/icons/Papirus-Dark", Path.home() / ".local/share/icons/Papirus"]:
+            if p.exists():
+                subprocess.run(["gtk-update-icon-cache", "-f", "-t", str(p)], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
     except Exception:
         pass
 

@@ -224,6 +224,7 @@ if ! command -v papirus-folders &>/dev/null; then
         || warn "Could not install papirus-folders script"
 fi
 if command -v papirus-folders &>/dev/null; then
+    sudo chmod -R a+rw /usr/share/icons/Papirus* 2>/dev/null || true
     papirus-folders -C blue --theme Papirus-Dark 2>/dev/null || true
 fi
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Extract a 16-color palette from a wallpaper and write pywal cache files."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -216,6 +217,22 @@ def write_cpmenu_layout(colors: list[str]) -> None:
     (WAL_DIR / "cpmenu-layout").write_text(content)
 
 
+def write_colors_json(colors: list[str], wallpaper: Path) -> None:
+    data = {
+        "wallpaper": str(wallpaper),
+        "alpha": "100",
+        "special": {
+            "background": f"#{colors[0]}",
+            "foreground": f"#{colors[7]}",
+            "cursor": f"#{colors[7]}"
+        },
+        "colors": {
+            f"color{i}": f"#{c}" for i, c in enumerate(colors)
+        }
+    }
+    (WAL_DIR / "colors.json").write_text(json.dumps(data, indent=4) + "\n")
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <wallpaper>", file=sys.stderr)
@@ -236,6 +253,7 @@ def main() -> int:
     write_gtk_css(colors)
     write_colors_sh(colors, wallpaper)
     write_cpmenu_layout(colors)
+    write_colors_json(colors, wallpaper)
 
     return 0
 
