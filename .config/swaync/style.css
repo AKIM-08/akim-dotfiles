@@ -280,33 +280,47 @@ window.control-center {
     background-color: @mpris-button-hover;
 }
 .widget-buttons-grid {
-    font-family: "JetBrainsMono Nerd Font";
-    padding: 8px;
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', sans-serif;
+    padding: 6px;
     margin: 6px 12px 12px 12px;
     border-radius: 14px;
     background: alpha(@background, 0.45);
     border: 1px solid alpha(@color4, 0.15);
 }
 
+.widget-buttons-grid > flowbox {
+    padding: 0px;
+    margin: 0px;
+}
+
+.widget-buttons-grid > flowbox > flowboxchild {
+    padding: 3px;
+    margin: 0px;
+}
+
 .widget-buttons-grid > flowbox > flowboxchild > button {
     background: alpha(@foreground, 0.08);
-    border-radius: 10px;
-    border: 1px solid alpha(@color4, 0.10);
-    padding: 8px 12px;
-    margin: 4px;
-    transition: all 0.3s ease;
+    border-radius: 12px;
+    border: 1px solid alpha(@color4, 0.12);
+    min-width: 96px;
+    min-height: 48px;
+    padding: 10px;
+    margin: 0px;
+    box-shadow: none;
+    transition: all 0.25s ease;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button label {
-    font-size: 18px;
+    font-size: 24px;
+    font-weight: bold;
     color: @foreground;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover {
-    background: alpha(@color4, 0.30);
+    background: alpha(@color4, 0.35);
     border: 1px solid @color4;
-    box-shadow: 0 0 10px alpha(@color4, 0.35);
+    box-shadow: 0 0 12px alpha(@color4, 0.45);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover label {
@@ -316,7 +330,7 @@ window.control-center {
 .widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
     background: @color4;
     border: 1px solid @color4;
-    box-shadow: 0 0 12px alpha(@color4, 0.50);
+    box-shadow: 0 0 14px alpha(@color4, 0.55);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked label {

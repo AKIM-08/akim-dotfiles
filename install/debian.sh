@@ -106,6 +106,7 @@ APT_CORE_PKGS=(
     xdg-desktop-portal-hyprland
     fonts-jetbrains-mono
     fonts-font-awesome
+    fonts-nerd-symbols
     papirus-icon-theme
     qt5ct
     qt6ct
