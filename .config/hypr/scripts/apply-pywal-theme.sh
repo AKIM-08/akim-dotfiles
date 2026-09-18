@@ -68,8 +68,7 @@ reload_ui() {
         pkill -SIGUSR2 waybar 2>/dev/null || true
     fi
     if pgrep -x swaync >/dev/null 2>&1 && command -v swaync-client &>/dev/null; then
-        timeout 2 swaync-client -R 2>/dev/null || timeout 2 swaync-client --reload-css 2>/dev/null || true
-        timeout 2 swaync-client -rs 2>/dev/null || true
+        timeout 2 swaync-client --reload-css 2>/dev/null || true
     fi
 }
 

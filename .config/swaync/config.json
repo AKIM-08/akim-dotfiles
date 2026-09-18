@@ -61,30 +61,30 @@
             "columns": 3,
             "actions": [
                 {
-                    "label": "󰝟",
+                    "label": "󰕾",
                     "command": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
                     "type": "toggle"
                 },
                 {
-                    "label": "󰍭",
+                    "label": "󰍬",
                     "command": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
                     "type": "toggle"
                 },
                 {
-                    "label": "",
+                    "label": "󰖩",
                     "command": "kitty -e nmtui"
                 },
                 {
-                    "label": "",
+                    "label": "󰂯",
                     "command": "bash -c 'rfkill unblock bluetooth 2>/dev/null; bluetoothctl power on 2>/dev/null; blueman-manager'"
                 },
                 {
-                    "label": "󰤄",
+                    "label": "󰂛",
                     "command": "swaync-client -d -sw",
                     "type": "toggle"
                 },
                 {
-                    "label": "󰄪",
+                    "label": "󰍛",
                     "command": "kitty -e btop"
                 }
             ]

@@ -1,17 +1,14 @@
 @import url("colors-waybar.css");
-/* Fallback si pywal pas chargé */
-@define-color background #1e1e2e;
-@define-color foreground #cdd6f4;
-@define-color color4 #89b4fa;
-@define-color color7 #bac2de;
-@define-color color15 #cdd6f4;
-@define-color mpris-album-art-overlay alpha(@background, 0.55);
-@define-color mpris-button-hover alpha(@background, 0.50);
-@define-color text @color15;
-@define-color bg alpha(@background,.5);
-@define-color bg-hover alpha(@background,.8);
-@define-color mycolor @color9;
-@define-color border-color alpha(@mycolor, 0.15);
+
+@define-color text @foreground;
+@define-color text-muted @color7;
+@define-color bg alpha(@background, 0.70);
+@define-color bg-card alpha(@background, 0.50);
+@define-color bg-hover alpha(@color4, 0.25);
+@define-color mycolor @color4;
+@define-color border-color alpha(@color4, 0.25);
+@define-color mpris-album-art-overlay alpha(@background, 0.60);
+@define-color mpris-button-hover alpha(@color4, 0.30);
 
 @keyframes fadeIn{
 0% {
@@ -284,42 +281,42 @@ window.control-center {
 }
 .widget-buttons-grid {
     font-family: "JetBrainsMono Nerd Font";
-    padding-left: 8px;
-    padding-right: 8px;
-    padding-bottom: 8px;
-    margin: 10px;
-    border-radius: 12px;
-    background: transparent;
-}
-
-.widget-buttons-grid > flowbox > flowboxchild > button label {
-    font-size: 20px;
-    color: @color7;
-    transition: all 0.7s ease;
-}
-
-.widget-buttons-grid > flowbox > flowboxchild > button:hover label {
-    font-size: 20px;
-    color: @text;
-    transition: all 0.7s ease;
+    padding: 8px;
+    margin: 6px 12px 12px 12px;
+    border-radius: 14px;
+    background: alpha(@background, 0.45);
+    border: 1px solid alpha(@color4, 0.15);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button {
-    background: transparent;
-    border-radius: 12px;
-    text-shadow: none;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.02);
-    transition: all 0.5s ease;
+    background: alpha(@foreground, 0.08);
+    border-radius: 10px;
+    border: 1px solid alpha(@color4, 0.10);
+    padding: 8px 12px;
+    margin: 4px;
+    transition: all 0.3s ease;
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button label {
+    font-size: 18px;
+    color: @foreground;
+    transition: all 0.3s ease;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover {
-    background: @color4;
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
-    transition: all 0.5s ease;
+    background: alpha(@color4, 0.30);
+    border: 1px solid @color4;
+    box-shadow: 0 0 10px alpha(@color4, 0.35);
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button:hover label {
+    color: @foreground;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
-    background: @mycolor;
+    background: @color4;
+    border: 1px solid @color4;
+    box-shadow: 0 0 12px alpha(@color4, 0.50);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked label {
@@ -337,42 +334,39 @@ window.control-center {
 }
 
 trough {
-    border-radius: 20px;
-    background: transparent;
+    border-radius: 10px;
+    background: alpha(@foreground, 0.12);
+    min-height: 8px;
 }
 
 trough highlight {
-    padding: 5px;
-    background: @mycolor;
-    border-radius: 20px;
-    box-shadow: 0px 0px 5px rgba(0, 0, 0, .5);
-    transition: all .7s ease;
-}
-trough highlight:hover {
-    padding: 5px;
-    background: @mycolor;
-    border-radius: 20px;
-    box-shadow: 0px 0px 5px rgba(0, 0, 0, 1);
-    transition: all .7s ease;
+    background: @color4;
+    border-radius: 10px;
+    box-shadow: 0px 0px 8px alpha(@color4, 0.4);
+    transition: all .2s ease;
 }
 
 trough slider {
-    background: transparent;
-}
-trough slider:hover {
-    background: transparent;
+    background: @foreground;
+    border-radius: 50%;
+    min-width: 14px;
+    min-height: 14px;
+    box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.5);
 }
 
 .widget-volume {
-    background-color: transparent;
-    padding: 8px;
-    margin: 8px;
+    background-color: alpha(@background, 0.35);
+    padding: 8px 14px;
+    margin: 4px 12px;
     border-radius: 12px;
+    border: 1px solid alpha(@color4, 0.10);
 }
+
 .widget-backlight {
-    background-color: transparent;
-    padding: 8px;
-    margin: 8px;
+    background-color: alpha(@background, 0.35);
+    padding: 8px 14px;
+    margin: 4px 12px;
     border-radius: 12px;
+    border: 1px solid alpha(@color4, 0.10);
 }
 
