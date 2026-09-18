@@ -74,7 +74,7 @@ element {
     spacing: 12px;
     background-color: transparent;
     text-color: @text-color;
-    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 element normal.normal {
@@ -115,12 +115,12 @@ element alternate.normal {
 
 element-icon {
     size: 30px;
-    cursor: pointer;
+    cursor: inherit;
     vertical-align: 0.5;
 }
 
 element-text {
     vertical-align: 0.5;
-    cursor: pointer;
+    cursor: inherit;
     text-color: inherit;
 }
