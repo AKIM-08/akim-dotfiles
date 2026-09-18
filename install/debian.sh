@@ -230,26 +230,23 @@ fi
 echo "--> Checking Rust tools (awww, snmenu)..."
 mkdir -p "$HOME/.local/bin"
 
-install_rust_tool() {
-    local tool_name="$1"
-    local git_url="$2"
-    if ! command -v "$tool_name" &>/dev/null && [ ! -x "$HOME/.local/bin/$tool_name" ]; then
-        echo "    Attempting to install $tool_name from $git_url..."
-        if command -v cargo &>/dev/null; then
-            cargo install --git "$git_url" --root "$HOME/.local" 2>/dev/null || {
-                # Fallback: git clone & build
-                rm -rf "/tmp/$tool_name" 2>/dev/null
-                git clone --depth=1 "$git_url" "/tmp/$tool_name" && \
-                (cd "/tmp/$tool_name" && cargo build --release && cp target/release/* "$HOME/.local/bin/" 2>/dev/null) && \
-                rm -rf "/tmp/$tool_name"
-            } || warn "Failed to build $tool_name from source"
-        else
-            warn "Rust 'cargo' not found. If you wish to build $tool_name: sudo apt install cargo liblz4-dev pkg-config"
-        fi
+install_rust_git() {
+    local repo_url="$1"
+    shift
+    local packages=("$@")
+    if command -v cargo &>/dev/null; then
+        for pkg in "${packages[@]}"; do
+            if ! command -v "$pkg" &>/dev/null && [ ! -x "$HOME/.local/bin/$pkg" ]; then
+                echo "    Installing $pkg from $repo_url..."
+                cargo install --git "$repo_url" "$pkg" --root "$HOME/.local" 2>/dev/null || warn "Failed to install $pkg"
+            fi
+        done
+    else
+        warn "Rust 'cargo' not found. If you wish to build packages from source: sudo apt install cargo liblz4-dev pkg-config"
     fi
 }
 
-install_rust_tool "awww" "https://codeberg.org/LGFae/awww.git"
+install_rust_git "https://codeberg.org/LGFae/awww.git" "awww" "awww-daemon"
 
 # 6. Wayland Session Registration for GDM & PAM Configuration
 echo "--> Ensuring Hyprland Wayland session is registered with GDM..."
