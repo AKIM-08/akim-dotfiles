@@ -120,17 +120,38 @@ APT_CORE_PKGS=(
     policykit-1-gnome
 )
 
+# 2b. Enable trixie-backports (required for Hyprland packages)
+echo "--> Enabling trixie-backports repository..."
+BACKPORTS_FILE="/etc/apt/sources.list.d/backports.list"
+if ! grep -q "trixie-backports" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+    echo "deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware" | sudo tee "$BACKPORTS_FILE" > /dev/null
+    sudo apt-get update || die "apt-get update failed after adding backports."
+    echo "    ✓ trixie-backports added"
+else
+    echo "    ✓ trixie-backports already configured"
+fi
+
 # Optional packages available in standard APT
 APT_EXTRA_PKGS=(
-    hyprland
-    hyprlock
-    hypridle
     sway-notification-center
     qt5-style-kvantum
     qt6-style-kvantum
     pavucontrol
     bluez
 )
+
+# Hyprland packages from backports (REQUIRED, not optional)
+BACKPORTS_PKGS=(
+    hyprland
+    hyprlock
+    hypridle
+    xdg-desktop-portal-hyprland
+)
+
+echo "--> Installing Hyprland packages from trixie-backports..."
+for pkg in "${BACKPORTS_PKGS[@]}"; do
+    sudo apt-get install -y -t trixie-backports "$pkg" || echo "WARNING: Failed to install $pkg from backports"
+done
 
 for pkg in "${APT_CORE_PKGS[@]}"; do
     run_optional "Installing $pkg" sudo apt-get install -y "$pkg"
