@@ -110,11 +110,15 @@ decoration {
     # https://wiki.hyprland.org/Configuring/Variables/#blur
     blur {
         enabled = true
+        size = 8
+        passes = 3
+        new_optimizations = on
+        ignore_opacity = true
         xray = false
         special = false
-        size = 10
-        passes = 3
-
+        noise = 0.0117
+        contrast = 0.8916
+        brightness = 0.8172
         vibrancy = 0.1696
     }
 }

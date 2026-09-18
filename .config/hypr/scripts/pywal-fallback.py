@@ -13,19 +13,54 @@ def hex_rgb(r: int, g: int, b: int) -> str:
     return f"{r:02x}{g:02x}{b:02x}"
 
 
+def luminance(r: int, g: int, b: int) -> float:
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
 def extract_colors(image_path: Path) -> list[str]:
     img = Image.open(image_path).convert("RGB")
     img = img.resize((256, 256))
-    quantized = img.quantize(colors=16)
+    quantized = img.quantize(colors=32)
     palette = quantized.getpalette()
     if not palette:
         raise RuntimeError("Could not extract palette from image")
 
-    colors: list[str] = []
-    for i in range(16):
+    raw_rgbs = []
+    for i in range(32):
         r, g, b = palette[i * 3 : i * 3 + 3]
-        colors.append(hex_rgb(r, g, b))
-    return colors
+        raw_rgbs.append((r, g, b))
+
+    # Sort by luminance
+    raw_rgbs.sort(key=lambda c: luminance(*c))
+
+    # Construct clean dark-mode palette:
+    # color0 / background: Deep charcoal tinted with darkest hue
+    darkest = raw_rgbs[0]
+    bg_r = max(16, min(32, int(darkest[0] * 0.25) + 12))
+    bg_g = max(18, min(36, int(darkest[1] * 0.25) + 14))
+    bg_b = max(24, min(42, int(darkest[2] * 0.25) + 20))
+
+    # Foreground: Clean bright white/cream
+    fg_r, fg_g, fg_b = 218, 224, 238
+
+    # Pick 6 distinct vibrant midtones for colors 1-6
+    accents = raw_rgbs[4:28]
+    step = max(1, len(accents) // 6)
+    picked = [accents[i * step] for i in range(6)]
+
+    colors = [hex_rgb(bg_r, bg_g, bg_b)]
+    for r, g, b in picked:
+        # Boost saturation/vibrancy slightly for dark background
+        colors.append(hex_rgb(min(255, max(40, r)), min(255, max(40, g)), min(255, max(40, b))))
+    colors.append(hex_rgb(fg_r, fg_g, fg_b))
+
+    # Bright variants (colors 8-15)
+    colors.append(hex_rgb(bg_r + 20, bg_g + 20, bg_b + 25))
+    for r, g, b in picked:
+        colors.append(hex_rgb(min(255, r + 30), min(255, g + 30), min(255, b + 30)))
+    colors.append(hex_rgb(245, 247, 255))
+
+    return colors[:16]
 
 
 def write_hyprland_conf(colors: list[str], wallpaper: Path) -> None:

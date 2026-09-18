@@ -15,13 +15,13 @@ _fishy_collapsed_wd() {
   echo "${(j:/:)pwd}"
 }
 
-local user_color='green'; [ $UID -eq 0 ] && user_color='red'
+local user_color='cyan'; [ $UID -eq 0 ] && user_color='red'
 local host_color='white'; [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ] && host_color='yellow'
-PROMPT='%{$fg_bold[$user_color]%}%n%{$reset_color%} %{$fg_bold[$host_color]%}$(_fishy_collapsed_wd)%{$reset_color%} %{$fg_bold[$host_color]%}❯%{$reset_color%} '
+PROMPT='%{$fg_bold[$user_color]%}%n %{$fg_bold[blue]%}%~ %{$fg_bold[magenta]%}❯%{$reset_color%} '
 PROMPT2='%{$fg[red]%}\ %{$reset_color%}'
 
 local return_status="%{$fg_bold[red]%}%(?..%?)%{$reset_color%}"
-RPROMPT="${RPROMPT}"'${return_status}$(git_prompt_info)$(git_prompt_status)%{$reset_color%}'
+RPROMPT='%{$fg[cyan]%}%*%{$reset_color%} ${return_status}$(git_prompt_info)$(git_prompt_status)%{$reset_color%}'
 
 ZSH_THEME_GIT_PROMPT_PREFIX=" "
 ZSH_THEME_GIT_PROMPT_SUFFIX=""
