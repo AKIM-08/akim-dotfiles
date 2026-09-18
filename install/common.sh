@@ -98,7 +98,9 @@ fi
 
 if [ -n "$(command -v zsh 2>/dev/null)" ] && [ "$SHELL" != "$(command -v zsh)" ]; then
     echo "--> Setting zsh as default shell..."
-    if chsh -s "$(command -v zsh)" 2>/dev/null; then
+    if sudo usermod -s "$(command -v zsh)" "$USER" 2>/dev/null; then
+        echo "--> Default shell changed to zsh (effective after next login)."
+    elif command -v chsh &>/dev/null && chsh -s "$(command -v zsh)" < /dev/null 2>/dev/null; then
         echo "--> Default shell changed to zsh (effective after next login)."
     else
         warn "Could not change default shell automatically. Run manually: chsh -s \$(command -v zsh)"

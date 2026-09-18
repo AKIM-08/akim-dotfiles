@@ -65,6 +65,7 @@ sudo apt-get update || die "apt-get update failed. Please check your network and
 echo "--> Installing build essentials and tools..."
 sudo apt-get install -y \
     build-essential \
+    cargo \
     git \
     curl \
     wget \
@@ -72,6 +73,8 @@ sudo apt-get install -y \
     pipx \
     python3-pip \
     python3-pil \
+    python3-pyqt5 \
+    python3-pyqt6 \
     libnotify-bin \
     pkg-config \
     libglib2.0-bin \
@@ -165,14 +168,13 @@ pipx install waypaper --force 2>/dev/null || warn "Could not install waypaper vi
 ## 5c. Catppuccin Mocha GTK Theme
 echo "--> Installing Catppuccin Mocha GTK Theme..."
 mkdir -p "$HOME/.local/share/themes"
-if [ ! -d "$HOME/.local/share/themes/Catppuccin-Mocha-Standard-Blue-Dark" ] && [ ! -d "/usr/share/themes/Catppuccin-Mocha-Standard-Blue-Dark" ]; then
-    echo "    Downloading Catppuccin Mocha GTK theme..."
+if [ ! -d "$HOME/.local/share/themes/catppuccin-mocha-blue-standard+default" ] && [ ! -d "/usr/share/themes/catppuccin-mocha-blue-standard+default" ]; then
+    echo "    Downloading and applying Catppuccin Mocha GTK theme..."
     mkdir -p /tmp/catppuccin-gtk
-    wget -q -O /tmp/catppuccin-gtk/theme.zip \
-        https://github.com/catppuccin/gtk/releases/download/v1.0.3/Catppuccin-Mocha-Standard-Blue-Dark.zip 2>/dev/null \
-        && unzip -q -o /tmp/catppuccin-gtk/theme.zip -d "$HOME/.local/share/themes/" 2>/dev/null \
-        && rm -rf /tmp/catppuccin-gtk \
-        || warn "Could not download prebuilt Catppuccin Mocha GTK theme"
+    if curl -LsS "https://raw.githubusercontent.com/catppuccin/gtk/main/install.py" -o /tmp/catppuccin-gtk/install.py 2>/dev/null; then
+        (cd /tmp/catppuccin-gtk && python3 install.py mocha blue -d "$HOME/.local/share/themes") 2>/dev/null || warn "Catppuccin GTK install.py failed"
+    fi
+    rm -rf /tmp/catppuccin-gtk
 fi
 
 ## 5d. Nordzy Cursors
