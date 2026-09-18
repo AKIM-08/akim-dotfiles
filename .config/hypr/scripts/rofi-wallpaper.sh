@@ -2,8 +2,9 @@
 # rofi-wallpaper.sh - Interactive Rofi/Wofi Wallpaper Picker with preview icons & toggle support
 
 # Toggle: Si le sélecteur Rofi/Wofi/QML est déjà ouvert, appuyer à nouveau sur SUPER+W le ferme immédiatement
-if pgrep -f "hex-wallpaper-picker.qml" >/dev/null || pgrep -x rofi >/dev/null || pgrep -x wofi >/dev/null; then
-    pkill -f "hex-wallpaper-picker.qml" 2>/dev/null || true
+if pgrep -x qmlscene >/dev/null || pgrep -x qml6 >/dev/null || pgrep -x rofi >/dev/null || pgrep -x wofi >/dev/null; then
+    pkill -x qmlscene 2>/dev/null || true
+    pkill -x qml6 2>/dev/null || true
     pkill -x rofi 2>/dev/null || pkill -x wofi 2>/dev/null || true
     exit 0
 fi

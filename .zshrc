@@ -15,12 +15,22 @@ else
     PROMPT='%n@%m %~ ❯ '
 fi
 
-# Arch Linux plugin paths (must be sourced after oh-my-zsh.sh)
-_autosuggestions=/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-_syntax_highlighting=/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# Distro-agnostic plugin paths (Arch & Debian compatible)
+for _p in /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh \
+          /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh; do
+    if [[ -f "$_p" ]]; then
+        source "$_p"
+        break
+    fi
+done
 
-[[ -f "$_autosuggestions" ]] && source "$_autosuggestions"
-[[ -f "$_syntax_highlighting" ]] && source "$_syntax_highlighting"
+for _p in /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+          /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
+    if [[ -f "$_p" ]]; then
+        source "$_p"
+        break
+    fi
+done
 
 ZSH_HIGHLIGHT_STYLES[command]='fg=12,bold'
 ZSH_HIGHLIGHT_STYLES[alias]='fg=12,bold'

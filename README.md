@@ -1,20 +1,20 @@
 # akim-dotfiles
 
-Configuration Hyprland pour **Arch Linux** (laptop, écran unique, clavier **AZERTY**), avec thème dynamique généré depuis le fond d'écran via **pywal16**.
+Configuration Hyprland multi-distribution pour **Arch Linux** et **Debian** (laptop, écran unique, clavier **AZERTY**), avec thème dynamique généré depuis le fond d'écran via **pywal16**.
 
 ## Stack
 
 | Composant | Outil |
 |-----------|-------|
-| OS | Arch Linux |
-| Écran de connexion | SDDM (thème **akim** — split-screen) |
+| OS | Arch Linux / Debian (13 Trixie, Testing, Sid ou Bookworm backports) |
+| Écran de connexion | SDDM (Arch) / GDM (Debian — coexistence GNOME préservée) |
 | Compositrice | Hyprland |
 | Terminal | Kitty |
 | Barre d'état | Waybar (4 thèmes) |
 | Lanceur | Rofi (+ Wofi pour certains menus) |
-| Menu d'alimentation | wlogout |
+| Menu d'alimentation | snmenu (radial CS:GO) / wlogout |
 | Notifications | SwayNC |
-| Fond d'écran | hyprpaper |
+| Fond d'écran | awww (transitions animées) / hyprpaper / waypaper |
 | Verrouillage / veille | hyprlock + hypridle |
 | Infos système (terminal) | fastfetch |
 | Thème GTK | Catppuccin Mocha + accents **pywal16** (`gtk.css`) |
@@ -26,11 +26,16 @@ Configuration Hyprland pour **Arch Linux** (laptop, écran unique, clavier **AZE
 
 ```
 akim-dotfiles/
-├── install.sh              # Installation automatique (Arch)
+├── install.sh              # Lanceur universel (détection automatique Arch / Debian)
+├── install/
+│   ├── arch.sh             # Couche d'installation paquets Arch Linux & AUR
+│   ├── debian.sh           # Couche d'installation paquets Debian (APT, pipx, thèmes)
+│   ├── common.sh           # Déploiement configs partagées, pywal, scripts, sauvegardes
+│   └── rollback.sh         # Script de restauration / annulation des modifications
 ├── .gitignore
 ├── README.md
-├── .zshrc
-├── sddm/akim/              # Thème SDDM personnalisé (split-screen)
+├── .zshrc                  # Compatible Arch et Debian (auto-détection des plugins)
+├── sddm/akim/              # Thème SDDM personnalisé (split-screen pour Arch)
 ├── omz-custom/             # Thème fishy (copié vers ~/.oh-my-zsh/themes/ à l'install)
 │   └── themes/fishy.zsh-theme
 ├── assets/
@@ -39,35 +44,24 @@ akim-dotfiles/
 └── .config/
     ├── hypr/               # Hyprland, hyprpaper, hyprlock, hypridle + scripts
     ├── waybar/             # Barre + thèmes + scripts
-    ├── wlogout/            # Menu d'alimentation
+    ├── cpmenu/             # Menu d'alimentation snmenu
     ├── kitty/              # Terminal
     ├── rofi/               # Lanceur + presse-papier (clipboard.rasi)
     ├── wofi/               # Menus (sélecteur de thème Waybar)
     ├── swaync/             # Centre de notifications
     ├── waypaper/           # Gestionnaire de fonds d'écran (GUI)
-    ├── wal/                # Templates pywal16 (Hyprland, GTK)
+    ├── wal/                # Templates pywal16 (Hyprland, GTK, Qt)
     ├── gtk-3.0/            # Thème GTK de base (Catppuccin Mocha)
-    └── gtk-4.0/            # Thème GTK 4 / libadwaita
+    ├── gtk-4.0/            # Thème GTK 4 / libadwaita
+    ├── qt5ct/              # Configuration Qt5
+    └── qt6ct/              # Configuration Qt6
 ```
 
 > `current.jpg` n'est **pas** dans le dépôt : c'est un **symlink** vers une image dans `~/Pictures/wallpapers/` (ex. `image1.jpg`), créé à l'installation. Cela évite de recopier le JPEG et de perdre en qualité.
 
-## Fonds d'écran inclus
-
-| Fichier | Description |
-|---------|-------------|
-| `image1.jpg` | Dragon Ball — Goku sur Shenron (fond par défaut) |
-| `image2.jpg` | Logo Arch Linux (minimaliste) |
-| `image3.jpg` | Paysage arctique — brise-glace |
-| `image4.jpg` | Hunter × Hunter — personnages en costume |
-| `image5.jpg` | Jujutsu Kaisen — Gojo |
-| `image6.jpg` | Dark fantasy — chevalier spectral |
-| `image7.jpg` | Montagnes enneigées — Patagonie |
-| `image8.jpg` | Sword Art Online — Kirito & Asuna |
-
 ## Prérequis
 
-- Arch Linux (installation fraîche ou existante)
+- Arch Linux ou Debian (Debian 13 Trixie / Sid / Testing recommandé)
 - Accès `sudo`
 - Connexion internet
 - Laptop avec un seul écran (config moniteur auto-détectée)
@@ -75,30 +69,29 @@ akim-dotfiles/
 
 ## Installation
 
-### Automatique (recommandée)
+### Automatique (détection intelligente de l'OS)
 
 ```bash
 git clone <url-du-repo> akim-dotfiles
 cd akim-dotfiles
-chmod +x install.sh
+chmod +x install.sh install/*.sh
 ./install.sh
-sudo reboot
 ```
 
-Le script `install.sh` :
+Options manuelles disponibles :
+```bash
+./install.sh --debian    # Forcer le mode Debian
+./install.sh --arch      # Forcer le mode Arch Linux
+./install.sh --rollback  # Restaurer les configurations précédentes
+```
 
-1. Configure la locale en `en_US.UTF-8`
-2. Installe les **paquets essentiels** (Hyprland, Kitty, Waybar, wlogout, pipewire-pulse, bluez, btop…)
-3. Installe les **applications optionnelles** sans bloquer (Firefox, Discord, VS Code, VLC, OBS, Cava…)
-4. Active **NetworkManager** et **bluetooth**
-5. Installe **yay** puis depuis l'AUR : pywal16, Catppuccin Mocha GTK, Papirus folders, Nordzy, Waypaper
-6. Installe des paquets AUR optionnels (Brave, Spotify, pipes.sh, tty-clock, thème SDDM Catppuccin…)
-7. Copie les wallpapers, déploie les configs, configure **wlogout** et les thèmes GTK
-8. Installe Oh My Zsh + thème fishy, rend les scripts exécutables
-9. Génère le **thème dynamique** depuis `current.jpg` via `apply-pywal-theme.sh`
-10. Installe le thème SDDM **akim** et active **SDDM**
+### Comportement sur Debian
+- **Coexistence GNOME :** GDM et GNOME restent intacts. Hyprland apparaît dans le menu de session de GDM (icône engrenage).
+- **Sécurité des configurations :** Chaque dossier dans `~/.config/` et `~/.zshrc` est automatiquement sauvegardé (`.backup-before-akim-dotfiles-...`) avant remplacement.
+- **Thèmes & Polices :** Les polices JetBrainsMono Nerd Font, le thème GTK Catppuccin Mocha et les curseurs Nordzy sont automatiquement téléchargés et configurés.
 
-Les paquets optionnels peuvent échouer sans interrompre l'installation. Le changement de shell vers zsh affiche un avertissement si `chsh` échoue (mot de passe requis).
+### Comportement sur Arch Linux
+- Installe les paquets officiels et AUR (via `yay`), configure SDDM avec le thème akim.
 
 ### Mise à jour après `git pull`
 
