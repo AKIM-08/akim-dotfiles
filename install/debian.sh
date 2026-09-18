@@ -227,26 +227,26 @@ if command -v papirus-folders &>/dev/null; then
 fi
 
 ## 5f. Rust tools: awww (animated wallpaper daemon) & snmenu (radial power menu)
-echo "--> Checking Rust tools (awww, snmenu)..."
+echo "--> Setting up Rust tools (awww, snmenu)..."
 mkdir -p "$HOME/.local/bin"
 
-install_rust_git() {
-    local repo_url="$1"
-    shift
-    local packages=("$@")
-    if command -v cargo &>/dev/null; then
-        for pkg in "${packages[@]}"; do
-            if ! command -v "$pkg" &>/dev/null && [ ! -x "$HOME/.local/bin/$pkg" ]; then
-                echo "    Installing $pkg from $repo_url..."
-                cargo install --git "$repo_url" "$pkg" --root "$HOME/.local" 2>/dev/null || warn "Failed to install $pkg"
-            fi
-        done
-    else
-        warn "Rust 'cargo' not found. If you wish to build packages from source: sudo apt install cargo liblz4-dev pkg-config"
+if ! command -v awww &>/dev/null || ! command -v awww-daemon &>/dev/null; then
+    echo "    Building awww & awww-daemon from source..."
+    sudo apt-get install -y cargo liblz4-dev pkg-config libwayland-dev 2>/dev/null || true
+    
+    # Ensure rustc >= 1.89
+    if ! command -v rustup &>/dev/null && [ "$(rustc --version 2>/dev/null | awk '{print $2}' | cut -d. -f2 || echo 0)" -lt 89 ]; then
+        echo "    Installing modern Rust via rustup for compilation..."
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y 2>/dev/null || true
+        [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
     fi
-}
-
-install_rust_git "https://codeberg.org/LGFae/awww.git" "awww" "awww-daemon"
+    
+    rm -rf /tmp/awww 2>/dev/null
+    git clone --depth=1 https://codeberg.org/LGFae/awww.git /tmp/awww 2>/dev/null && {
+        (cd /tmp/awww && cargo build --release --locked && cp target/release/awww target/release/awww-daemon "$HOME/.local/bin/" && sudo cp target/release/awww target/release/awww-daemon /usr/local/bin/ 2>/dev/null)
+        rm -rf /tmp/awww
+    } || warn "Failed to build awww from source"
+fi
 
 # 6. Wayland Session Registration for GDM & PAM Configuration
 echo "--> Ensuring Hyprland Wayland session is registered with GDM..."
@@ -274,11 +274,16 @@ sudo tee /etc/pam.d/hyprlock > /dev/null << 'EOF'
 @include common-session
 EOF
 
-# 8. Add user to input and video groups (for keyboard/mouse access under Wayland)
+# 8. Ensure systemd doesn't start hypridle immediately before input is ready
+echo "--> Disabling systemd user hypridle service (started with delay in hyprland.hl)..."
+systemctl --user disable hypridle.service 2>/dev/null || true
+systemctl --user mask hypridle.service 2>/dev/null || true
+
+# 9. Add user to input and video groups (for keyboard/mouse access under Wayland)
 echo "--> Ensuring user is in input and video groups..."
 sudo usermod -aG input,video "$USER" 2>/dev/null || true
 
-# 9. Ensure only GDM is active (disable SDDM if previously enabled)
+# 10. Ensure only GDM is active (disable SDDM if previously enabled)
 echo "--> Ensuring GDM is active and disabling any conflicting SDDM..."
 sudo systemctl disable sddm 2>/dev/null || true
 

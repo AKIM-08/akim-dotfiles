@@ -27,6 +27,12 @@
 * {
     outline:none;
 }
+.blank-window {
+    background: transparent;
+}
+window.control-center {
+    background: transparent;
+}
 .control-center .notification-row {
     background-color: unset;
 }
