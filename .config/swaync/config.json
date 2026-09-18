@@ -36,8 +36,7 @@
         "notifications",
         "volume",
         "backlight",
-        "buttons-grid#row1",
-        "buttons-grid#row2"
+        "buttons-grid"
     ],
     "widget-config": {
         "title": {
@@ -54,43 +53,39 @@
             "image-radius": 12
         },
         "volume": {
-            "label": " ",
+            "label": "󰕾 ",
             "show-value": true
         },
         "backlight": {
             "label": "󰃟 "
         },
-        "buttons-grid#row1": {
+        "buttons-grid": {
             "actions": [
                 {
-                    "label": "",
+                    "label": "󰝟",
                     "command": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
                     "type": "toggle"
                 },
                 {
-                    "label": "",
+                    "label": "󰍭",
                     "command": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
                     "type": "toggle"
                 },
                 {
                     "label": "",
                     "command": "kitty -e nmtui"
-                }
-            ]
-        },
-        "buttons-grid#row2": {
-            "actions": [
+                },
                 {
-                    "label": "",
+                    "label": "",
                     "command": "bash -c 'rfkill unblock bluetooth 2>/dev/null; bluetoothctl power on 2>/dev/null; blueman-manager'"
                 },
                 {
-                    "label": "",
+                    "label": "󰤄",
                     "command": "swaync-client -d -sw",
                     "type": "toggle"
                 },
                 {
-                    "label": "",
+                    "label": "󰄪",
                     "command": "kitty -e btop"
                 }
             ]

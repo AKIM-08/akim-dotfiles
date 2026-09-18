@@ -102,7 +102,7 @@ window.control-center {
 
 .widget-mpris .widget-mpris-player button {
     all: unset;
-    color: @text;
+    color: @accent;
     background: alpha(@foreground, 0.08);
     border: 1px solid @border-card;
     border-radius: 10px;
@@ -189,7 +189,7 @@ window.control-center {
     color: @color1;
 }
 
-/* Sliders: Volume and Backlight */
+/* Sliders: Volume and Backlight — Colored with Active Wallpaper Accent */
 .widget-volume,
 .widget-backlight {
     background-color: @bg-card;
@@ -201,9 +201,10 @@ window.control-center {
 
 .widget-volume > box > label,
 .widget-backlight > box > label {
-    font-size: 18px;
-    font-weight: bold;
-    color: @accent;
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    color: @accent !important;
     margin-right: 10px;
 }
 
@@ -229,39 +230,31 @@ scale trough slider {
     box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.45);
 }
 
-/* Buttons Grid: 3x2 Action Rows */
-.widget-buttons-grid,
-.row1,
-.row2 {
+/* Action Buttons Grid — Colored with Active Wallpaper Accent */
+.widget-buttons-grid {
     background-color: @bg-card;
-    padding: 4px;
-    margin: 3px 8px;
+    padding: 6px;
+    margin: 4px 8px 8px 8px;
     border-radius: 14px;
     border: 1px solid @border-card;
 }
 
-.widget-buttons-grid > flowbox,
-.row1 > flowbox,
-.row2 > flowbox {
+.widget-buttons-grid > flowbox {
     padding: 0px;
     margin: 0px;
 }
 
-.widget-buttons-grid > flowbox > flowboxchild,
-.row1 > flowbox > flowboxchild,
-.row2 > flowbox > flowboxchild {
+.widget-buttons-grid > flowbox > flowboxchild {
     padding: 3px;
     margin: 0px;
 }
 
-.widget-buttons-grid > flowbox > flowboxchild > button,
-.row1 > flowbox > flowboxchild > button,
-.row2 > flowbox > flowboxchild > button {
+.widget-buttons-grid > flowbox > flowboxchild > button {
     background: alpha(@foreground, 0.08);
     border-radius: 12px;
-    border: 1px solid alpha(@foreground, 0.12);
-    min-width: 104px;
-    min-height: 52px;
+    border: 1px solid alpha(@color4, 0.20);
+    min-width: 56px;
+    min-height: 48px;
     padding: 8px;
     margin: 0px;
     box-shadow: none;
@@ -269,54 +262,36 @@ scale trough slider {
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button label,
-.row1 > flowbox > flowboxchild > button label,
-.row2 > flowbox > flowboxchild > button label,
 .widget-buttons-grid button label,
-.row1 button label,
-.row2 button label,
-.widget-buttons-grid label,
-.row1 label,
-.row2 label {
-    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', sans-serif !important;
-    font-size: 26px !important;
-    font-weight: 900 !important;
-    color: @foreground !important;
-    -gtk-icon-size: 26px;
+.widget-buttons-grid label {
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif !important;
+    font-size: 22px !important;
+    font-weight: bold !important;
+    color: @accent !important;
+    -gtk-icon-size: 22px;
     margin: 0;
     padding: 0;
     transition: all 0.2s ease;
 }
 
-.widget-buttons-grid > flowbox > flowboxchild > button:hover,
-.row1 > flowbox > flowboxchild > button:hover,
-.row2 > flowbox > flowboxchild > button:hover {
-    background: @bg-card-hover;
-    border: 1px solid @accent;
-    box-shadow: 0 0 12px alpha(@accent, 0.40);
+.widget-buttons-grid > flowbox > flowboxchild > button:hover {
+    background: alpha(@color4, 0.25);
+    border: 1px solid @color4;
+    box-shadow: 0 0 12px alpha(@color4, 0.40);
 }
 
-.widget-buttons-grid > flowbox > flowboxchild > button:hover label,
-.row1 > flowbox > flowboxchild > button:hover label,
-.row2 > flowbox > flowboxchild > button:hover label {
-    color: @foreground !important;
+.widget-buttons-grid > flowbox > flowboxchild > button:hover label {
+    color: @accent !important;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.active,
-.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked,
-.row1 > flowbox > flowboxchild > button.active,
-.row1 > flowbox > flowboxchild > button.toggle:checked,
-.row2 > flowbox > flowboxchild > button.active,
-.row2 > flowbox > flowboxchild > button.toggle:checked {
+.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
     background: @accent;
     border: 1px solid @accent;
     box-shadow: 0 0 16px alpha(@accent, 0.60);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.active label,
-.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked label,
-.row1 > flowbox > flowboxchild > button.active label,
-.row1 > flowbox > flowboxchild > button.toggle:checked label,
-.row2 > flowbox > flowboxchild > button.active label,
-.row2 > flowbox > flowboxchild > button.toggle:checked label {
+.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked label {
     color: @background !important;
 }
