@@ -57,9 +57,15 @@ def main():
             min_dist = dist
             closest_color_name = name
 
-    # Appliquer avec papirus-folders (silencieusement)
+    # Appliquer avec papirus-folders (silencieusement, non bloquant)
     try:
-        subprocess.run(["papirus-folders", "-C", closest_color_name, "--theme", "Papirus-Dark"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["papirus-folders", "-C", closest_color_name, "--theme", "Papirus-Dark"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=2,
+        )
     except Exception:
         pass
 

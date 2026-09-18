@@ -61,11 +61,15 @@ apply_qt_colors() {
 }
 
 reload_ui() {
-    hyprctl reload 2>/dev/null || true
-    pkill -SIGUSR2 waybar 2>/dev/null || true
-    if command -v swaync-client &>/dev/null; then
-        swaync-client -R 2>/dev/null || swaync-client --reload-css 2>/dev/null || true
-        swaync-client -rs 2>/dev/null || true
+    if pgrep -x Hyprland >/dev/null 2>&1; then
+        hyprctl reload 2>/dev/null || true
+    fi
+    if pgrep -x waybar >/dev/null 2>&1; then
+        pkill -SIGUSR2 waybar 2>/dev/null || true
+    fi
+    if pgrep -x swaync >/dev/null 2>&1 && command -v swaync-client &>/dev/null; then
+        timeout 2 swaync-client -R 2>/dev/null || timeout 2 swaync-client --reload-css 2>/dev/null || true
+        timeout 2 swaync-client -rs 2>/dev/null || true
     fi
 }
 
@@ -97,6 +101,7 @@ apply_qt_colors
 command -v pywal-discord &>/dev/null && pywal-discord -t default
 
 # Recolorer les dossiers Papirus silencieusement sans bloquer
-python3 "$SCRIPT_DIR/apply-papirus-color.py" 2>/dev/null || true
+timeout 3 python3 "$SCRIPT_DIR/apply-papirus-color.py" 2>/dev/null || true
 
 reload_ui
+echo "--> Theme applied successfully."
