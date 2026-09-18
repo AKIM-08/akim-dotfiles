@@ -30,35 +30,44 @@ def extract_colors(image_path: Path) -> list[str]:
         r, g, b = palette[i * 3 : i * 3 + 3]
         raw_rgbs.append((r, g, b))
 
-    # Sort by luminance
-    raw_rgbs.sort(key=lambda c: luminance(*c))
+    # Sort by color saturation: max(c) - min(c)
+    def saturation(c):
+        return max(c) - min(c)
 
-    # Construct clean dark-mode palette:
-    # color0 / background: Deep charcoal tinted with darkest hue
-    darkest = raw_rgbs[0]
-    bg_r = max(16, min(32, int(darkest[0] * 0.25) + 12))
-    bg_g = max(18, min(36, int(darkest[1] * 0.25) + 14))
-    bg_b = max(24, min(42, int(darkest[2] * 0.25) + 20))
+    # Find dominant image tint
+    avg_r = sum(c[0] for c in raw_rgbs) // len(raw_rgbs)
+    avg_g = sum(c[1] for c in raw_rgbs) // len(raw_rgbs)
+    avg_b = sum(c[2] for c in raw_rgbs) // len(raw_rgbs)
 
-    # Foreground: Clean bright white/cream
-    fg_r, fg_g, fg_b = 218, 224, 238
+    # Background: Deep dark base with rich wallpaper hue tint
+    bg_r = max(14, min(36, int(avg_r * 0.18) + 8))
+    bg_g = max(14, min(36, int(avg_g * 0.18) + 8))
+    bg_b = max(18, min(42, int(avg_b * 0.18) + 12))
 
-    # Pick 6 distinct vibrant midtones for colors 1-6
-    accents = raw_rgbs[4:28]
+    # Foreground: Bright clean text with subtle warm/cool bias
+    fg_r = min(250, max(215, 230 + (avg_r - avg_b) // 10))
+    fg_g = min(250, max(220, 235))
+    fg_b = min(250, max(220, 240 + (avg_b - avg_r) // 10))
+
+    # Sort accents by saturation (vibrancy)
+    vibrant_rgbs = sorted(raw_rgbs, key=saturation, reverse=True)
+    accents = vibrant_rgbs[:12] if len(vibrant_rgbs) >= 12 else raw_rgbs
+
+    # Assign distinct 6 accent colors
     step = max(1, len(accents) // 6)
     picked = [accents[i * step] for i in range(6)]
 
     colors = [hex_rgb(bg_r, bg_g, bg_b)]
     for r, g, b in picked:
-        # Boost saturation/vibrancy slightly for dark background
-        colors.append(hex_rgb(min(255, max(40, r)), min(255, max(40, g)), min(255, max(40, b))))
+        # Boost vibrancy for dark themes
+        colors.append(hex_rgb(min(255, max(50, r)), min(255, max(50, g)), min(255, max(50, b))))
     colors.append(hex_rgb(fg_r, fg_g, fg_b))
 
     # Bright variants (colors 8-15)
-    colors.append(hex_rgb(bg_r + 20, bg_g + 20, bg_b + 25))
+    colors.append(hex_rgb(min(255, bg_r + 25), min(255, bg_g + 25), min(255, bg_b + 30)))
     for r, g, b in picked:
-        colors.append(hex_rgb(min(255, r + 30), min(255, g + 30), min(255, b + 30)))
-    colors.append(hex_rgb(245, 247, 255))
+        colors.append(hex_rgb(min(255, r + 35), min(255, g + 35), min(255, b + 35)))
+    colors.append(hex_rgb(248, 250, 255))
 
     return colors[:16]
 
