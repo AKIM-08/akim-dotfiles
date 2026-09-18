@@ -232,19 +232,24 @@ mkdir -p "$HOME/.local/bin"
 
 install_rust_tool() {
     local tool_name="$1"
-    local crate_name="$2"
+    local git_url="$2"
     if ! command -v "$tool_name" &>/dev/null && [ ! -x "$HOME/.local/bin/$tool_name" ]; then
-        echo "    Attempting to install $tool_name via cargo/pipx..."
+        echo "    Attempting to install $tool_name from $git_url..."
         if command -v cargo &>/dev/null; then
-            cargo install "$crate_name" --root "$HOME/.local" 2>/dev/null || warn "cargo install $crate_name failed"
+            cargo install --git "$git_url" --root "$HOME/.local" 2>/dev/null || {
+                # Fallback: git clone & build
+                rm -rf "/tmp/$tool_name" 2>/dev/null
+                git clone --depth=1 "$git_url" "/tmp/$tool_name" && \
+                (cd "/tmp/$tool_name" && cargo build --release && cp target/release/* "$HOME/.local/bin/" 2>/dev/null) && \
+                rm -rf "/tmp/$tool_name"
+            } || warn "Failed to build $tool_name from source"
         else
-            warn "Rust 'cargo' not found. If you wish to build $tool_name from source: sudo apt install cargo && cargo install $crate_name"
+            warn "Rust 'cargo' not found. If you wish to build $tool_name: sudo apt install cargo liblz4-dev pkg-config"
         fi
     fi
 }
 
-install_rust_tool "awww" "awww"
-install_rust_tool "snmenu" "snmenu"
+install_rust_tool "awww" "https://codeberg.org/LGFae/awww.git"
 
 # 6. Wayland Session Registration for GDM & PAM Configuration
 echo "--> Ensuring Hyprland Wayland session is registered with GDM..."
