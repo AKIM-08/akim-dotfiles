@@ -117,6 +117,7 @@ APT_CORE_PKGS=(
     zsh-syntax-highlighting
     zsh-autosuggestions
     imagemagick
+    policykit-1-gnome
 )
 
 # Optional packages available in standard APT
@@ -224,7 +225,7 @@ install_rust_tool() {
 install_rust_tool "awww" "awww"
 install_rust_tool "snmenu" "snmenu"
 
-# 6. Wayland Session Registration for GDM
+# 6. Wayland Session Registration for GDM & PAM Configuration
 echo "--> Ensuring Hyprland Wayland session is registered with GDM..."
 sudo mkdir -p /usr/share/wayland-sessions
 if [ ! -f /usr/share/wayland-sessions/hyprland.desktop ]; then
@@ -239,6 +240,25 @@ DesktopNames=Hyprland
 Keywords=tiling;wm;windowmanager;window;manager;
 EOF
 fi
+
+# 7. Configure PAM for hyprlock (essential for Debian keyboard unlock)
+echo "--> Configuring PAM for hyprlock..."
+if [ ! -f /etc/pam.d/hyprlock ]; then
+    sudo tee /etc/pam.d/hyprlock > /dev/null << 'EOF'
+auth include login
+account include login
+password include login
+session include login
+EOF
+fi
+
+# 8. Add user to input and video groups (for keyboard/mouse access under Wayland)
+echo "--> Ensuring user is in input and video groups..."
+sudo usermod -aG input,video "$USER" 2>/dev/null || true
+
+# 9. Ensure only GDM is active (disable SDDM if previously enabled)
+echo "--> Ensuring GDM is active and disabling any conflicting SDDM..."
+sudo systemctl disable sddm 2>/dev/null || true
 
 echo "=========================================================================="
 echo " Debian package and dependency layer installation complete."
