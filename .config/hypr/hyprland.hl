@@ -359,10 +359,8 @@ windowrule {
     match:class = (?i)^(org.gnome.Nautilus|nautilus)$
     opacity = 0.90 0.82
 }
-# Layer rules for SwayNC Apple iOS Liquid Glass blur
-layerrule = blur, swaync-control-center
-layerrule = blur, swaync-notification-window
-layerrule = ignorezero, swaync-control-center
-layerrule = ignorezero, swaync-notification-window
-layerrule = ignorealpha 0.5, swaync-control-center
-layerrule = ignorealpha 0.5, swaync-notification-window
+# Layer rules for SwayNC blur (Hyprland 0.53+ syntax)
+layerrule = blur on, match:namespace swaync-control-center
+layerrule = blur on, match:namespace swaync-notification-window
+layerrule = ignore_alpha 0.5, match:namespace swaync-control-center
+layerrule = ignore_alpha 0.5, match:namespace swaync-notification-window
