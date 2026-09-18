@@ -1,17 +1,17 @@
 {
     "$schema": "/etc/xdg/swaync/configSchema.json",
-    "positionX": "left",
-    "positionY": "bottom",
+    "positionX": "right",
+    "positionY": "top",
     "layer": "overlay",
     "control-center-layer": "top",
     "layer-shell": true,
     "cssPriority": "user",
     "ignore-gtk-theme": true,
-    "control-center-width": 350,
-    "control-center-margin-top": 8,
-    "control-center-margin-bottom": 8,
-    "control-center-margin-right": 0,
-    "control-center-margin-left": 8,
+    "control-center-width": 380,
+    "control-center-margin-top": 10,
+    "control-center-margin-bottom": 10,
+    "control-center-margin-right": 10,
+    "control-center-margin-left": 0,
     "notification-2fa-action": true,
     "notification-inline-replies": true,
     "notification-window-width": 350,
@@ -48,7 +48,7 @@
         },
         "mpris": {
             "image-size": 80,
-            "image-radius": 0
+            "image-radius": 12
         },
         "volume": {
             "label": "󰕾 ",
@@ -58,7 +58,7 @@
             "label": "󰃟 "
         },
         "buttons-grid": {
-            "columns": 3,
+            "buttons-per-row": 3,
             "actions": [
                 {
                     "label": "󰕾",

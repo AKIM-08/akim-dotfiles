@@ -2,7 +2,7 @@
 
 configuration {
     font: "JetBrainsMono Nerd Font 10.5";
-    show-icons: false;
+    show-icons: true;
     location: 0;
     yoffset: 0;
     xoffset: 0;
@@ -18,7 +18,7 @@ configuration {
 }
 
 window {
-    width: 580px;
+    width: 620px;
     border-radius: 16px;
     border: 2px;
     border-color: @border-color;
@@ -65,12 +65,13 @@ listview {
 }
 
 element {
-    padding: 8px 12px;
+    padding: 6px 12px;
     border-radius: 10px;
-    spacing: 10px;
+    spacing: 12px;
     background-color: transparent;
     text-color: @text-color;
     cursor: pointer;
+    children: [ "element-icon", "element-text" ];
 }
 
 element normal.normal {
@@ -107,6 +108,13 @@ element selected.active {
 element alternate.normal {
     background-color: transparent;
     text-color: @text-color;
+}
+
+element-icon {
+    size: 38px;
+    border-radius: 6px;
+    cursor: inherit;
+    vertical-align: 0.5;
 }
 
 element-text {
