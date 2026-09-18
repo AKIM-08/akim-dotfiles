@@ -31,6 +31,11 @@ if [ -x "/usr/local/bin/snmenu" ]; then
     exec /usr/local/bin/snmenu
 fi
 
+# 2. Python GTK3/Cairo native radial menu (exact replica of SNMenu)
+if [ -f "$HOME/.config/hypr/scripts/snmenu.py" ]; then
+    exec python3 "$HOME/.config/hypr/scripts/snmenu.py"
+fi
+
 # 2. wlogout if installed
 if command -v wlogout &>/dev/null; then
     exec wlogout -b 5

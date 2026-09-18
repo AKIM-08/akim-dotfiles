@@ -251,14 +251,14 @@ if ! command -v awww &>/dev/null || ! command -v awww-daemon &>/dev/null; then
 fi
 
 if ! command -v snmenu &>/dev/null && [ ! -x "$HOME/.local/bin/snmenu" ]; then
-    echo "    Building snmenu (radial power menu) from source..."
-    sudo apt-get install -y cargo pkg-config libgtk-3-dev libcairo2-dev libglib2.0-dev libpango1.0-dev 2>/dev/null || true
+    echo "    Setting up snmenu (radial power menu)..."
+    sudo apt-get install -y python3-gi gir1.2-gtk-3.0 python3-cairo gir1.2-gtklayershell-0.1 2>/dev/null || true
     
-    rm -rf /tmp/snmenu 2>/dev/null
-    git clone --depth=1 https://github.com/Sleep-No-More/SNMenu.git /tmp/snmenu 2>/dev/null && {
-        (cd /tmp/snmenu && cargo build --release && cp target/release/snmenu "$HOME/.local/bin/" && sudo cp target/release/snmenu /usr/local/bin/ 2>/dev/null)
-        rm -rf /tmp/snmenu
-    } || warn "Failed to build snmenu from source"
+    mkdir -p "$HOME/.local/bin"
+    if [ -f "$REPO_ROOT/.config/hypr/scripts/snmenu.py" ]; then
+        cp "$REPO_ROOT/.config/hypr/scripts/snmenu.py" "$HOME/.local/bin/snmenu"
+        chmod +x "$HOME/.local/bin/snmenu"
+    fi
 fi
 
 # 6. Wayland Session Registration for GDM & PAM Configuration
