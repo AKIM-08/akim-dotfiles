@@ -22,9 +22,56 @@ apply_gtk_colors() {
     local gtk_css="$WAL_CACHE/colors-gtk.css"
     [ -f "$gtk_css" ] || return 0
     mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"
-    cp "$gtk_css" "$HOME/.config/gtk-3.0/gtk.css"
     
-    # Pour GTK4 et Libadwaita (Nautilus)
+    # GTK3 Styling (Blueman, Pavucontrol, etc.)
+    cat "$gtk_css" > "$HOME/.config/gtk-3.0/gtk.css"
+    cat << 'EOF' >> "$HOME/.config/gtk-3.0/gtk.css"
+
+window, .background {
+    background-color: @theme_bg_color;
+    color: @theme_fg_color;
+}
+
+view, textview text, treeview.view, list, row {
+    background-color: @theme_base_color;
+    color: @theme_text_color;
+}
+
+headerbar, toolbar, menubar {
+    background-color: @theme_bg_color;
+    color: @theme_fg_color;
+    border-bottom: 1px solid alpha(@theme_fg_color, 0.12);
+}
+
+button {
+    background-color: alpha(@theme_fg_color, 0.08);
+    color: @theme_fg_color;
+    border: 1px solid alpha(@theme_fg_color, 0.12);
+    border-radius: 8px;
+}
+
+button:hover {
+    background-color: alpha(@theme_selected_bg_color, 0.25);
+    border-color: @theme_selected_bg_color;
+}
+
+switch:checked {
+    background-color: @theme_selected_bg_color;
+    border-color: @theme_selected_bg_color;
+}
+
+selection, *:selected, row:selected, treeview.view:selected {
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
+}
+
+scrollbar slider {
+    background-color: alpha(@theme_fg_color, 0.2);
+    border-radius: 6px;
+}
+EOF
+
+    # GTK4 et Libadwaita (Nautilus)
     cat "$gtk_css" > "$HOME/.config/gtk-4.0/gtk.css"
     cat << 'EOF' >> "$HOME/.config/gtk-4.0/gtk.css"
 @define-color window_bg_color @theme_bg_color;
