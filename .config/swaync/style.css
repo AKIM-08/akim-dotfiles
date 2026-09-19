@@ -233,7 +233,6 @@ window.control-center {
     font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif;
     font-size: 17px;
     color: @foreground;
-    -gtk-icon-size: 17px;
     margin-right: 10px;
     min-width: 24px;
 }
@@ -295,8 +294,6 @@ scale trough slider,
     box-shadow: none;
     background: transparent;
     background-color: transparent;
-    -gtk-icon-source: none;
-    -gtk-icon-shadow: none;
     outline: none;
     opacity: 0;
 }
@@ -361,7 +358,6 @@ scale trough slider,
     font-size: 18px;
     font-weight: normal;
     color: @foreground;
-    -gtk-icon-size: 18px;
     margin: 0;
     padding: 0;
 }
