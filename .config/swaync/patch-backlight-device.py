@@ -1,38 +1,54 @@
 #!/usr/bin/env python3
+"""Detect active backlight device and configure SwayNC config.json."""
 
 import glob
 import json
 import os
+import subprocess
 import sys
 
 
 def pick_device():
+    # 1. Try brightnessctl output
+    try:
+        res = subprocess.run(
+            ["brightnessctl", "-l", "-c", "backlight", "-m"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            for line in res.stdout.strip().splitlines():
+                parts = line.split(",")
+                if parts and parts[0]:
+                    return parts[0].strip()
+    except Exception:
+        pass
+
+    # 2. Inspect /sys/class/backlight
     candidates = [
         os.path.basename(p)
         for p in glob.glob("/sys/class/backlight/*")
         if os.path.isdir(p)
     ]
-    if not candidates:
-        return None
-    if len(candidates) == 1:
+    if candidates:
+        preferred = (
+            "amdgpu_bl",
+            "intel_backlight",
+            "nvidia",
+            "apple_backlight",
+            "ddcci",
+        )
+        for pref in preferred:
+            for d in candidates:
+                if d.startswith(pref):
+                    return d
+        for d in candidates:
+            if d != "acpi_video0":
+                return d
         return candidates[0]
 
-    preferred_prefixes = (
-        "intel_backlight",
-        "amdgpu_",
-        "nvidia",
-        "apple_backlight",
-        "ddcci",
-    )
-    for d in candidates:
-        if d.startswith(preferred_prefixes):
-            return d
-
-    for d in candidates:
-        if d != "acpi_video0":
-            return d
-
-    return candidates[0]
+    return "intel_backlight"
 
 
 def main():
@@ -50,15 +66,11 @@ def main():
 
     widget_cfg = data.setdefault("widget-config", {})
     backlight_cfg = widget_cfg.setdefault("backlight", {})
-    if backlight_cfg.get("device"):
-        return 0
 
     device = pick_device()
-    if not device:
-        return 0
-
-    backlight_cfg["subsystem"] = backlight_cfg.get("subsystem") or "backlight"
-    backlight_cfg["device"] = device
+    if device:
+        backlight_cfg["device"] = device
+        backlight_cfg["subsystem"] = "backlight"
 
     tmp_path = f"{config_path}.tmp"
     with open(tmp_path, "w", encoding="utf-8") as f:
