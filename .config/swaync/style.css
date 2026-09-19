@@ -164,38 +164,9 @@ window.control-center {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
-.control-center scrolledwindow {
-    border: none;
-    background: transparent;
-    padding: 0;
-    margin: 0;
-}
-
-.control-center scrolledwindow scrollbar {
-    opacity: 0;
-    min-width: 0px;
-    min-height: 0px;
-    width: 0px;
-    height: 0px;
-    border: none;
-    background: transparent;
-    margin: 0;
-    padding: 0;
-}
-
-.control-center scrolledwindow scrollbar trough,
-.control-center scrolledwindow scrollbar slider {
-    min-width: 0px;
-    width: 0px;
-    border: none;
-    background: transparent;
-}
-
 .control-center .control-center-list-placeholder,
 .control-center .control-center-list {
     min-height: 80px;
-    margin: 0;
-    padding: 0;
 }
 
 .floating-notifications .notification-row .notification-background .notification {
@@ -261,7 +232,7 @@ progressbar {
 progressbar trough {
     background-color: alpha(@foreground, 0.15);
     border-radius: 9999px;
-    min-height: 8px;
+    min-height: 6px;
     border: none;
     box-shadow: none;
 }
@@ -283,7 +254,7 @@ progressbar progress {
     background: transparent;
     background-color: transparent;
     padding: 6px 12px;
-    margin: 2px 8px;
+    margin: 2px 4px;
     border: none;
     box-shadow: none;
 }
@@ -367,8 +338,8 @@ scale trough slider,
 .widget-buttons {
     background: transparent;
     background-color: transparent;
-    padding: 0px;
-    margin: 6px 8px 8px 8px;
+    padding: 4px;
+    margin: 6px 4px 8px 4px;
     border: none;
     box-shadow: none;
 }
