@@ -213,6 +213,33 @@ window.control-center {
     color: @color1;
 }
 
+/* Notification Progress Bar (Volume / Brightness OSD popups) */
+.notification progressbar,
+progressbar {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 4px 0;
+}
+
+.notification progressbar trough,
+progressbar trough {
+    background-color: alpha(@foreground, 0.15);
+    border-radius: 9999px;
+    min-height: 6px;
+    border: none;
+    box-shadow: none;
+}
+
+.notification progressbar progress,
+progressbar progress {
+    background-color: @accent;
+    background-image: none;
+    border-radius: 9999px;
+    border: none;
+    box-shadow: 0 0 8px alpha(@accent, 0.45);
+}
+
 /* ==========================================================================
    Sliders: Volume and Backlight — Full Accent Color with No Visible Knob
    ========================================================================== */

@@ -58,6 +58,7 @@
         },
         "backlight": {
             "label": "󰃟 ",
+            "device": "intel_backlight",
             "subsystem": "backlight"
         },
         "buttons-grid": {
@@ -65,14 +66,14 @@
                 {
                     "label": "󰝟",
                     "type": "toggle",
-                    "command": "bash -c ~/.config/hypr/scripts/volume-mute.sh",
-                    "update-command": "bash -c ~/.config/hypr/scripts/check-mute.sh"
+                    "command": "$HOME/.config/hypr/scripts/volume-mute.sh",
+                    "update-command": "$HOME/.config/hypr/scripts/check-mute.sh"
                 },
                 {
                     "label": "󰍭",
                     "type": "toggle",
-                    "command": "bash -c ~/.config/hypr/scripts/mic-mute.sh",
-                    "update-command": "bash -c ~/.config/hypr/scripts/check-mic.sh"
+                    "command": "$HOME/.config/hypr/scripts/mic-mute.sh",
+                    "update-command": "$HOME/.config/hypr/scripts/check-mic.sh"
                 },
                 {
                     "label": "",
@@ -81,8 +82,8 @@
                 {
                     "label": "",
                     "type": "toggle",
-                    "command": "bash -c ~/.config/hypr/scripts/toggle-bluetooth.sh",
-                    "update-command": "bash -c ~/.config/hypr/scripts/check-bluetooth.sh"
+                    "command": "$HOME/.config/hypr/scripts/toggle-bluetooth.sh",
+                    "update-command": "$HOME/.config/hypr/scripts/check-bluetooth.sh"
                 },
                 {
                     "label": "󰤄",
