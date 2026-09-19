@@ -166,7 +166,7 @@ window.control-center {
 
 .control-center .control-center-list-placeholder,
 .control-center .control-center-list {
-    min-height: 200px;
+    min-height: 80px;
 }
 
 .floating-notifications .notification-row .notification-background .notification {
