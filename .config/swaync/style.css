@@ -164,6 +164,11 @@ window.control-center {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
+.control-center .control-center-list-placeholder,
+.control-center .control-center-list {
+    min-height: 200px;
+}
+
 .floating-notifications .notification-row .notification-background .notification {
     margin: 8px 14px;
     padding: 10px 14px;
