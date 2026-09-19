@@ -1,10 +1,26 @@
-@import url("colors-waybar.css");
+/* Base Color Definitions (Fallback values to guarantee GTK parses all rules) */
+@define-color foreground #f2e9f7;
+@define-color background #14121a;
+@define-color cursor #f2e9f7;
+@define-color color0 #14121a;
+@define-color color1 #e04b9b;
+@define-color color2 #b84fe0;
+@define-color color3 #4fb8e0;
+@define-color color4 #4fe0b8;
+@define-color color5 #e0b84f;
+@define-color color6 #e04b4f;
+@define-color color7 #f2e9f7;
+@define-color color8 #2a2436;
+@define-color color9 #ff66b2;
+@define-color color10 #d466ff;
+@define-color color11 #66d4ff;
+@define-color color12 #66ffd4;
+@define-color color13 #ffd466;
+@define-color color14 #ff6666;
+@define-color color15 #ffffff;
 
-/* Fallback colors if colors-waybar.css is empty or loading */
-@define-color default-bg #14121a;
-@define-color default-fg #f2e9f7;
-@define-color default-accent #e04b9b;
-@define-color default-muted #9b8da9;
+/* Import dynamic wallpaper palette from pywal (overrides defaults above) */
+@import url("colors-waybar.css");
 
 @define-color text @foreground;
 @define-color text-muted @color7;
@@ -234,6 +250,8 @@ scale {
 
 .widget-volume scale trough,
 .widget-backlight scale trough,
+.widget-volume trough,
+.widget-backlight trough,
 scale trough,
 trough {
     border-radius: 9999px !important;
@@ -251,6 +269,8 @@ trough {
 .widget-backlight scale trough highlight,
 .widget-volume scale highlight,
 .widget-backlight scale highlight,
+.widget-volume highlight,
+.widget-backlight highlight,
 scale trough highlight,
 scale highlight,
 highlight {
@@ -269,7 +289,9 @@ slider,
 .widget-volume scale slider,
 .widget-backlight scale slider,
 .widget-volume scale trough slider,
-.widget-backlight scale trough slider {
+.widget-backlight scale trough slider,
+.widget-volume slider,
+.widget-backlight slider {
     min-width: 0px !important;
     min-height: 0px !important;
     margin: 0px !important;
@@ -288,7 +310,8 @@ slider,
 /* ==========================================================================
    Action Buttons Grid — Translucent Rounded Buttons (Picture 2 Style)
    ========================================================================== */
-.widget-buttons-grid {
+.widget-buttons-grid,
+.widget-buttons {
     background: transparent !important;
     background-color: transparent !important;
     padding: 4px;
@@ -297,20 +320,26 @@ slider,
     box-shadow: none !important;
 }
 
-.widget-buttons-grid > flowbox {
+.widget-buttons-grid > flowbox,
+.widget-buttons > flowbox {
     padding: 0px;
     margin: 0px;
     background: transparent !important;
 }
 
-.widget-buttons-grid > flowbox > flowboxchild {
+.widget-buttons-grid > flowbox > flowboxchild,
+.widget-buttons > flowbox > flowboxchild {
     padding: 4px;
     margin: 0px;
     background: transparent !important;
 }
 
 .widget-buttons-grid button,
-.widget-buttons-grid > flowbox > flowboxchild > button {
+.widget-buttons button,
+.widget-buttons-grid > flowbox > flowboxchild > button,
+.widget-buttons > flowbox > flowboxchild > button,
+.widget-buttons-grid flowboxchild button,
+.widget-buttons flowboxchild button {
     background: alpha(@foreground, 0.10) !important;
     background-color: alpha(@foreground, 0.10) !important;
     background-image: none !important;
@@ -330,7 +359,13 @@ slider,
 .widget-buttons-grid label,
 .widget-buttons-grid image,
 .widget-buttons-grid > flowbox > flowboxchild > button label,
-.widget-buttons-grid > flowbox > flowboxchild > button image {
+.widget-buttons-grid > flowbox > flowboxchild > button image,
+.widget-buttons button label,
+.widget-buttons button image,
+.widget-buttons label,
+.widget-buttons image,
+.widget-buttons > flowbox > flowboxchild > button label,
+.widget-buttons > flowbox > flowboxchild > button image {
     font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif !important;
     font-size: 18px !important;
     font-weight: normal !important;
@@ -342,7 +377,9 @@ slider,
 }
 
 .widget-buttons-grid button:hover,
-.widget-buttons-grid > flowbox > flowboxchild > button:hover {
+.widget-buttons-grid > flowbox > flowboxchild > button:hover,
+.widget-buttons button:hover,
+.widget-buttons > flowbox > flowboxchild > button:hover {
     background: alpha(@accent, 0.35) !important;
     background-color: alpha(@accent, 0.35) !important;
     border: none !important;
@@ -350,14 +387,20 @@ slider,
 }
 
 .widget-buttons-grid button:hover label,
-.widget-buttons-grid > flowbox > flowboxchild > button:hover label {
+.widget-buttons-grid > flowbox > flowboxchild > button:hover label,
+.widget-buttons button:hover label,
+.widget-buttons > flowbox > flowboxchild > button:hover label {
     color: #ffffff !important;
 }
 
 .widget-buttons-grid button.active,
 .widget-buttons-grid button.toggle:checked,
 .widget-buttons-grid > flowbox > flowboxchild > button.active,
-.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
+.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked,
+.widget-buttons button.active,
+.widget-buttons button.toggle:checked,
+.widget-buttons > flowbox > flowboxchild > button.active,
+.widget-buttons > flowbox > flowboxchild > button.toggle:checked {
     background: @accent !important;
     background-color: @accent !important;
     border: none !important;
@@ -367,6 +410,10 @@ slider,
 .widget-buttons-grid button.active label,
 .widget-buttons-grid button.toggle:checked label,
 .widget-buttons-grid > flowbox > flowboxchild > button.active label,
-.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked label {
+.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked label,
+.widget-buttons button.active label,
+.widget-buttons button.toggle:checked label,
+.widget-buttons > flowbox > flowboxchild > button.active label,
+.widget-buttons > flowbox > flowboxchild > button.toggle:checked label {
     color: @background !important;
 }
