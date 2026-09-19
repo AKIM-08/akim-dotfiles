@@ -56,19 +56,18 @@
             "show-value": true
         },
         "backlight": {
-            "label": "󰃟 "
+            "label": "󰃟 ",
+            "subsystem": "backlight"
         },
         "buttons-grid": {
             "actions": [
                 {
                     "label": "󰝟",
-                    "command": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-                    "type": "toggle"
+                    "command": "bash -c '~/.config/hypr/scripts/volume-mute.sh'"
                 },
                 {
                     "label": "󰍭",
-                    "command": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
-                    "type": "toggle"
+                    "command": "bash -c '~/.config/hypr/scripts/mic-mute.sh'"
                 },
                 {
                     "label": "",
@@ -76,12 +75,11 @@
                 },
                 {
                     "label": "",
-                    "command": "bash -c 'rfkill unblock bluetooth 2>/dev/null; bluetoothctl power on 2>/dev/null; blueman-manager'"
+                    "command": "bash -c '~/.config/hypr/scripts/bluetooth-toggle.sh'"
                 },
                 {
                     "label": "󰤄",
-                    "command": "swaync-client -d -sw",
-                    "type": "toggle"
+                    "command": "swaync-client -d -sw"
                 },
                 {
                     "label": "󰄪",

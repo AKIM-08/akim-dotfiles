@@ -12,6 +12,7 @@ link_pywal_css() {
     local dir
     for dir in waybar swaync cpmenu; do
         mkdir -p "$HOME/.config/$dir"
+        cp "$WAL_CACHE/colors-waybar.css" "$HOME/.config/$dir/colors-waybar.css" 2>/dev/null || true
         ln -sf "$WAL_CACHE/colors-waybar.css" "$HOME/.config/$dir/colors-waybar.css" 2>/dev/null || true
     done
     ln -sf "$WAL_CACHE/cpmenu-layout" "$HOME/.config/cpmenu/layout" 2>/dev/null || true
@@ -69,7 +70,6 @@ reload_ui() {
         pkill -SIGUSR2 waybar 2>/dev/null || true
     fi
     if pgrep -x swaync >/dev/null 2>&1 && command -v swaync-client &>/dev/null; then
-        timeout 2 swaync-client --reload-config 2>/dev/null || true
         timeout 2 swaync-client --reload-css 2>/dev/null || true
     fi
     if pgrep -x kitty >/dev/null 2>&1; then
