@@ -17,16 +17,19 @@ limit=10
 }
 
 [[ $# -eq 1 && $1 = "-j" ]] && {
-  text="$(head -n 1 "$loc/colors")"
+  raw_text="$(head -n 1 "$loc/colors" 2>/dev/null)"
+  text="${raw_text:-#ffffff}"
 
-  mapfile -t allcolors < <(tail -n +2 "$loc/colors")
-  # allcolors=($(tail -n +2 "$loc/colors"))
-  tooltip="<b>   COLORS</b>\n\n"
-
-  tooltip+="-> <b>$text</b>  <span color='$text'></span>  \n"
-  for i in "${allcolors[@]}"; do
-    tooltip+="   <b>$i</b>  <span color='$i'></span>  \n"
-  done
+  if [ -s "$loc/colors" ]; then
+    mapfile -t allcolors < <(tail -n +2 "$loc/colors")
+    tooltip="<b>   COLORS</b>\n\n"
+    tooltip+="-> <b>$text</b>  <span color='$text'></span>  \n"
+    for i in "${allcolors[@]}"; do
+      [ -n "$i" ] && tooltip+="   <b>$i</b>  <span color='$i'></span>  \n"
+    done
+  else
+    tooltip="<b>Color Picker</b>\nClick to pick a color"
+  fi
 
   cat <<EOF
 { "text":"<span color='$text'></span>", "tooltip":"$tooltip"}  
