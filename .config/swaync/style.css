@@ -36,9 +36,18 @@
     font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', sans-serif;
 }
 
-.blank-window {
+/* Blank background overlay — fully transparent so only the compact card is visible */
+.blank-window,
+window.blank-window,
+window .blank-window,
+window.control-center .blank-window,
+.notification-window,
+window.control-center-window,
+viewport,
+scrolledwindow {
     background: transparent;
     background-color: transparent;
+    opacity: 0;
 }
 
 window {
@@ -53,13 +62,14 @@ window.control-center {
 
 /* Control Center Container — Frosted Glass Look */
 .control-center {
-    background: @bg;
+    background: alpha(@background, 0.60);
     color: @text;
     border-radius: 20px;
     border: 1px solid alpha(@foreground, 0.12);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
     padding: 10px;
     margin: 6px;
+    opacity: 1;
 }
 
 /* Title bar widget */
