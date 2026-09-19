@@ -177,6 +177,13 @@ class RadialMenu(Gtk.Window):
         new_index = self.get_slice_index_at(event.x, event.y)
         if new_index != self.hovered_index:
             self.hovered_index = new_index
+            window = self.get_window()
+            if window:
+                if new_index >= 0:
+                    cursor = Gdk.Cursor.new_from_name(window.get_display(), "pointer")
+                else:
+                    cursor = Gdk.Cursor.new_from_name(window.get_display(), "default")
+                window.set_cursor(cursor)
             self.queue_draw()
         return True
 
@@ -210,6 +217,71 @@ class RadialMenu(Gtk.Window):
                 sys.stderr.write(f"Failed to execute '{action}': {e}\n")
         Gtk.main_quit()
 
+    def draw_slice(self, cr, cx, cy, index, is_hovered, slice_angle):
+        item = self.items[index]
+        start_angle = -math.pi / 2.0 + index * slice_angle
+        end_angle = start_angle + slice_angle
+
+        # Hovered wedge pops outward like CS:GO radial buy menu (Picture 3)
+        outer_r = self.outer_radius + 18.0 if is_hovered else self.outer_radius
+        inner_r = self.inner_radius
+
+        cr.arc(cx, cy, outer_r, start_angle, end_angle)
+        cr.arc_negative(cx, cy, inner_r, end_angle, start_angle)
+        cr.close_path()
+
+        if is_hovered:
+            ar, ag, ab = self.theme["accent"]
+            cr.set_source_rgba(ar, ag, ab, 0.98)
+        else:
+            br, bg, bb, ba = self.theme["wedge_bg"]
+            cr.set_source_rgba(br, bg, bb, ba)
+        cr.fill_preserve()
+
+        # Outline border
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.45)
+        cr.set_line_width(1.5)
+        cr.stroke()
+
+        # Content position (Icon & Text)
+        mid_angle = (start_angle + end_angle) / 2.0
+        content_r = (inner_r + outer_r) / 2.0
+        tx = cx + content_r * math.cos(mid_angle)
+        ty = cy + content_r * math.sin(mid_angle)
+
+        icon_char = item.get("icon_char", "")
+        label_text = item.get("text", item.get("label", "")).capitalize()
+
+        # Text color
+        if is_hovered:
+            cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
+        else:
+            fr, fg, fb = self.theme["fg"]
+            cr.set_source_rgba(fr, fg, fb, 0.92)
+
+        # Draw icon
+        layout_icon = self.create_pango_layout(icon_char)
+        font_desc = Pango.FontDescription("JetBrainsMono Nerd Font 24")
+        layout_icon.set_font_description(font_desc)
+        _, rect = layout_icon.get_pixel_extents()
+
+        icon_x = tx - rect.width / 2.0
+        icon_y = ty - rect.height / 2.0 - 8
+        cr.move_to(icon_x, icon_y)
+        PangoCairo.show_layout(cr, layout_icon)
+
+        # Draw label underneath
+        if label_text:
+            layout_label = self.create_pango_layout(label_text)
+            font_label = Pango.FontDescription("Sans Bold 9")
+            layout_label.set_font_description(font_label)
+            _, l_rect = layout_label.get_pixel_extents()
+
+            lbl_x = tx - l_rect.width / 2.0
+            lbl_y = ty + 15
+            cr.move_to(lbl_x, lbl_y)
+            PangoCairo.show_layout(cr, layout_label)
+
     def on_draw(self, widget, cr):
         alloc = self.get_allocation()
         w, h = alloc.width, alloc.height
@@ -222,82 +294,25 @@ class RadialMenu(Gtk.Window):
 
         slice_angle = (2.0 * math.pi) / self.num_items
 
-        # 2. Draw Donut Slices
+        # 2. Draw non-hovered slices first
         for i in range(self.num_items):
-            item = self.items[i]
-            is_hovered = (i == self.hovered_index)
+            if i != self.hovered_index:
+                self.draw_slice(cr, cx, cy, i, False, slice_angle)
 
-            start_angle = -math.pi / 2.0 + i * slice_angle
-            end_angle = start_angle + slice_angle
-
-            # Draw wedge sector path
-            cr.arc(cx, cy, self.outer_radius, start_angle, end_angle)
-            cr.arc_negative(cx, cy, self.inner_radius, end_angle, start_angle)
-            cr.close_path()
-
-            # Fill wedge
-            if is_hovered:
-                ar, ag, ab = self.theme["accent"]
-                cr.set_source_rgba(ar, ag, ab, 0.96)
-            else:
-                br, bg, bb, ba = self.theme["wedge_bg"]
-                cr.set_source_rgba(br, bg, bb, ba)
-            cr.fill_preserve()
-
-            # Wedge border dividers
-            cr.set_source_rgba(0.0, 0.0, 0.0, 0.40)
-            cr.set_line_width(1.5)
-            cr.stroke()
-
-            # 3. Draw Icon and Label
-            mid_angle = (start_angle + end_angle) / 2.0
-            content_r = (self.inner_radius + self.outer_radius) / 2.0
-            tx = cx + content_r * math.cos(mid_angle)
-            ty = cy + content_r * math.sin(mid_angle)
-
-            icon_char = item.get("icon_char", "")
-            label_text = item.get("text", item.get("label", "")).capitalize()
-
-            # Color for icon and text
-            if is_hovered:
-                cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
-            else:
-                fr, fg, fb = self.theme["fg"]
-                cr.set_source_rgba(fr, fg, fb, 0.92)
-
-            # Draw icon
-            layout_icon = self.create_pango_layout(icon_char)
-            font_desc = Pango.FontDescription("JetBrainsMono Nerd Font 26")
-            layout_icon.set_font_description(font_desc)
-            _, rect = layout_icon.get_pixel_extents()
-
-            icon_x = tx - rect.width / 2.0
-            icon_y = ty - rect.height / 2.0 - 8
-            cr.move_to(icon_x, icon_y)
-            PangoCairo.show_layout(cr, layout_icon)
-
-            # Draw text label underneath
-            if label_text:
-                layout_label = self.create_pango_layout(label_text)
-                font_label = Pango.FontDescription("Sans Bold 9")
-                layout_label.set_font_description(font_label)
-                _, l_rect = layout_label.get_pixel_extents()
-
-                lbl_x = tx - l_rect.width / 2.0
-                lbl_y = ty + 15
-                cr.move_to(lbl_x, lbl_y)
-                PangoCairo.show_layout(cr, layout_label)
-
-        # 4. Outer & Inner Circle Clean Outlines
+        # 3. Draw inner & outer base circle outlines
         cr.arc(cx, cy, self.outer_radius, 0, 2.0 * math.pi)
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.5)
-        cr.set_line_width(2.0)
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.4)
+        cr.set_line_width(1.5)
         cr.stroke()
 
         cr.arc(cx, cy, self.inner_radius, 0, 2.0 * math.pi)
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.5)
-        cr.set_line_width(2.0)
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.4)
+        cr.set_line_width(1.5)
         cr.stroke()
+
+        # 4. Draw the popped-out hovered slice on TOP of everything (Picture 3)
+        if 0 <= self.hovered_index < self.num_items:
+            self.draw_slice(cr, cx, cy, self.hovered_index, True, slice_angle)
 
         return True
 
