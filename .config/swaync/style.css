@@ -1,4 +1,4 @@
-/* Base Color Definitions (Fallback values to guarantee GTK parses all rules) */
+/* Base Color Definitions (Fallback values to ensure GTK parses everything) */
 @define-color foreground #f2e9f7;
 @define-color background #14121a;
 @define-color cursor #f2e9f7;
@@ -37,18 +37,18 @@
 }
 
 .blank-window {
-    background: transparent !important;
-    background-color: transparent !important;
+    background: transparent;
+    background-color: transparent;
 }
 
 window {
-    background: transparent !important;
-    background-color: transparent !important;
+    background: transparent;
+    background-color: transparent;
 }
 
 window.control-center {
-    background: transparent !important;
-    background-color: transparent !important;
+    background: transparent;
+    background-color: transparent;
 }
 
 /* Control Center Container — Frosted Glass Look */
@@ -75,13 +75,13 @@ window.control-center {
 }
 
 .widget-title > button {
-    all: unset;
-    font-size: 14px;
-    color: @color1;
     background: alpha(@color1, 0.18);
+    color: @color1;
     border: 1px solid alpha(@color1, 0.35);
     border-radius: 10px;
     padding: 5px 12px;
+    font-size: 14px;
+    box-shadow: none;
     transition: all 0.2s ease;
 }
 
@@ -123,7 +123,6 @@ window.control-center {
 }
 
 .widget-mpris .widget-mpris-player button {
-    all: unset;
     color: @accent;
     background: alpha(@foreground, 0.08);
     border: 1px solid @border-card;
@@ -131,6 +130,7 @@ window.control-center {
     padding: 6px 14px;
     margin: 3px;
     font-size: 16px;
+    box-shadow: none;
     transition: all 0.2s ease;
 }
 
@@ -197,12 +197,14 @@ window.control-center {
 }
 
 .notification-row .close-button {
-    all: unset;
     color: @text-muted;
+    background: transparent;
+    border: none;
     border-radius: 50%;
     padding: 4px;
     min-width: 20px;
     min-height: 20px;
+    box-shadow: none;
     transition: all 0.2s ease;
 }
 
@@ -216,23 +218,21 @@ window.control-center {
    ========================================================================== */
 .widget-volume,
 .widget-backlight {
-    background: transparent !important;
-    background-color: transparent !important;
+    background: transparent;
+    background-color: transparent;
     padding: 6px 12px;
     margin: 2px 4px;
-    border: none !important;
-    box-shadow: none !important;
+    border: none;
+    box-shadow: none;
 }
 
 .widget-volume label,
 .widget-backlight label,
-.widget-volume > box > label,
-.widget-backlight > box > label,
 .widget-volume image,
 .widget-backlight image {
-    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif !important;
-    font-size: 17px !important;
-    color: @foreground !important;
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif;
+    font-size: 17px;
+    color: @foreground;
     -gtk-icon-size: 17px;
     margin-right: 10px;
     min-width: 24px;
@@ -244,24 +244,22 @@ window.control-center {
 scale {
     margin: 0;
     padding: 0;
-    background: transparent !important;
-    border: none !important;
+    background: transparent;
+    border: none;
 }
 
 .widget-volume scale trough,
 .widget-backlight scale trough,
 .widget-volume trough,
 .widget-backlight trough,
-scale trough,
-trough {
-    border-radius: 9999px !important;
-    background: alpha(@foreground, 0.15) !important;
-    background-color: alpha(@foreground, 0.15) !important;
-    background-image: none !important;
-    min-height: 10px !important;
-    min-width: 180px !important;
-    border: none !important;
-    box-shadow: none !important;
+scale trough {
+    border-radius: 9999px;
+    background: alpha(@foreground, 0.15);
+    background-color: alpha(@foreground, 0.15);
+    min-height: 10px;
+    min-width: 180px;
+    border: none;
+    box-shadow: none;
 }
 
 /* Highlight (filled slider portion) — Wallpaper Accent color */
@@ -272,39 +270,35 @@ trough {
 .widget-volume highlight,
 .widget-backlight highlight,
 scale trough highlight,
-scale highlight,
-highlight {
-    background: @accent !important;
-    background-color: @accent !important;
-    background-image: none !important;
-    border-radius: 9999px !important;
-    border: none !important;
-    box-shadow: 0 0 10px alpha(@accent, 0.45) !important;
+scale highlight {
+    background: @accent;
+    background-color: @accent;
+    border-radius: 9999px;
+    border: none;
+    box-shadow: 0 0 10px alpha(@accent, 0.45);
 }
 
 /* Slider Knob — Completely Hidden */
 scale slider,
 scale trough slider,
-slider,
 .widget-volume scale slider,
 .widget-backlight scale slider,
 .widget-volume scale trough slider,
 .widget-backlight scale trough slider,
 .widget-volume slider,
 .widget-backlight slider {
-    min-width: 0px !important;
-    min-height: 0px !important;
-    margin: 0px !important;
-    padding: 0px !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    -gtk-icon-source: none !important;
-    -gtk-icon-shadow: none !important;
-    outline: none !important;
-    opacity: 0 !important;
+    min-width: 0px;
+    min-height: 0px;
+    margin: 0px;
+    padding: 0px;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    background-color: transparent;
+    -gtk-icon-source: none;
+    -gtk-icon-shadow: none;
+    outline: none;
+    opacity: 0;
 }
 
 /* ==========================================================================
@@ -312,45 +306,42 @@ slider,
    ========================================================================== */
 .widget-buttons-grid,
 .widget-buttons {
-    background: transparent !important;
-    background-color: transparent !important;
+    background: transparent;
+    background-color: transparent;
     padding: 4px;
     margin: 6px 4px 8px 4px;
-    border: none !important;
-    box-shadow: none !important;
+    border: none;
+    box-shadow: none;
 }
 
 .widget-buttons-grid > flowbox,
 .widget-buttons > flowbox {
     padding: 0px;
     margin: 0px;
-    background: transparent !important;
+    background: transparent;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild,
 .widget-buttons > flowbox > flowboxchild {
     padding: 4px;
     margin: 0px;
-    background: transparent !important;
+    background: transparent;
 }
 
 .widget-buttons-grid button,
 .widget-buttons button,
 .widget-buttons-grid > flowbox > flowboxchild > button,
-.widget-buttons > flowbox > flowboxchild > button,
-.widget-buttons-grid flowboxchild button,
-.widget-buttons flowboxchild button {
-    background: alpha(@foreground, 0.10) !important;
-    background-color: alpha(@foreground, 0.10) !important;
-    background-image: none !important;
-    border: none !important;
-    outline: none !important;
-    border-radius: 12px !important;
-    min-width: 48px !important;
-    min-height: 42px !important;
-    padding: 8px 12px !important;
-    margin: 0px !important;
-    box-shadow: none !important;
+.widget-buttons > flowbox > flowboxchild > button {
+    background: alpha(@foreground, 0.10);
+    background-color: alpha(@foreground, 0.10);
+    border: none;
+    outline: none;
+    border-radius: 12px;
+    min-width: 48px;
+    min-height: 42px;
+    padding: 8px 12px;
+    margin: 0px;
+    box-shadow: none;
     transition: all 0.2s ease;
 }
 
@@ -366,31 +357,30 @@ slider,
 .widget-buttons image,
 .widget-buttons > flowbox > flowboxchild > button label,
 .widget-buttons > flowbox > flowboxchild > button image {
-    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif !important;
-    font-size: 18px !important;
-    font-weight: normal !important;
-    color: @foreground !important;
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif;
+    font-size: 18px;
+    font-weight: normal;
+    color: @foreground;
     -gtk-icon-size: 18px;
     margin: 0;
     padding: 0;
-    transition: all 0.2s ease;
 }
 
 .widget-buttons-grid button:hover,
 .widget-buttons-grid > flowbox > flowboxchild > button:hover,
 .widget-buttons button:hover,
 .widget-buttons > flowbox > flowboxchild > button:hover {
-    background: alpha(@accent, 0.35) !important;
-    background-color: alpha(@accent, 0.35) !important;
-    border: none !important;
-    box-shadow: 0 0 10px alpha(@accent, 0.45) !important;
+    background: alpha(@accent, 0.35);
+    background-color: alpha(@accent, 0.35);
+    border: none;
+    box-shadow: 0 0 10px alpha(@accent, 0.45);
 }
 
 .widget-buttons-grid button:hover label,
 .widget-buttons-grid > flowbox > flowboxchild > button:hover label,
 .widget-buttons button:hover label,
 .widget-buttons > flowbox > flowboxchild > button:hover label {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 .widget-buttons-grid button.active,
@@ -401,10 +391,10 @@ slider,
 .widget-buttons button.toggle:checked,
 .widget-buttons > flowbox > flowboxchild > button.active,
 .widget-buttons > flowbox > flowboxchild > button.toggle:checked {
-    background: @accent !important;
-    background-color: @accent !important;
-    border: none !important;
-    box-shadow: 0 0 14px alpha(@accent, 0.60) !important;
+    background: @accent;
+    background-color: @accent;
+    border: none;
+    box-shadow: 0 0 14px alpha(@accent, 0.60);
 }
 
 .widget-buttons-grid button.active label,
@@ -415,5 +405,5 @@ slider,
 .widget-buttons button.toggle:checked label,
 .widget-buttons > flowbox > flowboxchild > button.active label,
 .widget-buttons > flowbox > flowboxchild > button.toggle:checked label {
-    color: @background !important;
+    color: @background;
 }
