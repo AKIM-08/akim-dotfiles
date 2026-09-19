@@ -36,18 +36,9 @@
     font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', sans-serif;
 }
 
-/* Blank background overlay — fully transparent so only the compact card is visible */
-.blank-window,
-window.blank-window,
-window .blank-window,
-window.control-center .blank-window,
-.notification-window,
-window.control-center-window,
-viewport,
-scrolledwindow {
+.blank-window {
     background: transparent;
     background-color: transparent;
-    opacity: 0;
 }
 
 window {
@@ -69,7 +60,6 @@ window.control-center {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
     padding: 10px;
     margin: 6px;
-    opacity: 1;
 }
 
 /* Title bar widget */
