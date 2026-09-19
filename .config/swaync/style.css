@@ -219,6 +219,120 @@ window.control-center {
     color: @color1;
 }
 
+/* ==========================================================================
+   Notification Groups (App Grouping) & Actions
+   ========================================================================== */
+.notification-group {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 4px 0;
+    padding: 0;
+}
+
+.notification-group.low,
+.notification-group.normal,
+.notification-group.critical {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.notification-group-header,
+.notification-group-headers,
+.notification-group .notification-group-header {
+    background: transparent;
+    background-color: transparent;
+    color: @text;
+    margin: 4px 8px;
+    padding: 6px 8px;
+    border: none;
+    box-shadow: none;
+}
+
+.notification-group-header label,
+.notification-group-headers label,
+.notification-group .notification-group-header label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: @accent;
+    font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', sans-serif;
+}
+
+.notification-group-header image,
+.notification-group-icon,
+.notification-group .notification-group-header image {
+    margin-right: 8px;
+    color: @accent;
+}
+
+.notification-group-header button,
+.notification-group-headers button,
+.notification-group-close-button,
+.notification-group-collapse-button,
+.notification-group .notification-group-header button {
+    background: alpha(@color1, 0.18);
+    color: @color1;
+    border: 1px solid alpha(@color1, 0.35);
+    border-radius: 8px;
+    padding: 4px 10px;
+    margin: 0 2px;
+    font-size: 13px;
+    box-shadow: none;
+    transition: all 0.2s ease;
+}
+
+.notification-group-header button:hover,
+.notification-group-headers button:hover,
+.notification-group-close-button:hover,
+.notification-group-collapse-button:hover,
+.notification-group .notification-group-header button:hover {
+    background: @color1;
+    color: @background;
+    box-shadow: 0 0 10px alpha(@color1, 0.5);
+}
+
+.notification-group .notification-row {
+    background-color: transparent;
+    padding: 2px 0;
+}
+
+.notification-group .notification-row .notification-background .notification {
+    margin: 4px 8px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: @bg-card;
+    border: 1px solid @border-card;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: all 0.2s ease;
+}
+
+.notification-group .notification-row .notification-background .notification:hover {
+    background: alpha(@foreground, 0.10);
+    border-color: @border-glow;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.notification-action {
+    background: alpha(@foreground, 0.08);
+    color: @text;
+    border: 1px solid @border-card;
+    border-radius: 10px;
+    padding: 4px 10px;
+    margin: 4px 2px;
+    box-shadow: none;
+    transition: all 0.2s ease;
+}
+
+.notification-action:hover {
+    background: @bg-card-hover;
+    border-color: @accent;
+    color: @text;
+    box-shadow: 0 0 8px alpha(@accent, 0.35);
+}
+
 /* Notification Progress Bar (Volume / Brightness OSD popups) */
 .notification progressbar,
 progressbar {
