@@ -114,11 +114,10 @@
     "custom/pacman": {
         "format": "󰅢 {}",
         "interval": 3600,
-        "exec": "sh -c 'checkupdates 2>/dev/null | wc -l'",
-        "exec-if": "command -v checkupdates",
-        "on-click": "kitty sh -c 'yay -Syu; echo Done - Press enter to exit; read'; pkill -SIGRTMIN+8 waybar",
+        "exec": "~/.config/waybar/scripts/check-updates.sh",
+        "on-click": "kitty --class update-terminal -e ~/.config/waybar/scripts/system-update.sh",
         "signal": 8,
-        "tooltip": false,
+        "tooltip": false
     },
     "custom/expand": {
         "format": "",

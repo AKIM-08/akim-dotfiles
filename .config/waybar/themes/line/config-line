@@ -92,12 +92,11 @@
         },
         "custom/pacman": {
             "format": "󰅢 {}",
-            "interval": 30,   
-            "exec": "checkupdates | wc -l",
-            "exec-if": "exit 0",
-            "on-click": "kitty sh -c 'yay -Syu; echo Done - Press enter to exit; read'; pkill -SIGRTMIN+8 waybar",
+            "interval": 3600,   
+            "exec": "~/.config/waybar/scripts/check-updates.sh",
+            "on-click": "kitty --class update-terminal -e ~/.config/waybar/scripts/system-update.sh",
             "signal": 8,
-            "tooltip": false,
+            "tooltip": false
         },
         "custom/expand": {
             "format": "",
