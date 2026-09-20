@@ -51,6 +51,19 @@ window.control-center {
     background-color: transparent;
 }
 
+window.floating-notifications,
+.floating-notifications,
+.floating-notifications.background,
+.floating-notifications .notification-row,
+.floating-notifications .notification-background,
+.notification-row,
+.notification-background {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
 /* Control Center Container — Frosted Glass Look */
 .control-center {
     background: alpha(@background, 0.60);
