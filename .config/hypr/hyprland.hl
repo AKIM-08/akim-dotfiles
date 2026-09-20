@@ -385,7 +385,5 @@ windowrule {
 }
 # Layer rules for SwayNC blur (Hyprland 0.53+ syntax)
 layerrule = blur on, match:namespace swaync-control-center
-layerrule = blur on, match:namespace swaync-notification-window
 layerrule = ignore_alpha 0.5, match:namespace swaync-control-center
-layerrule = ignore_alpha 0.5, match:namespace swaync-notification-window
 

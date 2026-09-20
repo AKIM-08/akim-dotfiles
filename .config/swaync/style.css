@@ -186,7 +186,7 @@ window.floating-notifications,
     margin: 8px 14px;
     padding: 10px 14px;
     border-radius: 16px;
-    background: @bg;
+    background: alpha(@background, 0.88);
     border: 2px solid @border-glow;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
