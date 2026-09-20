@@ -183,12 +183,12 @@ window.floating-notifications,
 }
 
 .floating-notifications .notification-row .notification-background .notification {
-    margin: 8px 14px;
+    margin: 6px 8px;
     padding: 10px 14px;
     border-radius: 16px;
     background: alpha(@background, 0.88);
     border: 2px solid @border-glow;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .notification-content {

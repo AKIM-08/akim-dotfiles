@@ -383,7 +383,10 @@ windowrule {
     match:class = ^(kitty)$
     opacity = 0.82 0.74
 }
-# Layer rules for SwayNC blur (Hyprland 0.53+ syntax)
+# Layer rules for SwayNC
 layerrule = blur on, match:namespace swaync-control-center
 layerrule = ignore_alpha 0.5, match:namespace swaync-control-center
+layerrule = blur off, match:namespace swaync-notification-window
+layerrule = blur off, match:namespace notifications
+layerrule = blur off, match:namespace swaync
 
