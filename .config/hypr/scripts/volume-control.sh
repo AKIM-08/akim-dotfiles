@@ -67,3 +67,6 @@ if [ "$is_muted" = "true" ]; then
 else
     notify-send -h string:x-canonical-private-synchronous:sys-notify -h int:value:"$vol" -u low "Volume" "${vol}% 󰕾"
 fi
+
+# Refresh SwayNC widgets and button toggle states in real time
+(swaync-client -R 2>/dev/null &)

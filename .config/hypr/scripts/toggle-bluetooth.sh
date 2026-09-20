@@ -6,3 +6,6 @@ else
     rfkill unblock bluetooth 2>/dev/null || true
     bluetoothctl power on
 fi
+
+# Refresh SwayNC button states
+(swaync-client -R 2>/dev/null &)
