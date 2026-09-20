@@ -63,7 +63,7 @@ if [ "$action" = "mic-mute" ]; then
 fi
 
 if [ "$is_muted" = "true" ]; then
-    notify-send -h string:x-canonical-private-synchronous:sys-notify -h int:value:0 -u low "Volume" "Muted (Sourdine) 󰝟"
+    notify-send -h string:x-canonical-private-synchronous:sys-notify -h int:value:0 -u low "Volume" "Muted 󰝟"
 else
     notify-send -h string:x-canonical-private-synchronous:sys-notify -h int:value:"$vol" -u low "Volume" "${vol}% 󰕾"
 fi
