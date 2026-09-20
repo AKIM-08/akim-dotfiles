@@ -22,7 +22,8 @@ if [ -f "$STATE_FILE" ]; then
 
     rm -f "$STATE_FILE"
 
-    # Display clean top OSD banner only (in English, no bottom notification toast)
+    # Display notification
+    notify-send -h string:x-canonical-private-synchronous:sys-notify -u low "Caffeine Mode" "Disabled ☕" 2>/dev/null || true
     hyprctl notify 1 3000 "rgb(f38ba8)" "☕ Caffeine Mode Disabled" 2>/dev/null || true
 else
     # Enable Caffeine Mode
@@ -37,6 +38,7 @@ else
     # Stop hypridle during Caffeine mode
     pkill -x hypridle 2>/dev/null || true
 
-    # Display clean top OSD banner only (in English, no bottom notification toast)
+    # Display notification
+    notify-send -h string:x-canonical-private-synchronous:sys-notify -u low "Caffeine Mode" "Enabled ☕" 2>/dev/null || true
     hyprctl notify 2 3000 "rgb(a6e3a1)" "☕ Caffeine Mode Enabled" 2>/dev/null || true
 fi

@@ -338,7 +338,8 @@ bind = $mainMod ALT, right, exec, ~/.config/hypr/scripts/switch-wallpaper.sh nex
 bind = $mainMod ALT, left, exec, ~/.config/hypr/scripts/switch-wallpaper.sh prev
 
 
-# Caffeine Mode toggle (SUPER + SHIFT + C or SUPER + ALT + C)
+# Caffeine Mode toggle (SUPER + C, SUPER + SHIFT + C, or SUPER + ALT + C)
+bind = $mainMod, C, exec, ~/.config/hypr/scripts/caffeine-toggle.sh
 bind = $mainMod SHIFT, C, exec, ~/.config/hypr/scripts/caffeine-toggle.sh
 bind = $mainMod ALT, C, exec, ~/.config/hypr/scripts/caffeine-toggle.sh
 
