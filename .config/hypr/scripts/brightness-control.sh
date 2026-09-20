@@ -16,6 +16,3 @@ esac
 percent=$(brightnessctl -m 2>/dev/null | cut -d, -f4 | tr -d '%' || echo 50)
 
 notify-send -h string:x-canonical-private-synchronous:sys-notify -h int:value:"$percent" -u low "Brightness" "${percent}% 󰃟"
-
-# Refresh SwayNC widgets (backlight slider) in real time
-(swaync-client -R 2>/dev/null &)

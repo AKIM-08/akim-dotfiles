@@ -8,6 +8,3 @@ elif command -v pamixer &>/dev/null; then
 elif command -v pactl &>/dev/null; then
     pactl set-source-mute @DEFAULT_SOURCE@ toggle
 fi
-
-# Refresh SwayNC button states
-(swaync-client -R 2>/dev/null &)
