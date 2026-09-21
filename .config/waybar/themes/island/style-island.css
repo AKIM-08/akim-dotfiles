@@ -1,0 +1,116 @@
+@import url("colors-waybar.css");
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-weight: bold;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @foreground;
+}
+
+/* Distro Circular Button */
+#custom-distro {
+    background-color: alpha(@background, 0.88);
+    color: @color1;
+    border: 1px solid alpha(@foreground, 0.15);
+    border-radius: 50%;
+    padding: 3px 11px;
+    margin: 2px 8px 2px 2px;
+    font-size: 17px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    transition: all 0.3s ease;
+}
+
+#custom-distro:hover {
+    background-color: @color1;
+    color: @background;
+}
+
+/* Left Group Bar */
+.modules-left {
+    background-color: alpha(@background, 0.82);
+    border: 1px solid alpha(@foreground, 0.12);
+    border-radius: 20px;
+    padding: 3px 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Right Group Bar */
+.modules-right {
+    background-color: alpha(@background, 0.82);
+    border: 1px solid alpha(@foreground, 0.12);
+    border-radius: 20px;
+    padding: 3px 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Badges inside pills */
+#clock {
+    background-color: alpha(@color1, 0.22);
+    color: @foreground;
+    border: 1px solid alpha(@color1, 0.3);
+    border-radius: 12px;
+    padding: 3px 10px;
+    margin: 1px 4px;
+}
+
+#battery {
+    background-color: alpha(@color2, 0.22);
+    color: @foreground;
+    border: 1px solid alpha(@color2, 0.3);
+    border-radius: 12px;
+    padding: 3px 10px;
+    margin: 1px 4px;
+}
+
+#bluetooth,
+#network {
+    padding: 0 6px;
+    color: alpha(@foreground, 0.8);
+    font-size: 14px;
+}
+
+#bluetooth:hover,
+#network:hover {
+    color: @color1;
+}
+
+/* Workspaces with dot/pill style */
+#workspaces {
+    padding: 0 4px;
+}
+
+#workspaces button {
+    padding: 2px 7px;
+    color: alpha(@foreground, 0.4);
+    border-radius: 12px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+#workspaces button.active {
+    background-color: alpha(@color1, 0.35);
+    color: @foreground;
+    font-weight: bold;
+}
+
+#workspaces button:hover {
+    color: @foreground;
+}
+
+#pulseaudio {
+    padding: 0 8px;
+    color: alpha(@foreground, 0.85);
+}
+
+#custom-notification {
+    padding: 0 6px;
+    color: @color2;
+    font-size: 14px;
+}
