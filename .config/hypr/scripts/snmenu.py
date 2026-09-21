@@ -116,8 +116,9 @@ class RadialMenu(Gtk.Window):
         self.num_items = len(self.items) if self.items else 6
 
         self.hovered_index = -1
-        self.outer_radius = 235.0
-        self.inner_radius = 78.0
+        # Bigger circular dimensions for high visibility
+        self.outer_radius = 320.0
+        self.inner_radius = 110.0
 
         # Enable true RGBA transparency
         self.set_app_paintable(True)
@@ -164,17 +165,18 @@ class RadialMenu(Gtk.Window):
         dist = math.hypot(dx, dy)
 
         # Center is hollow hole, outside is outer screen
-        if dist < self.inner_radius or dist > (self.outer_radius + 30.0):
+        if dist < self.inner_radius or dist > (self.outer_radius + 45.0):
             return -1
 
-        # Angle in radians [-pi, pi], with -pi/2 at top (12 o'clock)
-        angle = math.atan2(dy, dx)
-        phi = (angle + math.pi / 2.0) % (2.0 * math.pi)
-        if phi < 0:
-            phi += 2.0 * math.pi
-
         slice_angle = (2.0 * math.pi) / self.num_items
-        index = int(phi / slice_angle) % self.num_items
+        base_angle = -math.pi / 2.0 - slice_angle / 2.0
+
+        angle = math.atan2(dy, dx)
+        rel_angle = (angle - base_angle) % (2.0 * math.pi)
+        if rel_angle < 0:
+            rel_angle += 2.0 * math.pi
+
+        index = int(rel_angle / slice_angle) % self.num_items
         return index
 
     def on_motion(self, widget, event):
@@ -223,11 +225,12 @@ class RadialMenu(Gtk.Window):
 
     def draw_slice(self, cr, cx, cy, index, is_hovered, slice_angle):
         item = self.items[index]
-        start_angle = -math.pi / 2.0 + index * slice_angle
+        base_angle = -math.pi / 2.0 - slice_angle / 2.0
+        start_angle = base_angle + index * slice_angle
         end_angle = start_angle + slice_angle
 
-        # Hovered wedge pops outward like Picture 3
-        outer_r = self.outer_radius + 22.0 if is_hovered else self.outer_radius
+        # Hovered wedge pops outward
+        outer_r = self.outer_radius + 35.0 if is_hovered else self.outer_radius
         inner_r = self.inner_radius
 
         cr.arc(cx, cy, outer_r, start_angle, end_angle)
@@ -243,8 +246,8 @@ class RadialMenu(Gtk.Window):
         cr.fill_preserve()
 
         # Outline border
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.40)
-        cr.set_line_width(1.5)
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.45)
+        cr.set_line_width(2.0)
         cr.stroke()
 
         # Content position (Icon & Text)
@@ -259,26 +262,26 @@ class RadialMenu(Gtk.Window):
         # Crisp white text & icons in both states
         cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
 
-        # Draw icon
+        # Draw icon (larger 34px)
         layout_icon = self.create_pango_layout(icon_char)
-        font_desc = Pango.FontDescription("JetBrainsMono Nerd Font 24")
+        font_desc = Pango.FontDescription("JetBrainsMono Nerd Font 34")
         layout_icon.set_font_description(font_desc)
         _, rect = layout_icon.get_pixel_extents()
 
         icon_x = tx - rect.width / 2.0
-        icon_y = ty - rect.height / 2.0 - 8
+        icon_y = ty - rect.height / 2.0 - 12
         cr.move_to(icon_x, icon_y)
         PangoCairo.show_layout(cr, layout_icon)
 
-        # Draw label underneath
+        # Draw label underneath (larger 12px bold)
         if label_text:
             layout_label = self.create_pango_layout(label_text)
-            font_label = Pango.FontDescription("JetBrainsMono Nerd Font Bold 9.5")
+            font_label = Pango.FontDescription("JetBrainsMono Nerd Font Bold 12")
             layout_label.set_font_description(font_label)
             _, l_rect = layout_label.get_pixel_extents()
 
             lbl_x = tx - l_rect.width / 2.0
-            lbl_y = ty + 16
+            lbl_y = ty + 20
             cr.move_to(lbl_x, lbl_y)
             PangoCairo.show_layout(cr, layout_label)
 
@@ -287,7 +290,7 @@ class RadialMenu(Gtk.Window):
         w, h = alloc.width, alloc.height
         cx, cy = w / 2.0, h / 2.0
 
-        # 1. Dimmed background
+        # 1. Full-screen dimmed blurred background
         or_, og, ob, oa = self.theme["overlay"]
         cr.set_source_rgba(or_, og, ob, oa)
         cr.paint()
@@ -299,7 +302,7 @@ class RadialMenu(Gtk.Window):
             if i != self.hovered_index:
                 self.draw_slice(cr, cx, cy, i, False, slice_angle)
 
-        # 3. Draw the popped-out hovered slice on TOP of everything (Picture 3)
+        # 3. Draw the popped-out hovered slice on TOP of everything
         if 0 <= self.hovered_index < self.num_items:
             self.draw_slice(cr, cx, cy, self.hovered_index, True, slice_angle)
 
@@ -308,14 +311,14 @@ class RadialMenu(Gtk.Window):
         cr.arc(cx, cy, self.inner_radius, 0, 2.0 * math.pi)
         cr.set_source_rgba(c_r, c_g, c_b, c_a)
         cr.fill_preserve()
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.40)
-        cr.set_line_width(1.5)
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.50)
+        cr.set_line_width(2.0)
         cr.stroke()
 
         # 5. Draw outer base circle border
         cr.arc(cx, cy, self.outer_radius, 0, 2.0 * math.pi)
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.40)
-        cr.set_line_width(1.5)
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.50)
+        cr.set_line_width(2.0)
         cr.stroke()
 
         return True
