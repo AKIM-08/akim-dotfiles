@@ -281,30 +281,86 @@ window.floating-notifications,
     color: @accent;
 }
 
+/* Universal styling for all buttons inside notification-group and notification headers */
+.notification-group button,
+.notification-group .notification-group-header button,
 .notification-group-header button,
 .notification-group-headers button,
 .notification-group-close-button,
 .notification-group-collapse-button,
-.notification-group .notification-group-header button {
-    background: alpha(@color1, 0.18);
+.notification-group .close-button,
+.notification-group .collapse-button,
+.notification-group button.close-button,
+.notification-group button.collapse-button,
+.notification-group-buttons button,
+.notification-group-buttons button.close-button,
+.notification-group-buttons button.collapse-button,
+.notification-group-header .close-button,
+.notification-group-header .collapse-button {
+    background: alpha(@color1, 0.20);
+    background-color: alpha(@color1, 0.20);
+    background-image: none;
     color: @color1;
-    border: 1px solid alpha(@color1, 0.35);
+    border: 1px solid alpha(@color1, 0.40);
     border-radius: 8px;
     padding: 4px 10px;
-    margin: 0 2px;
+    margin: 0 3px;
     font-size: 13px;
     box-shadow: none;
     transition: all 0.2s ease;
 }
 
+.notification-group button label,
+.notification-group button image,
+.notification-group .close-button label,
+.notification-group .close-button image,
+.notification-group .collapse-button label,
+.notification-group .collapse-button image,
+.notification-group-close-button label,
+.notification-group-close-button image,
+.notification-group-collapse-button label,
+.notification-group-collapse-button image,
+.notification-group-header button label,
+.notification-group-header button image {
+    color: @color1;
+    background: transparent;
+    background-color: transparent;
+}
+
+.notification-group button:hover,
+.notification-group .notification-group-header button:hover,
 .notification-group-header button:hover,
 .notification-group-headers button:hover,
 .notification-group-close-button:hover,
 .notification-group-collapse-button:hover,
-.notification-group .notification-group-header button:hover {
+.notification-group .close-button:hover,
+.notification-group .collapse-button:hover,
+.notification-group button.close-button:hover,
+.notification-group button.collapse-button:hover,
+.notification-group-buttons button:hover,
+.notification-group-buttons button.close-button:hover,
+.notification-group-buttons button.collapse-button:hover {
     background: @color1;
+    background-color: @color1;
+    background-image: none;
     color: @background;
+    border-color: @color1;
     box-shadow: 0 0 10px alpha(@color1, 0.5);
+}
+
+.notification-group button:hover label,
+.notification-group button:hover image,
+.notification-group .close-button:hover label,
+.notification-group .close-button:hover image,
+.notification-group .collapse-button:hover label,
+.notification-group .collapse-button:hover image,
+.notification-group-close-button:hover label,
+.notification-group-close-button:hover image,
+.notification-group-collapse-button:hover label,
+.notification-group-collapse-button:hover image,
+.notification-group-header button:hover label,
+.notification-group-header button:hover image {
+    color: @background;
 }
 
 .notification-group .notification-row {

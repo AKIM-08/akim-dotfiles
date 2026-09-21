@@ -93,10 +93,10 @@ def load_layout():
 
     return [
         {"label": "lock", "action": "hyprlock", "text": "Lock", "icon_char": ""},
-        {"label": "suspend", "action": "systemctl suspend", "text": "Suspend", "icon_char": ""},
+        {"label": "suspend", "action": "loginctl lock-session; systemctl suspend", "text": "Suspend", "icon_char": ""},
         {"label": "logout", "action": "hyprctl dispatch exit", "text": "Logout", "icon_char": ""},
         {"label": "shutdown", "action": "systemctl poweroff", "text": "Shutdown", "icon_char": ""},
-        {"label": "hibernate", "action": "systemctl hibernate", "text": "Hibernate", "icon_char": ""},
+        {"label": "hibernate", "action": "loginctl lock-session; systemctl hibernate", "text": "Hibernate", "icon_char": ""},
         {"label": "reboot", "action": "systemctl reboot", "text": "Reboot", "icon_char": ""},
     ]
 

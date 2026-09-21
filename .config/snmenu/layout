@@ -8,7 +8,7 @@
     },
     {
         "label": "suspend",
-        "action": "systemctl suspend",
+        "action": "loginctl lock-session; systemctl suspend",
         "text": "Suspend",
         "icon_char": "",
         "show_label": true
@@ -29,7 +29,7 @@
     },
     {
         "label": "hibernate",
-        "action": "systemctl hibernate",
+        "action": "loginctl lock-session; systemctl hibernate",
         "text": "Hibernate",
         "icon_char": "",
         "show_label": true
