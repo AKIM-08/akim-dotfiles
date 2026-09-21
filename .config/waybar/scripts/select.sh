@@ -13,7 +13,9 @@ apply_theme() {
     # Ensure pywal colors link is in place
     ln -sf "$WAL_CACHE/colors-waybar.css" "$WAYBAR_DIR/colors-waybar.css" 2>/dev/null || true
     
-    pkill waybar && waybar &
+    pkill -x waybar 2>/dev/null || true
+    sleep 0.15
+    waybar &
 }
 
 # Menu options with rich Nerd Font icons and descriptions

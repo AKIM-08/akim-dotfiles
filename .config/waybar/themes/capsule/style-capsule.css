@@ -1,4 +1,4 @@
-@import "../../colors-waybar.css";
+@import url("colors-waybar.css");
 
 * {
     border: none;
@@ -14,8 +14,15 @@ window#waybar {
     color: @foreground;
 }
 
-/* Left Pills */
-#clock, #custom-pacman, #workspaces, #custom-notification, #tray, #bluetooth, #network, #battery {
+/* Floating Modular Capsules */
+#clock,
+#bluetooth,
+#network,
+#battery,
+#custom-pacman,
+#workspaces,
+#custom-notification,
+#tray {
     background-color: alpha(@background, 0.78);
     color: @foreground;
     border: 1px solid alpha(@foreground, 0.12);
@@ -26,7 +33,13 @@ window#waybar {
     transition: all 0.3s ease;
 }
 
-#clock:hover, #custom-pacman:hover, #workspaces:hover, #custom-notification:hover, #bluetooth:hover, #network:hover, #battery:hover {
+#clock:hover,
+#custom-pacman:hover,
+#workspaces:hover,
+#custom-notification:hover,
+#bluetooth:hover,
+#network:hover,
+#battery:hover {
     background-color: alpha(@background, 0.92);
     border-color: @color1;
 }

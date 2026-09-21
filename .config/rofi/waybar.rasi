@@ -18,7 +18,7 @@ configuration {
 }
 
 window {
-    width: 520px;
+    width: 580px;
     border-radius: 16px;
     border: 2px;
     border-color: @border-color;
@@ -57,7 +57,7 @@ entry {
 }
 
 listview {
-    lines: 4;
+    lines: 5;
     columns: 1;
     spacing: 8px;
     padding: 4px 0px 0px 0px;
