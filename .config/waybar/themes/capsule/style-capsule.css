@@ -77,16 +77,37 @@ window#waybar {
     background-color: alpha(@foreground, 0.1);
 }
 
-#battery.warning {
-    color: #f1fa8c;
-}
-
-#battery.critical {
-    color: #ff5555;
+#battery {
+    color: @foreground;
+    transition: all 0.3s ease;
 }
 
 #battery.charging {
     color: #50fa7b;
+}
+
+#battery.plugged {
+    color: #8be9fd;
+}
+
+#battery.warning:not(.charging) {
+    color: #ffb86c;
+}
+
+#battery.critical:not(.charging) {
+    color: #ff5555;
+    animation-name: blink-critical;
+    animation-duration: 1s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes blink-critical {
+    to {
+        color: #ffffff;
+        background-color: alpha(#ff5555, 0.4);
+    }
 }
 
 #network.disconnected {

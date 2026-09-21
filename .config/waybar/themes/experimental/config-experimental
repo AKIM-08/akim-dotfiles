@@ -51,24 +51,31 @@
             "on-click-right": "blueman-manager",
         }, 
         "battery": {
-            "interval":30,
+            "interval": 1,
             "states": {
                 "good": 95,
                 "warning": 30,
-                "critical": 20
+                "critical": 15
             },
             "format": "{capacity}% {icon}",
             "format-charging": "{capacity}% 󰂄",
-            "format-plugged": "{capacity}% 󰂄 ",
-            "format-alt": "{time} {icon}",
+            "format-plugged": "{capacity}% 󰚥",
+            "format-discharging": "{capacity}% {icon}",
+            "format-full": "{capacity}% 󰁹",
             "format-icons": [
+                "󰂃",
+                "󰁺",
                 "󰁻",
-            "󰁼",
-            "󰁾",
-            "󰂀",
-            "󰂂",
-            "󰁹"
+                "󰁼",
+                "󰁽",
+                "󰁾",
+                "󰁿",
+                "󰂀",
+                "󰂁",
+                "󰂂",
+                "󰁹"
             ],
+            "tooltip": false
         },
         "custom/pacman": {
             "format": "󰅢 {}",

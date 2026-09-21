@@ -125,6 +125,10 @@ tooltip {
     color: #26A65B;
 }
 
+#battery.plugged {
+    color: #8be9fd;
+}
+
 #battery.warning:not(.charging) {
     color: #ffbe61;
 }

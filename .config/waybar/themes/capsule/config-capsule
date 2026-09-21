@@ -64,13 +64,17 @@
         "on-click": "blueman-manager"
     },
     "battery": {
+        "interval": 1,
         "states": {
+            "good": 95,
             "warning": 30,
             "critical": 15
         },
         "format": "{capacity}% {icon}",
         "format-charging": "{capacity}% 󰂄",
-        "format-plugged": "{capacity}% 󰂄",
+        "format-plugged": "{capacity}% 󰚥",
+        "format-discharging": "{capacity}% {icon}",
+        "format-full": "{capacity}% 󰁹",
         "format-icons": ["󰂃", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
         "tooltip": false
     },
