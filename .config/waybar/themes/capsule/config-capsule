@@ -1,0 +1,87 @@
+{
+    "layer": "top",
+    "position": "top",
+    "margin-top": 6,
+    "margin-left": 10,
+    "margin-right": 10,
+    "margin-bottom": 0,
+    "reload_style_on_change": true,
+    "modules-left": [
+        "clock",
+        "group/status"
+    ],
+    "modules-center": [
+        "custom/pacman",
+        "hyprland/workspaces"
+    ],
+    "modules-right": [
+        "custom/notification",
+        "tray"
+    ],
+    "hyprland/workspaces": {
+        "format": "{name}",
+        "format-icons": {
+            "active": "",
+            "default": "",
+            "empty": ""
+        },
+        "persistent-workspaces": {
+            "*": [1, 2, 3, 4, 5]
+        }
+    },
+    "custom/notification": {
+        "tooltip": false,
+        "format": "",
+        "on-click": "swaync-client -t -sw",
+        "escape": true
+    },
+    "custom/pacman": {
+        "format": "󰮯",
+        "tooltip": false,
+        "on-click": "~/.config/hypr/scripts/rofi-toggle.sh"
+    },
+    "clock": {
+        "format": "󰃭 {:%a %d %b  %I:%M:%S %p}",
+        "interval": 1,
+        "tooltip": false
+    },
+    "group/status": {
+        "orientation": "horizontal",
+        "modules": [
+            "bluetooth",
+            "network",
+            "battery"
+        ]
+    },
+    "network": {
+        "format-wifi": "󰤨",
+        "format-ethernet": "󰈀",
+        "format-disconnected": "󰤭",
+        "format-disabled": "󰤮",
+        "tooltip": false,
+        "on-click": "kitty nmtui"
+    },
+    "bluetooth": {
+        "format-on": "󰂯",
+        "format-off": "󰂲",
+        "format-disabled": "󰂲",
+        "format-connected": "󰂱",
+        "tooltip": false,
+        "on-click": "blueman-manager"
+    },
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{capacity}% {icon}",
+        "format-charging": "{capacity}% 󰂄",
+        "format-plugged": "{capacity}% 󰂄",
+        "format-icons": ["󰂃", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+        "tooltip": false
+    },
+    "tray": {
+        "icon-size": 16,
+        "spacing": 8
+    }
+}

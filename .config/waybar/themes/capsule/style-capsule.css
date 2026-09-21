@@ -1,0 +1,85 @@
+@import "../../colors-waybar.css";
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-weight: bold;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @foreground;
+}
+
+/* Left Pills */
+#clock, #custom-pacman, #workspaces, #custom-notification, #tray, #bluetooth, #network, #battery {
+    background-color: alpha(@background, 0.78);
+    color: @foreground;
+    border: 1px solid alpha(@foreground, 0.12);
+    border-radius: 12px;
+    padding: 4px 12px;
+    margin: 3px 3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
+}
+
+#clock:hover, #custom-pacman:hover, #workspaces:hover, #custom-notification:hover, #bluetooth:hover, #network:hover, #battery:hover {
+    background-color: alpha(@background, 0.92);
+    border-color: @color1;
+}
+
+#custom-pacman {
+    font-size: 16px;
+    color: @color1;
+    padding: 4px 14px;
+}
+
+#custom-notification {
+    font-size: 15px;
+    color: @color2;
+    padding: 4px 14px;
+}
+
+#workspaces {
+    padding: 2px 6px;
+}
+
+#workspaces button {
+    padding: 2px 6px;
+    color: alpha(@foreground, 0.45);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+#workspaces button.active {
+    color: @color1;
+    font-weight: 900;
+}
+
+#workspaces button:hover {
+    color: @foreground;
+    background-color: alpha(@foreground, 0.1);
+}
+
+#battery.warning {
+    color: #f1fa8c;
+}
+
+#battery.critical {
+    color: #ff5555;
+}
+
+#battery.charging {
+    color: #50fa7b;
+}
+
+#network.disconnected {
+    color: #ff5555;
+}
+
+#bluetooth.disabled {
+    color: alpha(@foreground, 0.4);
+}

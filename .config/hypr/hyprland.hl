@@ -97,8 +97,8 @@ decoration {
     rounding_power = 2
 
     # Change transparency of focused and unfocused windows
-    active_opacity = 0.98
-    inactive_opacity = 0.90
+    active_opacity = 0.92
+    inactive_opacity = 0.84
 	
     shadow {
         enabled = true
@@ -369,15 +369,21 @@ windowrule {
 }
 
 windowrule {
+    name = firefox-opacity
+    match:class = (?i)^(firefox|librewolf|Brave-browser|google-chrome|Chromium|zen-browser)$
+    opacity = 0.86 0.78
+}
+
+windowrule {
     name = opacity-apps
-    match:class = (?i)^(firefox|librewolf|Brave-browser|google-chrome|Chromium|discord|Discord|org.telegram.desktop|Telegram|code|Code|vlc|obs|Spotify)$
-    opacity = 0.98 0.90
+    match:class = (?i)^(discord|Discord|org.telegram.desktop|Telegram|code|Code|vlc|obs|Spotify)$
+    opacity = 0.90 0.82
 }
 
 windowrule {
     name = nautilus-opacity
     match:class = (?i)^(org.gnome.Nautilus|nautilus)$
-    opacity = 0.96 0.88
+    opacity = 0.90 0.82
 }
 
 windowrule {

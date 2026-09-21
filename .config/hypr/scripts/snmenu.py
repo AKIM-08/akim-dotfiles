@@ -243,11 +243,7 @@ class RadialMenu(Gtk.Window):
         cr.set_source_rgba(br, bg, bb, ba)
         cr.fill()
 
-        # 3. Draw center circle background
-        c_r, c_g, c_b, c_a = self.theme["center_bg"]
-        cr.arc(cx, cy, self.inner_radius, 0, 2.0 * math.pi)
-        cr.set_source_rgba(c_r, c_g, c_b, c_a)
-        cr.fill()
+        # Center circle is completely transparent (reveals blurred background)
 
         # 4. Draw popped-out highlighted sector for hovered item
         if 0 <= self.hovered_index < self.num_items:

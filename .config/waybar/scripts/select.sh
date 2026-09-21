@@ -17,12 +17,12 @@ apply_theme() {
 }
 
 # Menu options with rich Nerd Font icons and descriptions
-OPTIONS="󰕮  Default       —  Classic Floating Pill Bar\n󰤄  Line          —  Minimal Edge-to-Edge Top Bar\n󰾍  Zen           —  Clean Centered Floating Island\n󰘚  Experimental  —  Dynamic Multi-Module Bar"
+OPTIONS="󰕮  Default       —  Classic Floating Pill Bar\n󰤄  Line          —  Minimal Edge-to-Edge Top Bar\n󰾍  Zen           —  Clean Centered Floating Island\n󰘚  Experimental  —  Dynamic Multi-Module Bar\n󰍹  Capsule       —  Modular Floating Capsule Islands"
 
 if command -v rofi &>/dev/null; then
     choice=$(echo -e "$OPTIONS" | rofi -dmenu -i -theme "$HOME/.config/rofi/waybar.rasi")
 elif command -v wofi &>/dev/null; then
-    choice=$(printf "default\nline\nzen\nexperimental" | wofi --dmenu --prompt "Select Waybar Theme")
+    choice=$(printf "default\nline\nzen\nexperimental\ncapsule" | wofi --dmenu --prompt "Select Waybar Theme")
 fi
 
 case "$choice" in
@@ -30,8 +30,10 @@ case "$choice" in
     *Line*) apply_theme line ;;
     *Zen*) apply_theme zen ;;
     *Experimental*) apply_theme experimental ;;
+    *Capsule*) apply_theme capsule ;;
     default) apply_theme default ;;
     line) apply_theme line ;;
     zen) apply_theme zen ;;
     experimental) apply_theme experimental ;;
+    capsule) apply_theme capsule ;;
 esac
