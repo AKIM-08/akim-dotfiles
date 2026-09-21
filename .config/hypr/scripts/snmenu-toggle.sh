@@ -28,20 +28,12 @@ if [ -d "$HOME/.config/cpmenu" ]; then
     [ -f "$HOME/.config/cpmenu/style.css" ] && ln -sf "$HOME/.config/cpmenu/style.css" "$HOME/.config/snmenu/style.css" 2>/dev/null || true
 fi
 
-# 1. Native snmenu binary if installed
-if command -v snmenu &>/dev/null; then
-    exec snmenu
-fi
-if [ -x "$HOME/.local/bin/snmenu" ]; then
-    exec "$HOME/.local/bin/snmenu"
-fi
-
-# 2. Python GTK3/Cairo native radial menu (exact replica of SNMenu)
+# 1. Python GTK3/Cairo native radial menu (exact replica in Picture 3 & 4)
 if [ -f "$HOME/.config/hypr/scripts/snmenu.py" ]; then
     exec python3 "$HOME/.config/hypr/scripts/snmenu.py"
 fi
 
-# 3. wlogout if installed
+# 2. wlogout if installed
 if command -v wlogout &>/dev/null; then
     exec wlogout -b 5
 fi

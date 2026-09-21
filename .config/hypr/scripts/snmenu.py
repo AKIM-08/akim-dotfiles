@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-snmenu.py - Lightweight GTK3/Cairo circular (radial) menu
-Exact replica of SNMenu:
-- Pure hollow donut ring (no center button/play icon)
-- 6 wedge slices loaded from ~/.config/snmenu/layout
+snmenu.py - Lightweight GTK3/Cairo circular radial power menu
+- Sleek hollow donut ring with 6 sector slices
 - Dynamic wallpaper colors from pywal (~/.cache/wal/colors.json)
-- Hover highlighting with wallpaper accent
-- Smooth click actions and ESC/click-outside dismiss
+- Hover expansion effect with wallpaper accent color (CS:GO / wlogout radial style)
+- Crisp typography and Nerd Font icons
+- Instant ESC / click-outside dismiss
 """
 
 import sys
@@ -52,25 +51,29 @@ def hex_to_rgb(hex_str, default=(0.1, 0.1, 0.1)):
 def load_theme():
     colors_file = os.path.expanduser("~/.cache/wal/colors.json")
     theme = {
-        "bg": (0.12, 0.09, 0.15),
-        "fg": (0.95, 0.95, 0.95),
-        "accent": (0.75, 0.25, 0.55),
-        "overlay": (0.0, 0.0, 0.0, 0.55),
-        "wedge_bg": (0.14, 0.11, 0.17, 0.88),
+        "bg": (0.10, 0.08, 0.14),
+        "fg": (1.0, 1.0, 1.0),
+        "accent": (0.88, 0.29, 0.61),
+        "overlay": (0.0, 0.0, 0.0, 0.60),
+        "wedge_bg": (0.13, 0.10, 0.17, 0.90),
+        "center_bg": (0.08, 0.06, 0.11, 0.85),
     }
 
     if os.path.exists(colors_file):
         try:
             with open(colors_file, "r") as f:
                 data = json.load(f)
-                bg_rgb = hex_to_rgb(data.get("special", {}).get("background", "#161320"))
-                theme["bg"] = bg_rgb
-                theme["wedge_bg"] = (bg_rgb[0], bg_rgb[1], bg_rgb[2], 0.88)
-                theme["overlay"] = (bg_rgb[0] * 0.4, bg_rgb[1] * 0.4, bg_rgb[2] * 0.4, 0.60)
-                theme["fg"] = hex_to_rgb(data.get("special", {}).get("foreground", "#ffffff"))
-                
+                bg_hex = data.get("special", {}).get("background", "#14121a")
+                fg_hex = data.get("special", {}).get("foreground", "#ffffff")
                 colors = data.get("colors", {})
-                accent_hex = colors.get("color9") or colors.get("color4") or "#cba6f7"
+                accent_hex = colors.get("color1") or colors.get("color9") or "#e04b9b"
+
+                bg_rgb = hex_to_rgb(bg_hex)
+                theme["bg"] = bg_rgb
+                theme["wedge_bg"] = (bg_rgb[0], bg_rgb[1], bg_rgb[2], 0.90)
+                theme["center_bg"] = (bg_rgb[0] * 0.7, bg_rgb[1] * 0.7, bg_rgb[2] * 0.7, 0.85)
+                theme["overlay"] = (bg_rgb[0] * 0.3, bg_rgb[1] * 0.3, bg_rgb[2] * 0.3, 0.60)
+                theme["fg"] = hex_to_rgb(fg_hex)
                 theme["accent"] = hex_to_rgb(accent_hex)
         except Exception:
             pass
@@ -113,8 +116,8 @@ class RadialMenu(Gtk.Window):
         self.num_items = len(self.items) if self.items else 6
 
         self.hovered_index = -1
-        self.outer_radius = 215.0
-        self.inner_radius = 68.0
+        self.outer_radius = 235.0
+        self.inner_radius = 78.0
 
         # Enable true RGBA transparency
         self.set_app_paintable(True)
@@ -160,7 +163,7 @@ class RadialMenu(Gtk.Window):
         dist = math.hypot(dx, dy)
 
         # Center is hollow hole, outside is outer screen
-        if dist < self.inner_radius or dist > self.outer_radius:
+        if dist < self.inner_radius or dist > (self.outer_radius + 30.0):
             return -1
 
         # Angle in radians [-pi, pi], with -pi/2 at top (12 o'clock)
@@ -195,7 +198,7 @@ class RadialMenu(Gtk.Window):
                 self.execute_action(action)
                 return True
             else:
-                # Click outside the donut or in the hollow center dismisses menu
+                # Click outside the donut or in the center dismisses menu
                 Gtk.main_quit()
                 return True
         elif event.button == 3:
@@ -222,8 +225,8 @@ class RadialMenu(Gtk.Window):
         start_angle = -math.pi / 2.0 + index * slice_angle
         end_angle = start_angle + slice_angle
 
-        # Hovered wedge pops outward like CS:GO radial buy menu (Picture 3)
-        outer_r = self.outer_radius + 18.0 if is_hovered else self.outer_radius
+        # Hovered wedge pops outward like Picture 3
+        outer_r = self.outer_radius + 22.0 if is_hovered else self.outer_radius
         inner_r = self.inner_radius
 
         cr.arc(cx, cy, outer_r, start_angle, end_angle)
@@ -232,14 +235,14 @@ class RadialMenu(Gtk.Window):
 
         if is_hovered:
             ar, ag, ab = self.theme["accent"]
-            cr.set_source_rgba(ar, ag, ab, 0.98)
+            cr.set_source_rgba(ar, ag, ab, 0.96)
         else:
             br, bg, bb, ba = self.theme["wedge_bg"]
             cr.set_source_rgba(br, bg, bb, ba)
         cr.fill_preserve()
 
         # Outline border
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.45)
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.40)
         cr.set_line_width(1.5)
         cr.stroke()
 
@@ -252,12 +255,8 @@ class RadialMenu(Gtk.Window):
         icon_char = item.get("icon_char", "")
         label_text = item.get("text", item.get("label", "")).capitalize()
 
-        # Text color
-        if is_hovered:
-            cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
-        else:
-            fr, fg, fb = self.theme["fg"]
-            cr.set_source_rgba(fr, fg, fb, 0.92)
+        # Crisp white text & icons in both states
+        cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
 
         # Draw icon
         layout_icon = self.create_pango_layout(icon_char)
@@ -273,12 +272,12 @@ class RadialMenu(Gtk.Window):
         # Draw label underneath
         if label_text:
             layout_label = self.create_pango_layout(label_text)
-            font_label = Pango.FontDescription("Sans Bold 9")
+            font_label = Pango.FontDescription("JetBrainsMono Nerd Font Bold 9.5")
             layout_label.set_font_description(font_label)
             _, l_rect = layout_label.get_pixel_extents()
 
             lbl_x = tx - l_rect.width / 2.0
-            lbl_y = ty + 15
+            lbl_y = ty + 16
             cr.move_to(lbl_x, lbl_y)
             PangoCairo.show_layout(cr, layout_label)
 
@@ -287,7 +286,7 @@ class RadialMenu(Gtk.Window):
         w, h = alloc.width, alloc.height
         cx, cy = w / 2.0, h / 2.0
 
-        # 1. Dim entire background
+        # 1. Dimmed background
         or_, og, ob, oa = self.theme["overlay"]
         cr.set_source_rgba(or_, og, ob, oa)
         cr.paint()
@@ -299,20 +298,24 @@ class RadialMenu(Gtk.Window):
             if i != self.hovered_index:
                 self.draw_slice(cr, cx, cy, i, False, slice_angle)
 
-        # 3. Draw inner & outer base circle outlines
-        cr.arc(cx, cy, self.outer_radius, 0, 2.0 * math.pi)
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.4)
-        cr.set_line_width(1.5)
-        cr.stroke()
-
-        cr.arc(cx, cy, self.inner_radius, 0, 2.0 * math.pi)
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.4)
-        cr.set_line_width(1.5)
-        cr.stroke()
-
-        # 4. Draw the popped-out hovered slice on TOP of everything (Picture 3)
+        # 3. Draw the popped-out hovered slice on TOP of everything (Picture 3)
         if 0 <= self.hovered_index < self.num_items:
             self.draw_slice(cr, cx, cy, self.hovered_index, True, slice_angle)
+
+        # 4. Draw center circle background
+        c_r, c_g, c_b, c_a = self.theme["center_bg"]
+        cr.arc(cx, cy, self.inner_radius, 0, 2.0 * math.pi)
+        cr.set_source_rgba(c_r, c_g, c_b, c_a)
+        cr.fill_preserve()
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.40)
+        cr.set_line_width(1.5)
+        cr.stroke()
+
+        # 5. Draw outer base circle border
+        cr.arc(cx, cy, self.outer_radius, 0, 2.0 * math.pi)
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.40)
+        cr.set_line_width(1.5)
+        cr.stroke()
 
         return True
 
