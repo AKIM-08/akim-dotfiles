@@ -1,0 +1,33 @@
+/* GTK4 & Libadwaita dark theme and File Chooser overrides */
+@define-color window_bg_color #14121a;
+@define-color window_fg_color #ffffff;
+@define-color view_bg_color #181622;
+@define-color view_fg_color #e0def4;
+@define-color headerbar_bg_color #14121a;
+@define-color headerbar_fg_color #ffffff;
+@define-color popover_bg_color #1c1928;
+@define-color popover_fg_color #ffffff;
+@define-color card_bg_color rgba(255, 255, 255, 0.08);
+@define-color card_fg_color #ffffff;
+@define-color dialog_bg_color #14121a;
+@define-color dialog_fg_color #ffffff;
+@define-color accent_color #b53c7a;
+@define-color accent_bg_color #b53c7a;
+@define-color accent_fg_color #ffffff;
+
+window, .background {
+    background-color: @window_bg_color;
+    color: @window_fg_color;
+}
+
+headerbar {
+    background-color: @headerbar_bg_color;
+    color: @headerbar_fg_color;
+}
+
+entry {
+    background-color: #1c1928;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
+}

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 snmenu.py - Lightweight GTK3/Cairo circular radial power menu
-- Sleek hollow donut ring with 6 sector slices
-- Dynamic wallpaper colors from pywal (~/.cache/wal/colors.json)
-- Hover expansion effect with wallpaper accent color (CS:GO / wlogout radial style)
+- Continuous hollow donut disc with 6 power options
+- Symmetrical dial: Suspend (right), Logout (bottom-right), Shutdown (bottom-left), Hibernate (left), Reboot (top-left), Lock (top-right)
+- Popped-out wedge highlight on hover using active pywal wallpaper accent
 - Crisp typography and Nerd Font icons
 - Instant ESC / click-outside dismiss
 """
@@ -53,10 +53,10 @@ def load_theme():
     theme = {
         "bg": (0.10, 0.08, 0.14),
         "fg": (1.0, 1.0, 1.0),
-        "accent": (0.88, 0.29, 0.61),
-        "overlay": (0.0, 0.0, 0.0, 0.60),
-        "wedge_bg": (0.13, 0.10, 0.17, 0.90),
-        "center_bg": (0.08, 0.06, 0.11, 0.85),
+        "accent": (0.71, 0.24, 0.48), # Elegant magenta/pink default
+        "overlay": (0.0, 0.0, 0.0, 0.65),
+        "wedge_bg": (0.12, 0.09, 0.15, 0.94),
+        "center_bg": (0.07, 0.05, 0.09, 0.85),
     }
 
     if os.path.exists(colors_file):
@@ -66,13 +66,13 @@ def load_theme():
                 bg_hex = data.get("special", {}).get("background", "#14121a")
                 fg_hex = data.get("special", {}).get("foreground", "#ffffff")
                 colors = data.get("colors", {})
-                accent_hex = colors.get("color1") or colors.get("color9") or "#e04b9b"
+                accent_hex = colors.get("color1") or colors.get("color9") or "#b53c7a"
 
                 bg_rgb = hex_to_rgb(bg_hex)
                 theme["bg"] = bg_rgb
-                theme["wedge_bg"] = (bg_rgb[0], bg_rgb[1], bg_rgb[2], 0.90)
-                theme["center_bg"] = (bg_rgb[0] * 0.7, bg_rgb[1] * 0.7, bg_rgb[2] * 0.7, 0.85)
-                theme["overlay"] = (bg_rgb[0] * 0.3, bg_rgb[1] * 0.3, bg_rgb[2] * 0.3, 0.60)
+                theme["wedge_bg"] = (bg_rgb[0] * 1.1, bg_rgb[1] * 1.1, bg_rgb[2] * 1.1, 0.94)
+                theme["center_bg"] = (bg_rgb[0] * 0.6, bg_rgb[1] * 0.6, bg_rgb[2] * 0.6, 0.85)
+                theme["overlay"] = (bg_rgb[0] * 0.2, bg_rgb[1] * 0.2, bg_rgb[2] * 0.2, 0.65)
                 theme["fg"] = hex_to_rgb(fg_hex)
                 theme["accent"] = hex_to_rgb(accent_hex)
         except Exception:
@@ -95,12 +95,12 @@ def load_layout():
                 sys.stderr.write(f"Failed to parse {path}: {e}\n")
 
     return [
-        {"label": "lock", "action": "hyprlock", "text": "Lock", "icon_char": ""},
         {"label": "suspend", "action": "loginctl lock-session; systemctl suspend", "text": "Suspend", "icon_char": ""},
         {"label": "logout", "action": "hyprctl dispatch exit", "text": "Logout", "icon_char": ""},
         {"label": "shutdown", "action": "systemctl poweroff", "text": "Shutdown", "icon_char": ""},
         {"label": "hibernate", "action": "loginctl lock-session; systemctl hibernate", "text": "Hibernate", "icon_char": ""},
         {"label": "reboot", "action": "systemctl reboot", "text": "Reboot", "icon_char": ""},
+        {"label": "lock", "action": "hyprlock", "text": "Lock", "icon_char": ""},
     ]
 
 
@@ -116,9 +116,10 @@ class RadialMenu(Gtk.Window):
         self.num_items = len(self.items) if self.items else 6
 
         self.hovered_index = -1
-        # Bigger circular dimensions for high visibility
-        self.outer_radius = 320.0
-        self.inner_radius = 110.0
+        # Spacious circular dimensions
+        self.outer_radius = 295.0
+        self.inner_radius = 95.0
+        self.hover_pop_out = 45.0
 
         # Enable true RGBA transparency
         self.set_app_paintable(True)
@@ -164,18 +165,17 @@ class RadialMenu(Gtk.Window):
         dy = y - cy
         dist = math.hypot(dx, dy)
 
-        # Center is hollow hole, outside is outer screen
-        if dist < self.inner_radius or dist > (self.outer_radius + 45.0):
+        # Inside center hole or far outside bounds
+        if dist < self.inner_radius or dist > (self.outer_radius + self.hover_pop_out + 20.0):
             return -1
 
         slice_angle = (2.0 * math.pi) / self.num_items
-        base_angle = -math.pi / 2.0 - slice_angle / 2.0
-
         angle = math.atan2(dy, dx)
-        rel_angle = (angle - base_angle) % (2.0 * math.pi)
-        if rel_angle < 0:
-            rel_angle += 2.0 * math.pi
+        if angle < 0:
+            angle += 2.0 * math.pi
 
+        # Index 0 is centered at 0 rad (right / 3 o'clock)
+        rel_angle = (angle + slice_angle / 2.0) % (2.0 * math.pi)
         index = int(rel_angle / slice_angle) % self.num_items
         return index
 
@@ -223,103 +223,86 @@ class RadialMenu(Gtk.Window):
                 sys.stderr.write(f"Failed to execute '{action}': {e}\n")
         Gtk.main_quit()
 
-    def draw_slice(self, cr, cx, cy, index, is_hovered, slice_angle):
-        item = self.items[index]
-        base_angle = -math.pi / 2.0 - slice_angle / 2.0
-        start_angle = base_angle + index * slice_angle
-        end_angle = start_angle + slice_angle
-
-        # Hovered wedge pops outward
-        outer_r = self.outer_radius + 35.0 if is_hovered else self.outer_radius
-        inner_r = self.inner_radius
-
-        cr.arc(cx, cy, outer_r, start_angle, end_angle)
-        cr.arc_negative(cx, cy, inner_r, end_angle, start_angle)
-        cr.close_path()
-
-        if is_hovered:
-            ar, ag, ab = self.theme["accent"]
-            cr.set_source_rgba(ar, ag, ab, 0.96)
-        else:
-            br, bg, bb, ba = self.theme["wedge_bg"]
-            cr.set_source_rgba(br, bg, bb, ba)
-        cr.fill_preserve()
-
-        # Outline border
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.45)
-        cr.set_line_width(2.0)
-        cr.stroke()
-
-        # Content position (Icon & Text)
-        mid_angle = (start_angle + end_angle) / 2.0
-        content_r = (inner_r + outer_r) / 2.0
-        tx = cx + content_r * math.cos(mid_angle)
-        ty = cy + content_r * math.sin(mid_angle)
-
-        icon_char = item.get("icon_char", "")
-        label_text = item.get("text", item.get("label", "")).capitalize()
-
-        # Crisp white text & icons in both states
-        cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
-
-        # Draw icon (larger 34px)
-        layout_icon = self.create_pango_layout(icon_char)
-        font_desc = Pango.FontDescription("JetBrainsMono Nerd Font 34")
-        layout_icon.set_font_description(font_desc)
-        _, rect = layout_icon.get_pixel_extents()
-
-        icon_x = tx - rect.width / 2.0
-        icon_y = ty - rect.height / 2.0 - 12
-        cr.move_to(icon_x, icon_y)
-        PangoCairo.show_layout(cr, layout_icon)
-
-        # Draw label underneath (larger 12px bold)
-        if label_text:
-            layout_label = self.create_pango_layout(label_text)
-            font_label = Pango.FontDescription("JetBrainsMono Nerd Font Bold 12")
-            layout_label.set_font_description(font_label)
-            _, l_rect = layout_label.get_pixel_extents()
-
-            lbl_x = tx - l_rect.width / 2.0
-            lbl_y = ty + 20
-            cr.move_to(lbl_x, lbl_y)
-            PangoCairo.show_layout(cr, layout_label)
-
     def on_draw(self, widget, cr):
         alloc = self.get_allocation()
         w, h = alloc.width, alloc.height
         cx, cy = w / 2.0, h / 2.0
 
-        # 1. Full-screen dimmed blurred background
+        # 1. Full-screen dimmed blurred background overlay
         or_, og, ob, oa = self.theme["overlay"]
         cr.set_source_rgba(or_, og, ob, oa)
         cr.paint()
 
         slice_angle = (2.0 * math.pi) / self.num_items
 
-        # 2. Draw non-hovered slices first
-        for i in range(self.num_items):
-            if i != self.hovered_index:
-                self.draw_slice(cr, cx, cy, i, False, slice_angle)
+        # 2. Draw continuous dark donut ring base (no dividing cuts)
+        br, bg, bb, ba = self.theme["wedge_bg"]
+        cr.arc(cx, cy, self.outer_radius, 0, 2.0 * math.pi)
+        cr.arc_negative(cx, cy, self.inner_radius, 2.0 * math.pi, 0)
+        cr.close_path()
+        cr.set_source_rgba(br, bg, bb, ba)
+        cr.fill()
 
-        # 3. Draw the popped-out hovered slice on TOP of everything
-        if 0 <= self.hovered_index < self.num_items:
-            self.draw_slice(cr, cx, cy, self.hovered_index, True, slice_angle)
-
-        # 4. Draw center circle background
+        # 3. Draw center circle background
         c_r, c_g, c_b, c_a = self.theme["center_bg"]
         cr.arc(cx, cy, self.inner_radius, 0, 2.0 * math.pi)
         cr.set_source_rgba(c_r, c_g, c_b, c_a)
-        cr.fill_preserve()
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.50)
-        cr.set_line_width(2.0)
-        cr.stroke()
+        cr.fill()
 
-        # 5. Draw outer base circle border
-        cr.arc(cx, cy, self.outer_radius, 0, 2.0 * math.pi)
-        cr.set_source_rgba(0.0, 0.0, 0.0, 0.50)
-        cr.set_line_width(2.0)
-        cr.stroke()
+        # 4. Draw popped-out highlighted sector for hovered item
+        if 0 <= self.hovered_index < self.num_items:
+            mid_angle = self.hovered_index * slice_angle
+            start_angle = mid_angle - slice_angle / 2.0
+            end_angle = mid_angle + slice_angle / 2.0
+            hover_r = self.outer_radius + self.hover_pop_out
+
+            cr.arc(cx, cy, hover_r, start_angle, end_angle)
+            cr.arc_negative(cx, cy, self.inner_radius, end_angle, start_angle)
+            cr.close_path()
+
+            ar, ag, ab = self.theme["accent"]
+            cr.set_source_rgba(ar, ag, ab, 0.96)
+            cr.fill()
+
+        # 5. Draw icons and labels for all 6 items
+        for i in range(self.num_items):
+            item = self.items[i]
+            mid_angle = i * slice_angle
+            is_hov = (i == self.hovered_index)
+
+            outer_r = (self.outer_radius + self.hover_pop_out) if is_hov else self.outer_radius
+            content_r = (self.inner_radius + outer_r) / 2.0
+            tx = cx + content_r * math.cos(mid_angle)
+            ty = cy + content_r * math.sin(mid_angle)
+
+            icon_char = item.get("icon_char", "")
+            label_text = item.get("text", item.get("label", "")).capitalize()
+
+            # Crisp white icons & text
+            cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
+
+            # Draw icon
+            layout_icon = self.create_pango_layout(icon_char)
+            font_desc = Pango.FontDescription("JetBrainsMono Nerd Font 30")
+            layout_icon.set_font_description(font_desc)
+            _, rect = layout_icon.get_pixel_extents()
+
+            icon_x = tx - rect.width / 2.0
+            icon_y = ty - rect.height / 2.0 - 10
+            cr.move_to(icon_x, icon_y)
+            PangoCairo.show_layout(cr, layout_icon)
+
+            # Draw label underneath
+            if label_text:
+                layout_label = self.create_pango_layout(label_text)
+                font_label = Pango.FontDescription("JetBrainsMono Nerd Font Bold 11")
+                layout_label.set_font_description(font_label)
+                _, l_rect = layout_label.get_pixel_extents()
+
+                lbl_x = tx - l_rect.width / 2.0
+                lbl_y = ty + 18
+                cr.move_to(lbl_x, lbl_y)
+                PangoCairo.show_layout(cr, layout_label)
 
         return True
 

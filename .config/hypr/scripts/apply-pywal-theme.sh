@@ -23,7 +23,7 @@ apply_gtk_colors() {
     [ -f "$gtk_css" ] || return 0
     mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"
     
-    # GTK3 Styling (Blueman, Pavucontrol, etc.)
+    # GTK3 Styling (Blueman, Pavucontrol, File Choosers, etc.)
     cat "$gtk_css" > "$HOME/.config/gtk-3.0/gtk.css"
     cat << 'EOF' >> "$HOME/.config/gtk-3.0/gtk.css"
 
@@ -37,10 +37,14 @@ view, textview text, treeview.view, list, row {
     color: @theme_text_color;
 }
 
-headerbar, toolbar, menubar {
+headerbar, toolbar, menubar, .titlebar {
     background-color: @theme_bg_color;
     color: @theme_fg_color;
     border-bottom: 1px solid alpha(@theme_fg_color, 0.12);
+}
+
+headerbar .title, headerbar .subtitle, headerbar label {
+    color: @theme_fg_color;
 }
 
 button {
@@ -48,11 +52,87 @@ button {
     color: @theme_fg_color;
     border: 1px solid alpha(@theme_fg_color, 0.12);
     border-radius: 8px;
+    padding: 6px 12px;
 }
 
 button:hover {
     background-color: alpha(@theme_selected_bg_color, 0.25);
     border-color: @theme_selected_bg_color;
+    color: @theme_fg_color;
+}
+
+button:active, button:checked {
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
+}
+
+button.suggested-action {
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
+    border: 1px solid @theme_selected_bg_color;
+}
+
+filechooser, filechooserdialog, .filechooser, dialog {
+    background-color: @theme_bg_color;
+    color: @theme_fg_color;
+}
+
+.path-bar button, pathbar button {
+    background-color: alpha(@theme_fg_color, 0.08);
+    color: @theme_fg_color;
+    border: 1px solid alpha(@theme_fg_color, 0.12);
+    border-radius: 6px;
+    margin: 2px;
+}
+
+.path-bar button:hover, pathbar button:hover {
+    background-color: alpha(@theme_fg_color, 0.18);
+    color: @theme_fg_color;
+}
+
+.path-bar button:checked, pathbar button:checked {
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
+}
+
+.path-bar button label, pathbar button label {
+    color: @theme_fg_color;
+}
+
+entry, searchbar entry {
+    background-color: alpha(@theme_fg_color, 0.06);
+    color: @theme_fg_color;
+    border: 1px solid alpha(@theme_fg_color, 0.18);
+    border-radius: 6px;
+    padding: 6px 10px;
+    caret-color: @theme_fg_color;
+}
+
+entry:focus, searchbar entry:focus {
+    border-color: @theme_selected_bg_color;
+    background-color: alpha(@theme_fg_color, 0.10);
+    color: @theme_fg_color;
+}
+
+entry selection {
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
+}
+
+placessidebar, placesview, .sidebar {
+    background-color: @theme_base_color;
+    color: @theme_text_color;
+    border-right: 1px solid alpha(@theme_fg_color, 0.08);
+}
+
+placessidebar row:hover, placesview row:hover {
+    background-color: alpha(@theme_fg_color, 0.08);
+    color: @theme_fg_color;
+}
+
+placessidebar row:selected, placesview row:selected {
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
 }
 
 switch:checked {

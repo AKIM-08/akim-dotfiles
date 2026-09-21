@@ -1,12 +1,5 @@
 [
     {
-        "label": "lock",
-        "action": "hyprlock",
-        "text": "Lock",
-        "icon_char": "",
-        "show_label": true
-    },
-    {
         "label": "suspend",
         "action": "loginctl lock-session; systemctl suspend",
         "text": "Suspend",
@@ -39,6 +32,13 @@
         "action": "systemctl reboot",
         "text": "Reboot",
         "icon_char": "",
+        "show_label": true
+    },
+    {
+        "label": "lock",
+        "action": "hyprlock",
+        "text": "Lock",
+        "icon_char": "",
         "show_label": true
     }
 ]

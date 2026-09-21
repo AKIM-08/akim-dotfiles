@@ -1,14 +1,7 @@
 [
     {
-        "label": "lock",
-        "action": "hyprlock",
-        "text": "Lock",
-        "icon_char": "",
-        "show_label": true
-    },
-    {
         "label": "suspend",
-        "action": "systemctl suspend",
+        "action": "loginctl lock-session; systemctl suspend",
         "text": "Suspend",
         "icon_char": "",
         "show_label": true
@@ -29,7 +22,7 @@
     },
     {
         "label": "hibernate",
-        "action": "systemctl hibernate",
+        "action": "loginctl lock-session; systemctl hibernate",
         "text": "Hibernate",
         "icon_char": "",
         "show_label": true
@@ -39,6 +32,13 @@
         "action": "systemctl reboot",
         "text": "Reboot",
         "icon_char": "",
+        "show_label": true
+    },
+    {
+        "label": "lock",
+        "action": "hyprlock",
+        "text": "Lock",
+        "icon_char": "",
         "show_label": true
     }
 ]

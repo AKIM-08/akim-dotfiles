@@ -1,0 +1,200 @@
+/* Dark High-Contrast GTK 3 Theme & File Chooser Styles */
+
+@define-color theme_bg_color #14121a;
+@define-color theme_fg_color #ffffff;
+@define-color theme_base_color #181622;
+@define-color theme_text_color #e0def4;
+@define-color theme_selected_bg_color #b53c7a;
+@define-color theme_selected_fg_color #ffffff;
+
+/* Global Window and Background */
+window, .background {
+    background-color: @theme_bg_color;
+    color: @theme_fg_color;
+}
+
+view, textview text, treeview.view, list, row {
+    background-color: @theme_base_color;
+    color: @theme_text_color;
+}
+
+/* Headerbars, Toolbars, and Menubars */
+headerbar, toolbar, menubar, .titlebar {
+    background-color: #14121a;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+headerbar .title, headerbar .subtitle, headerbar label {
+    color: #ffffff;
+}
+
+/* Buttons */
+button {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+button:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+    border-color: @theme_selected_bg_color;
+    color: #ffffff;
+}
+
+button:active, button:checked {
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
+}
+
+button.suggested-action {
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
+    border: 1px solid @theme_selected_bg_color;
+}
+
+button.suggested-action:hover {
+    background-color: alpha(@theme_selected_bg_color, 0.85);
+}
+
+button.destructive-action {
+    background-color: #eb6f92;
+    color: #ffffff;
+}
+
+/* File Chooser & Dialog Specific Fixes */
+filechooser, filechooserdialog, .filechooser, dialog {
+    background-color: #14121a;
+    color: #ffffff;
+}
+
+/* Path Bar (Breadcrumbs e.g. Home > Downloads) */
+.path-bar button, pathbar button {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    margin: 2px;
+}
+
+.path-bar button:hover, pathbar button:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+}
+
+.path-bar button:checked, pathbar button:checked {
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
+}
+
+.path-bar button label, pathbar button label {
+    color: #ffffff;
+}
+
+/* Text Entries and Search inputs */
+entry, searchbar entry {
+    background-color: #1c1928;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
+    padding: 6px 10px;
+    caret-color: #ffffff;
+}
+
+entry:focus, searchbar entry:focus {
+    border-color: @theme_selected_bg_color;
+    background-color: #211d30;
+    color: #ffffff;
+}
+
+entry selection {
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
+}
+
+/* Places Sidebar (Left Navigation) */
+placessidebar, placesview, .sidebar {
+    background-color: #110f17;
+    color: #e0def4;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+placessidebar row, placesview row {
+    color: #e0def4;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+placessidebar row:hover, placesview row:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+placessidebar row:selected, placesview row:selected {
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
+}
+
+/* TreeView and File List */
+treeview.view {
+    background-color: #14121a;
+    color: #e0def4;
+    border: none;
+}
+
+treeview.view:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+treeview.view:selected, treeview.view:selected:focus {
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
+}
+
+treeview.view header button {
+    background-color: #110f17;
+    color: rgba(255, 255, 255, 0.7);
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Dropdowns & Comboboxes */
+combobox, combobox button {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+}
+
+menu, popover {
+    background-color: #1c1928;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+menuitem {
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 6px 12px;
+}
+
+menuitem:hover {
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
+}
+
+/* Scrollbars */
+scrollbar slider {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    min-width: 6px;
+    min-height: 6px;
+}
+
+scrollbar slider:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
