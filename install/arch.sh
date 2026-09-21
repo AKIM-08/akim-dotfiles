@@ -94,6 +94,7 @@ sudo pacman -Syu --needed --noconfirm \
     hyprpicker \
     libpulse \
     fastfetch \
+    chafa \
     zsh-syntax-highlighting \
     zsh-autosuggestions \
     imagemagick \

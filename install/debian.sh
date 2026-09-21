@@ -112,6 +112,7 @@ APT_CORE_PKGS=(
     qt6ct
     btop
     fastfetch
+    chafa
     nautilus
     blueman
     network-manager
