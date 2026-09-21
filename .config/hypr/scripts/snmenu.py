@@ -117,9 +117,9 @@ class RadialMenu(Gtk.Window):
 
         self.hovered_index = -1
         # Spacious circular dimensions
-        self.outer_radius = 295.0
-        self.inner_radius = 95.0
-        self.hover_pop_out = 45.0
+        self.outer_radius = 345.0
+        self.inner_radius = 110.0
+        self.hover_pop_out = 55.0
 
         # Enable true RGBA transparency
         self.set_app_paintable(True)
@@ -283,24 +283,24 @@ class RadialMenu(Gtk.Window):
 
             # Draw icon
             layout_icon = self.create_pango_layout(icon_char)
-            font_desc = Pango.FontDescription("JetBrainsMono Nerd Font 30")
+            font_desc = Pango.FontDescription("JetBrainsMono Nerd Font 36")
             layout_icon.set_font_description(font_desc)
             _, rect = layout_icon.get_pixel_extents()
 
             icon_x = tx - rect.width / 2.0
-            icon_y = ty - rect.height / 2.0 - 10
+            icon_y = ty - rect.height / 2.0 - 12
             cr.move_to(icon_x, icon_y)
             PangoCairo.show_layout(cr, layout_icon)
 
             # Draw label underneath
             if label_text:
                 layout_label = self.create_pango_layout(label_text)
-                font_label = Pango.FontDescription("JetBrainsMono Nerd Font Bold 11")
+                font_label = Pango.FontDescription("JetBrainsMono Nerd Font Bold 12.5")
                 layout_label.set_font_description(font_label)
                 _, l_rect = layout_label.get_pixel_extents()
 
                 lbl_x = tx - l_rect.width / 2.0
-                lbl_y = ty + 18
+                lbl_y = ty + 22
                 cr.move_to(lbl_x, lbl_y)
                 PangoCairo.show_layout(cr, layout_label)
 
