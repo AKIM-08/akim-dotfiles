@@ -326,9 +326,9 @@ bindl = , XF86AudioPlay, exec, playerctl play-pause
 bindl = , XF86AudioPrev, exec, playerctl previous
 
 # MY CUSTOM BINDS
-bind = $mainMod, SPACE, togglefloating
+bind = $mainMod, SPACE, exec, ~/.config/hypr/scripts/toggle-float-center.sh
+bind = $mainMod, TAB, exec, ~/.config/hypr/scripts/toggle-float-center.sh
 bind = $mainMod SHIFT, SPACE, centerwindow
-bind = $mainMod, TAB, togglefloating
 bind = $mainMod, T, exec, ~/.config/hypr/scripts/toggle-float-center.sh
 bind = $mainMod, D, exec, discord --enable-features=WebRTCPipeWireCapturer
 bind = $mainMod SHIFT, F, fullscreen

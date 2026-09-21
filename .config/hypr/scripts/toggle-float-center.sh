@@ -5,8 +5,9 @@ set -euo pipefail
 
 hyprctl dispatch togglefloating >/dev/null
 
-# Centrer uniquement si la fenêtre est maintenant en floating
+# Centrer et redimensionner uniquement si la fenêtre est maintenant en floating
 floating=$(hyprctl activewindow -j 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('floating', False))" 2>/dev/null || echo "False")
 if [ "$floating" = "True" ]; then
-    hyprctl dispatch centerwindow >/dev/null
+    hyprctl dispatch resizeactive exact 780 480 >/dev/null || true
+    hyprctl dispatch centerwindow >/dev/null || true
 fi
