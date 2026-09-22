@@ -170,7 +170,8 @@ toggle_recording() {
                     if command -v ffmpeg &>/dev/null; then
                         local tmp_clean="${saved_file%.mp4}_clean.mp4"
                         echo "[$(date)] Running FFmpeg noise suppression on $saved_file" >> /tmp/screenrec.log
-                        if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=120,lowpass=f=9000,afftdn=nf=-25,volume=1.3" -c:a aac -b:a 192k "$tmp_clean" >> /tmp/screenrec.log 2>&1; then
+                        # Filter: highpass 160Hz completely cuts fan drone, afftdn with nr=30dB wipes air hiss, lowpass 8000Hz removes coil whine, volume 1.4 boosts speech
+                        if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=160,lowpass=f=8000,afftdn=nr=30:nf=-35:tn=1,volume=1.4" -c:a aac -b:a 192k "$tmp_clean" >> /tmp/screenrec.log 2>&1; then
                             mv "$tmp_clean" "$saved_file" 2>/dev/null || true
                             echo "[$(date)] FFmpeg noise suppression succeeded" >> /tmp/screenrec.log
                         else
@@ -246,6 +247,11 @@ mon_target = ''
 mic_target = ''
 sink_name = ''
 
+# Strategy 0: Check for WebRTC Echo-Cancel Source
+pw_nodes = cmd(['pw-cli', 'list-objects', 'Node'])
+if 'echo-cancel-source' in pw_nodes:
+    mic_target = 'echo-cancel-source'
+
 # Strategy 1: wpctl inspect (WirePlumber native - highest accuracy)
 def wpctl_node(target):
     out = cmd(['wpctl', 'inspect', target])
@@ -255,10 +261,12 @@ def wpctl_node(target):
             return line.split('=', 1)[1].strip().strip('\"').strip(\"'\")
     return ''
 
-wp_mic = wpctl_node('@DEFAULT_AUDIO_SOURCE@')
+if not mic_target:
+    wp_mic = wpctl_node('@DEFAULT_AUDIO_SOURCE@')
+    if wp_mic and 'output' not in wp_mic.lower() and not wp_mic.endswith('.monitor'):
+        mic_target = wp_mic
+
 wp_sink = wpctl_node('@DEFAULT_AUDIO_SINK@')
-if wp_mic and 'output' not in wp_mic.lower() and not wp_mic.endswith('.monitor'):
-    mic_target = wp_mic
 if wp_sink:
     sink_name = wp_sink
     mon_target = f'{wp_sink}.monitor'
