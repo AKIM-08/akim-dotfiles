@@ -112,6 +112,23 @@ capture_swappy() {
     fi
 }
 
+# Helper: Unload any active loopback modules to prevent mic bleeding into desktop/speaker audio
+cleanup_loopback() {
+    if [ -f "$LOOPBACK_FILE" ]; then
+        local mod_id
+        mod_id=$(cat "$LOOPBACK_FILE" 2>/dev/null || true)
+        if [ -n "$mod_id" ] && command -v pactl &>/dev/null; then
+            pactl unload-module "$mod_id" 2>/dev/null || true
+        fi
+        rm -f "$LOOPBACK_FILE"
+    fi
+    if command -v pactl &>/dev/null; then
+        pactl list short modules 2>/dev/null | awk '/module-loopback/ {print $1}' | while read -r mid; do
+            [ -n "$mid" ] && pactl unload-module "$mid" 2>/dev/null || true
+        done
+    fi
+}
+
 # 6. Screen Recording Toggle with Audio Source and Persistent Red Border
 toggle_recording() {
     # If already running, STOP recording and clean up
@@ -120,15 +137,7 @@ toggle_recording() {
         pkill -INT -x wl-screenrec 2>/dev/null || true
         pkill -f "record-border.py" 2>/dev/null || true
         
-        # Unload temp loopback module if used
-        if [ -f "$LOOPBACK_FILE" ]; then
-            local mod_id
-            mod_id=$(cat "$LOOPBACK_FILE" 2>/dev/null || true)
-            if [ -n "$mod_id" ] && command -v pactl &>/dev/null; then
-                pactl unload-module "$mod_id" 2>/dev/null || true
-            fi
-            rm -f "$LOOPBACK_FILE"
-        fi
+        cleanup_loopback
 
         sleep 0.5
         if command -v notify-send &>/dev/null; then
@@ -167,47 +176,107 @@ toggle_recording() {
         exit 0
     fi
 
-    local AUDIO_ARGS=()
-    local DEFAULT_SINK=""
-    local DEFAULT_SOURCE=""
+    # Always clear existing loopbacks first so microphone is not leaking into output sinks
+    cleanup_loopback
 
-    if command -v pactl &>/dev/null; then
-        DEFAULT_SINK=$(pactl get-default-sink 2>/dev/null || true)
-        DEFAULT_SOURCE=$(pactl get-default-source 2>/dev/null || true)
+    # Discover devices accurately (monitor and microphone)
+    local AUDIO_TARGET=""
+    local SINK_NAME=""
+    local MIC_NAME=""
+    local MON_NAME=""
+
+    if command -v python3 &>/dev/null && command -v pactl &>/dev/null; then
+        read -r MON_NAME MIC_NAME SINK_NAME <<< "$(python3 -c "
+import subprocess
+
+def cmd(args):
+    try:
+        return subprocess.check_output(args, text=True, stderr=subprocess.DEVNULL).strip()
+    except Exception:
+        return ''
+
+sink = cmd(['pactl', 'get-default-sink'])
+source = cmd(['pactl', 'get-default-source'])
+sources_raw = cmd(['pactl', 'list', 'short', 'sources'])
+
+monitors = []
+mics = []
+for line in sources_raw.splitlines():
+    parts = line.split()
+    if len(parts) >= 2:
+        name = parts[1]
+        if name.endswith('.monitor'):
+            monitors.append(name)
+        else:
+            mics.append(name)
+
+# Resolve monitor for system audio
+mon_target = ''
+if sink:
+    expected = f'{sink}.monitor'
+    if expected in monitors:
+        mon_target = expected
+    else:
+        for m in monitors:
+            if sink in m:
+                mon_target = m
+                break
+        if not mon_target and monitors:
+            mon_target = monitors[0]
+elif monitors:
+    mon_target = monitors[0]
+
+if not mon_target:
+    mon_target = '@DEFAULT_AUDIO_SINK@.monitor'
+
+# Resolve mic
+mic_target = ''
+if source and not source.endswith('.monitor'):
+    mic_target = source
+elif mics:
+    mic_target = mics[0]
+
+if not mic_target:
+    mic_target = '@DEFAULT_AUDIO_SOURCE@'
+
+print(f'{mon_target} {mic_target} {sink}')
+" 2>/dev/null || echo "@DEFAULT_AUDIO_SINK@.monitor @DEFAULT_AUDIO_SOURCE@ default")"
+    else
+        MON_NAME="@DEFAULT_AUDIO_SINK@.monitor"
+        MIC_NAME="@DEFAULT_AUDIO_SOURCE@"
     fi
+
+    local AUDIO_ARGS=()
 
     case "$audio_choice" in
         *"Device / System"*)
-            if [ -n "$DEFAULT_SINK" ]; then
-                AUDIO_ARGS=(--audio="${DEFAULT_SINK}.monitor")
-            else
-                AUDIO_ARGS=(--audio)
-            fi
+            AUDIO_TARGET="$MON_NAME"
             ;;
         *"Microphone"*)
-            if [ -n "$DEFAULT_SOURCE" ]; then
-                AUDIO_ARGS=(--audio="${DEFAULT_SOURCE}")
-            else
-                AUDIO_ARGS=(--audio)
-            fi
+            AUDIO_TARGET="$MIC_NAME"
             ;;
         *"Both"*)
-            if [ -n "$DEFAULT_SOURCE" ] && [ -n "$DEFAULT_SINK" ] && command -v pactl &>/dev/null; then
-                # Route mic to sink monitor via loopback
+            if [ -n "$MIC_NAME" ] && [ -n "$SINK_NAME" ] && command -v pactl &>/dev/null; then
                 local mod_id
-                mod_id=$(pactl load-module module-loopback latency_msec=20 source="$DEFAULT_SOURCE" sink="$DEFAULT_SINK" 2>/dev/null || true)
+                mod_id=$(pactl load-module module-loopback latency_msec=20 source="$MIC_NAME" sink="$SINK_NAME" 2>/dev/null || true)
                 if [ -n "$mod_id" ]; then
                     echo "$mod_id" > "$LOOPBACK_FILE"
                 fi
-                AUDIO_ARGS=(--audio="${DEFAULT_SINK}.monitor")
-            else
-                AUDIO_ARGS=(--audio)
             fi
+            AUDIO_TARGET="$MON_NAME"
             ;;
         *"No Audio"*)
-            AUDIO_ARGS=()
+            AUDIO_TARGET=""
             ;;
     esac
+
+    if [ -n "$AUDIO_TARGET" ]; then
+        if [ "$RECORDER" = "wf-recorder" ]; then
+            AUDIO_ARGS=(--audio="$AUDIO_TARGET")
+        else
+            AUDIO_ARGS=(--audio --audio-device "$AUDIO_TARGET")
+        fi
+    fi
 
     # 2. Select region or ESC for fullscreen
     if command -v notify-send &>/dev/null; then
