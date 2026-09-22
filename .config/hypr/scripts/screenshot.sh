@@ -129,6 +129,10 @@ cleanup_loopback() {
             [ -n "$mid" ] && pactl unload-module "$mid" 2>/dev/null || true
         done
     fi
+    if command -v amixer &>/dev/null; then
+        amixer sset 'Loopback Mixing' 'Disabled' 2>/dev/null || true
+        amixer sset 'Loopback' 'Disabled' 2>/dev/null || true
+    fi
 }
 
 # 6. Screen Recording Toggle with Audio Source and Persistent Red Border
@@ -162,31 +166,6 @@ toggle_recording() {
         done
 
         echo "[$(date)] Stop requested. File: $saved_file, Mode: $saved_mode" >> /tmp/screenrec.log
-
-        # Advanced noise reduction, fan elimination, and voice clarity filter
-        if [ -n "$saved_file" ] && [ -f "$saved_file" ]; then
-            case "$saved_mode" in
-                *"Microphone"*|*"Both"*)
-                    if command -v ffmpeg &>/dev/null; then
-                        local tmp_clean="${saved_file%.mp4}_clean.mp4"
-                        echo "[$(date)] Running FFmpeg noise suppression on $saved_file" >> /tmp/screenrec.log
-                        # Filter: highpass 160Hz completely cuts fan drone, afftdn with nr=30dB wipes air hiss, lowpass 8000Hz removes coil whine, volume 1.4 boosts speech
-                        if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=160,lowpass=f=8000,afftdn=nr=30:nf=-35:tn=1,volume=1.4" -c:a aac -b:a 192k "$tmp_clean" >> /tmp/screenrec.log 2>&1; then
-                            mv "$tmp_clean" "$saved_file" 2>/dev/null || true
-                            echo "[$(date)] FFmpeg noise suppression succeeded" >> /tmp/screenrec.log
-                        else
-                            echo "[$(date)] FFmpeg noise suppression failed! See log above." >> /tmp/screenrec.log
-                            rm -f "$tmp_clean"
-                        fi
-                    else
-                        echo "[$(date)] FFmpeg not installed; skipping audio cleaning." >> /tmp/screenrec.log
-                        if command -v notify-send &>/dev/null; then
-                            notify-send -a "Screen Recorder" "Fan Noise Warning" "Install ffmpeg to automatically remove fan noise: sudo apt install ffmpeg" -u normal
-                        fi
-                    fi
-                    ;;
-            esac
-        fi
 
         if command -v notify-send &>/dev/null; then
             notify-send -a "Screen Recorder" "Recording Stopped" "Video saved to $VID_DIR" -i video-x-generic -u normal
@@ -247,11 +226,6 @@ mon_target = ''
 mic_target = ''
 sink_name = ''
 
-# Strategy 0: Check for WebRTC Echo-Cancel Source
-pw_nodes = cmd(['pw-cli', 'list-objects', 'Node'])
-if 'echo-cancel-source' in pw_nodes:
-    mic_target = 'echo-cancel-source'
-
 # Strategy 1: wpctl inspect (WirePlumber native - highest accuracy)
 def wpctl_node(target):
     out = cmd(['wpctl', 'inspect', target])
@@ -261,10 +235,9 @@ def wpctl_node(target):
             return line.split('=', 1)[1].strip().strip('\"').strip(\"'\")
     return ''
 
-if not mic_target:
-    wp_mic = wpctl_node('@DEFAULT_AUDIO_SOURCE@')
-    if wp_mic and 'output' not in wp_mic.lower() and not wp_mic.endswith('.monitor'):
-        mic_target = wp_mic
+wp_mic = wpctl_node('@DEFAULT_AUDIO_SOURCE@')
+if wp_mic and 'output' not in wp_mic.lower() and not wp_mic.endswith('.monitor'):
+    mic_target = wp_mic
 
 wp_sink = wpctl_node('@DEFAULT_AUDIO_SINK@')
 if wp_sink:
