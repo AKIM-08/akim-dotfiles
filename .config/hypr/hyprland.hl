@@ -419,9 +419,6 @@ windowrule {
     opacity = 1.0 1.0
 }
 
-windowrulev2 = noborder, class:^(record-border)$
-windowrulev2 = noshadow, class:^(record-border)$
-
 # Layer rules for SwayNC & Radial Power Menu
 layerrule = blur on, match:namespace swaync-control-center
 layerrule = ignore_alpha 0.5, match:namespace swaync-control-center
