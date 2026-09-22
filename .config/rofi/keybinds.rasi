@@ -1,0 +1,100 @@
+@import "~/.cache/wal/colors-rofi-dark"
+
+configuration {
+    font: "JetBrainsMono Nerd Font 11";
+    show-icons: false;
+    location: 0;
+    yoffset: 0;
+    xoffset: 0;
+    fixed-num-lines: true;
+    hide-scrollbar: false;
+    click-to-exit: true;
+    cycle: true;
+}
+
+* {
+    background-color: transparent;
+}
+
+window {
+    width: 820px;
+    height: 560px;
+    border-radius: 18px;
+    border: 2px;
+    border-color: @border-color;
+    background-color: @background-color;
+    padding: 0px;
+}
+
+mainbox {
+    border-radius: 18px;
+    padding: 18px;
+    spacing: 14px;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 10px 14px;
+    spacing: 10px;
+    border: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    children: [ prompt, entry ];
+}
+
+prompt {
+    text-color: @selected-normal-background;
+    font: "JetBrainsMono Nerd Font Bold 12";
+    vertical-align: 0.5;
+}
+
+entry {
+    placeholder: "Search shortcuts by key or action...";
+    placeholder-color: rgba(255, 255, 255, 0.35);
+    text-color: @text-color;
+    vertical-align: 0.5;
+}
+
+listview {
+    lines: 11;
+    columns: 1;
+    spacing: 4px;
+    scrollbar: true;
+}
+
+scrollbar {
+    width: 4px;
+    border: 0;
+    handle-width: 6px;
+    handle-color: @selected-normal-background;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+element {
+    border-radius: 10px;
+    padding: 8px 12px;
+    spacing: 10px;
+}
+
+element normal.normal {
+    background-color: transparent;
+    text-color: @text-color;
+}
+
+element alternate.normal {
+    background-color: rgba(255, 255, 255, 0.02);
+    text-color: @text-color;
+}
+
+element selected.normal {
+    background-color: @selected-normal-background;
+    text-color: @selected-normal-foreground;
+}
+
+element-text {
+    text-color: inherit;
+    vertical-align: 0.5;
+    font: "JetBrainsMono Nerd Font 10.5";
+}

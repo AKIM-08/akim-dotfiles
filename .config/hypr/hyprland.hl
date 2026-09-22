@@ -217,6 +217,7 @@ $mainMod = SUPER
 
 bind = $mainMod, Return, exec, kitty
 bind = $mainMod, Q, exec, ~/.config/hypr/scripts/rofi-toggle.sh
+bind = $mainMod, G, exec, ~/.config/hypr/scripts/keybinds.sh
 bind = $mainMod, A, killactive,
 bind = $mainMod, M, exit,
 bind = $mainMod, F, exec, $fileManager

@@ -220,6 +220,7 @@ chmod +x ~/.config/wlogout/hibernate.sh
 |-----------|--------|
 | `Super + Entrée` | Ouvrir le terminal (Kitty) |
 | `Super + Q` | Lanceur d'applications (Rofi) — **toggle** (ouvre / ferme) |
+| `Super + G` | Aide & documentation des raccourcis (**Cheatsheet Rofi**, toggle) |
 | `Super + A` | Fermer la fenêtre active |
 | `Super + F` | Gestionnaire de fichiers (Nautilus) |
 | `Super + B` | Navigateur web (Firefox, Brave ou Chromium) |
