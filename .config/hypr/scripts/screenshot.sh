@@ -161,24 +161,24 @@ toggle_recording() {
             fi
         done
 
+        echo "[$(date)] Stop requested. File: $saved_file, Mode: $saved_mode" >> /tmp/screenrec.log
+
         # Advanced noise reduction, fan elimination, and voice clarity filter
         if [ -n "$saved_file" ] && [ -f "$saved_file" ]; then
             case "$saved_mode" in
                 *"Microphone"*|*"Both"*)
                     if command -v ffmpeg &>/dev/null; then
                         local tmp_clean="${saved_file%.mp4}_clean.mp4"
-                        # Filter chain:
-                        # 1. highpass=120: Kills low-frequency fan motor rumble
-                        # 2. lowpass=9000: Kills high-frequency coil whine
-                        # 3. afftdn=nf=-25: Adaptive FFT noise floor elimination for air circulation hiss
-                        # 4. agate=threshold=0.03: Noise gate - cuts fan to absolute dead silence when not speaking
-                        # 5. volume=1.3: Vocal clarity boost
-                        if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=120,lowpass=f=9000,afftdn=nf=-25,agate=threshold=0.03:range=0.01:attack=10:release=100,volume=1.3" -c:a aac -b:a 192k "$tmp_clean" 2>/dev/null; then
+                        echo "[$(date)] Running FFmpeg noise suppression on $saved_file" >> /tmp/screenrec.log
+                        if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=120,lowpass=f=9000,afftdn=nf=-25,volume=1.3" -c:a aac -b:a 192k "$tmp_clean" >> /tmp/screenrec.log 2>&1; then
                             mv "$tmp_clean" "$saved_file" 2>/dev/null || true
+                            echo "[$(date)] FFmpeg noise suppression succeeded" >> /tmp/screenrec.log
                         else
+                            echo "[$(date)] FFmpeg noise suppression failed! See log above." >> /tmp/screenrec.log
                             rm -f "$tmp_clean"
                         fi
                     else
+                        echo "[$(date)] FFmpeg not installed; skipping audio cleaning." >> /tmp/screenrec.log
                         if command -v notify-send &>/dev/null; then
                             notify-send -a "Screen Recorder" "Fan Noise Warning" "Install ffmpeg to automatically remove fan noise: sudo apt install ffmpeg" -u normal
                         fi
@@ -375,6 +375,11 @@ print(f'{mon_target} {mic_target} {sink_name}')
             ;;
         *"Microphone"*)
             AUDIO_TARGET="$MIC_NAME"
+            if [ -z "$AUDIO_TARGET" ] || [[ "$AUDIO_TARGET" == *".monitor"* ]] || [[ "$AUDIO_TARGET" == *"output"* ]]; then
+                if command -v pactl &>/dev/null; then
+                    AUDIO_TARGET=$(pactl get-default-source 2>/dev/null || true)
+                fi
+            fi
             ;;
         *"Both"*)
             if [ -n "$MIC_NAME" ] && [ -n "$SINK_NAME" ] && command -v pactl &>/dev/null; then
@@ -399,8 +404,9 @@ print(f'{mon_target} {mic_target} {sink_name}')
         fi
     fi
 
-    # Record metadata for stop handler
+    # Record metadata and debug log
     echo "${audio_choice}|${REC_FILE}" > "$REC_META"
+    echo "[$(date)] Starting record: Choice='$audio_choice', Target='$AUDIO_TARGET', File='$REC_FILE', Mic='$MIC_NAME', Sink='$SINK_NAME', Mon='$MON_NAME'" >> /tmp/screenrec.log
 
     # 2. Select region or ESC for fullscreen
     if command -v notify-send &>/dev/null; then
