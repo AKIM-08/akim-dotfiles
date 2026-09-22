@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # screenshot.sh - Multi-choice Screenshot and Screen Recording tool for Hyprland
-# Clean transparent selection marquee, Swappy annotation, Screen Recording, and Color Picker with fallbacks.
+# Features:
+# - Full toggle support (SUPER+SHIFT+P or SUPER+P opens and closes menu)
+# - Clean transparent marquee selection
+# - Persistent on-screen red bounding box during region video recording
+# - Audio source selection: Device / System Audio, Microphone, Both, or No Audio
 
 set -euo pipefail
 
@@ -11,8 +15,9 @@ mkdir -p "$DIR" "$VID_DIR"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 FILE="$DIR/screenshot-${TIMESTAMP}.png"
 REC_FILE="$VID_DIR/recording-${TIMESTAMP}.mp4"
+LOOPBACK_FILE="/tmp/wf_loopback_module.id"
 
-# Slurp appearance: Clean subtle dark dim outside, white crisp border, 100% TRANSPARENT inside (no blue tint)
+# Slurp appearance: Dark dim outside, crisp white border, 100% transparent inside
 SLURP_ARGS=(-d -b "#00000055" -c "#ffffff" -s "#00000000" -w 2)
 
 # Notify and copy helper
@@ -42,7 +47,7 @@ except Exception:
     fi
 }
 
-# 1. Selection (Region) - 100% transparent marquee selection
+# 1. Selection (Region)
 capture_region() {
     local geom
     geom=$(slurp "${SLURP_ARGS[@]}") || exit 0
@@ -107,18 +112,24 @@ capture_swappy() {
     fi
 }
 
-# 6. Screen Recording Toggle (wf-recorder / wl-screenrec)
+# 6. Screen Recording Toggle with Audio Source and Persistent Red Border
 toggle_recording() {
-    # If already running, stop recording
-    if pgrep -x wf-recorder &>/dev/null; then
-        pkill -INT -x wf-recorder || true
-        sleep 0.5
-        if command -v notify-send &>/dev/null; then
-            notify-send -a "Screen Recorder" "Recording Stopped" "Video saved to $VID_DIR" -i video-x-generic -u normal
+    # If already running, STOP recording and clean up
+    if pgrep -x wf-recorder &>/dev/null || pgrep -x wl-screenrec &>/dev/null; then
+        pkill -INT -x wf-recorder 2>/dev/null || true
+        pkill -INT -x wl-screenrec 2>/dev/null || true
+        pkill -f "record-border.py" 2>/dev/null || true
+        
+        # Unload temp loopback module if used
+        if [ -f "$LOOPBACK_FILE" ]; then
+            local mod_id
+            mod_id=$(cat "$LOOPBACK_FILE" 2>/dev/null || true)
+            if [ -n "$mod_id" ] && command -v pactl &>/dev/null; then
+                pactl unload-module "$mod_id" 2>/dev/null || true
+            fi
+            rm -f "$LOOPBACK_FILE"
         fi
-        exit 0
-    elif pgrep -x wl-screenrec &>/dev/null; then
-        pkill -INT -x wl-screenrec || true
+
         sleep 0.5
         if command -v notify-send &>/dev/null; then
             notify-send -a "Screen Recorder" "Recording Stopped" "Video saved to $VID_DIR" -i video-x-generic -u normal
@@ -141,26 +152,101 @@ toggle_recording() {
         exit 1
     fi
 
-    # Optional region select (Press ESC or click for full screen)
+    # 1. Ask for Audio Choice via quick rofi menu
+    local opt_sys="󰓃  Device / System Audio (Desktop Sounds)"
+    local opt_mic="󰍬  Microphone (Voice)"
+    local opt_both="󰓃󰍬 Both (System Audio + Microphone)"
+    local opt_none="󰝟  No Audio (Muted Video)"
+
+    local audio_choice
+    audio_choice=$(printf "%s\n%s\n%s\n%s" "$opt_sys" "$opt_mic" "$opt_both" "$opt_none" | \
+        rofi -dmenu -i -p "󰍬 Audio Source" -theme "$HOME/.config/rofi/screenshot.rasi" || true)
+
+    if [ -z "$audio_choice" ]; then
+        # User cancelled audio prompt
+        exit 0
+    fi
+
+    local AUDIO_ARGS=()
+    local DEFAULT_SINK=""
+    local DEFAULT_SOURCE=""
+
+    if command -v pactl &>/dev/null; then
+        DEFAULT_SINK=$(pactl get-default-sink 2>/dev/null || true)
+        DEFAULT_SOURCE=$(pactl get-default-source 2>/dev/null || true)
+    fi
+
+    case "$audio_choice" in
+        *"Device / System"*)
+            if [ -n "$DEFAULT_SINK" ]; then
+                AUDIO_ARGS=(--audio="${DEFAULT_SINK}.monitor")
+            else
+                AUDIO_ARGS=(--audio)
+            fi
+            ;;
+        *"Microphone"*)
+            if [ -n "$DEFAULT_SOURCE" ]; then
+                AUDIO_ARGS=(--audio="${DEFAULT_SOURCE}")
+            else
+                AUDIO_ARGS=(--audio)
+            fi
+            ;;
+        *"Both"*)
+            if [ -n "$DEFAULT_SOURCE" ] && [ -n "$DEFAULT_SINK" ] && command -v pactl &>/dev/null; then
+                # Route mic to sink monitor via loopback
+                local mod_id
+                mod_id=$(pactl load-module module-loopback latency_msec=20 source="$DEFAULT_SOURCE" sink="$DEFAULT_SINK" 2>/dev/null || true)
+                if [ -n "$mod_id" ]; then
+                    echo "$mod_id" > "$LOOPBACK_FILE"
+                fi
+                AUDIO_ARGS=(--audio="${DEFAULT_SINK}.monitor")
+            else
+                AUDIO_ARGS=(--audio)
+            fi
+            ;;
+        *"No Audio"*)
+            AUDIO_ARGS=()
+            ;;
+    esac
+
+    # 2. Select region or ESC for fullscreen
+    if command -v notify-send &>/dev/null; then
+        notify-send -a "Screen Recorder" "Select recording area" "Draw an area or press ESC for fullscreen" -u low
+    fi
+
     local geom=""
     geom=$(slurp -d -b "#00000055" -c "#ff3366" -s "#00000000" -w 2 || true)
 
+    # 3. If region selected, launch persistent red border overlay
+    if [ -n "$geom" ]; then
+        # Parse x, y, width, height from geom format "X,Y WxH"
+        local pos=${geom% *}
+        local dim=${geom#* }
+        local gx=${pos%,*}
+        local gy=${pos#*,}
+        local gw=${dim%x*}
+        local gh=${dim#*x}
+
+        python3 "$HOME/.config/hypr/scripts/record-border.py" "$gx" "$gy" "$gw" "$gh" &
+    fi
+
+    # 4. Start recording process
     if [ "$RECORDER" = "wf-recorder" ]; then
         if [ -n "$geom" ]; then
-            wf-recorder -g "$geom" -f "$REC_FILE" &
+            wf-recorder -g "$geom" -f "$REC_FILE" "${AUDIO_ARGS[@]}" &
         else
-            wf-recorder -f "$REC_FILE" &
+            wf-recorder -f "$REC_FILE" "${AUDIO_ARGS[@]}" &
         fi
     else
         if [ -n "$geom" ]; then
-            wl-screenrec -g "$geom" -f "$REC_FILE" &
+            wl-screenrec -g "$geom" -f "$REC_FILE" "${AUDIO_ARGS[@]}" &
         else
-            wl-screenrec -f "$REC_FILE" &
+            wl-screenrec -f "$REC_FILE" "${AUDIO_ARGS[@]}" &
         fi
     fi
 
     if command -v notify-send &>/dev/null; then
-        notify-send -a "Screen Recorder" "Recording Started" "Press SUPER+SHIFT+R or open menu to stop" -i media-record -u critical
+        notify-send -a "Screen Recorder" "Recording Started" "Press SUPER+SHIFT+P, SUPER+SHIFT+R, or Screenshot menu to stop" -i media-record -u critical
     fi
 }
 
@@ -203,8 +289,14 @@ except Exception:
     fi
 }
 
-# Interactive Rofi Screenshot & Record Menu
+# Interactive Rofi Screenshot & Record Menu (with toggle support)
 show_menu() {
+    # If menu is already open, toggle it off!
+    if pgrep -x rofi >/dev/null; then
+        pkill -x rofi
+        exit 0
+    fi
+
     local is_recording="󰑋  Screen Record (Start / Stop)"
     if pgrep -x wf-recorder &>/dev/null || pgrep -x wl-screenrec &>/dev/null; then
         is_recording="󰓛  STOP Screen Recording (Active)"

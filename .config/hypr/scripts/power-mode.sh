@@ -79,6 +79,11 @@ toggle_profile() {
 
 # Interactive Rofi Power Mode Menu
 show_menu() {
+    if pgrep -x rofi >/dev/null; then
+        pkill -x rofi
+        exit 0
+    fi
+
     local current
     current=$(get_current_profile)
 
