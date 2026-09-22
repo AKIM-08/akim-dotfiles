@@ -414,12 +414,13 @@ windowrule {
     match:class = (?i)^(record-border)$
     match:title = (?i)^(record-border)$
     float = true
-    noborder = true
-    noshadow = true
-    nofocus = true
     pin = true
+    no_focus = true
     opacity = 1.0 1.0
 }
+
+windowrulev2 = noborder, class:^(record-border)$
+windowrulev2 = noshadow, class:^(record-border)$
 
 # Layer rules for SwayNC & Radial Power Menu
 layerrule = blur on, match:namespace swaync-control-center
