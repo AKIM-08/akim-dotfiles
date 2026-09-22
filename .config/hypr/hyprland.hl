@@ -352,7 +352,6 @@ bind = $mainMod ALT, C, exec, ~/.config/hypr/scripts/caffeine-toggle.sh
 
 # Power Mode selector (SUPER + F12)
 bind = $mainMod, F12, exec, ~/.config/hypr/scripts/power-mode.sh menu
-bind = $mainMod SHIFT, P, exec, ~/.config/hypr/scripts/screenshot.sh
 
 
 ##############################
