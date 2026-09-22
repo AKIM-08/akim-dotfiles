@@ -149,16 +149,31 @@ toggle_recording() {
             rm -f "$REC_META"
         fi
 
-        sleep 0.5
+        # Wait up to 5 seconds for recorder to exit cleanly and flush the MP4 trailer
+        local wait_count=0
+        while pgrep -x wf-recorder &>/dev/null || pgrep -x wl-screenrec &>/dev/null; do
+            sleep 0.2
+            wait_count=$((wait_count + 1))
+            if [ "$wait_count" -ge 25 ]; then
+                pkill -9 -x wf-recorder 2>/dev/null || true
+                pkill -9 -x wl-screenrec 2>/dev/null || true
+                break
+            fi
+        done
 
-        # Advanced noise reduction & clarity enhancer for microphone audio
+        # Advanced noise reduction, fan elimination, and voice clarity filter
         if [ -n "$saved_file" ] && [ -f "$saved_file" ]; then
             case "$saved_mode" in
                 *"Microphone"*|*"Both"*)
                     if command -v ffmpeg &>/dev/null; then
                         local tmp_clean="${saved_file%.mp4}_clean.mp4"
-                        # Filter: highpass=120Hz kills fan motor drone, lowpass=9500Hz cuts coil hiss, afftdn=-28dB wipes air hiss, volume=1.35 brings voice up
-                        if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=120,lowpass=f=9500,afftdn=nf=-28,volume=1.35" -c:a aac -b:a 192k "$tmp_clean" 2>/dev/null; then
+                        # Filter chain:
+                        # 1. highpass=120: Kills low-frequency fan motor rumble
+                        # 2. lowpass=9000: Kills high-frequency coil whine
+                        # 3. afftdn=nf=-25: Adaptive FFT noise floor elimination for air circulation hiss
+                        # 4. agate=threshold=0.03: Noise gate - cuts fan to absolute dead silence when not speaking
+                        # 5. volume=1.3: Vocal clarity boost
+                        if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=120,lowpass=f=9000,afftdn=nf=-25,agate=threshold=0.03:range=0.01:attack=10:release=100,volume=1.3" -c:a aac -b:a 192k "$tmp_clean" 2>/dev/null; then
                             mv "$tmp_clean" "$saved_file" 2>/dev/null || true
                         else
                             rm -f "$tmp_clean"
@@ -211,7 +226,7 @@ toggle_recording() {
     # Always clear existing loopbacks first so microphone is not leaking into output sinks
     cleanup_loopback
 
-    # Discover devices accurately using PipeWire pw-dump, pactl, or wpctl
+    # Discover devices accurately using wpctl inspect, pw-dump, or pactl
     local AUDIO_TARGET=""
     local SINK_NAME=""
     local MIC_NAME=""
@@ -231,54 +246,71 @@ mon_target = ''
 mic_target = ''
 sink_name = ''
 
-# Strategy 1: pw-dump (Native PipeWire JSON)
-pw_raw = cmd(['pw-dump'])
-if pw_raw:
-    try:
-        data = json.loads(pw_raw)
-        def_sink = ''
-        def_source = ''
-        for item in data:
-            if item.get('type') == 'PipeWire:Interface:Metadata' and item.get('props', {}).get('metadata.name') == 'default':
-                for meta in item.get('metadata', []):
-                    k = meta.get('key', '')
-                    v = meta.get('value', {})
-                    val_str = v.get('name', '') if isinstance(v, dict) else str(v)
-                    if k == 'default.audio.sink':
-                        def_sink = val_str
-                    elif k == 'default.audio.source':
-                        def_source = val_str
+# Strategy 1: wpctl inspect (WirePlumber native - highest accuracy)
+def wpctl_node(target):
+    out = cmd(['wpctl', 'inspect', target])
+    for line in out.splitlines():
+        line = line.strip()
+        if 'node.name' in line and '=' in line:
+            return line.split('=', 1)[1].strip().strip('\"').strip(\"'\")
+    return ''
 
-        sinks = []
-        sources = []
-        for item in data:
-            if item.get('type') == 'PipeWire:Interface:Node':
-                props = item.get('info', {}).get('props', {})
-                mc = str(props.get('media.class', ''))
-                nn = str(props.get('node.name', ''))
-                if not nn:
-                    continue
-                if 'Sink' in mc and not nn.endswith('.monitor'):
-                    sinks.append(nn)
-                # Microphone MUST be an Audio/Source, and NOT a monitor, and NOT an output sink
-                elif 'Source' in mc and not nn.endswith('.monitor') and 'output' not in nn.lower() and 'sink' not in nn.lower():
-                    sources.append(nn)
+wp_mic = wpctl_node('@DEFAULT_AUDIO_SOURCE@')
+wp_sink = wpctl_node('@DEFAULT_AUDIO_SINK@')
+if wp_mic and 'output' not in wp_mic.lower() and not wp_mic.endswith('.monitor'):
+    mic_target = wp_mic
+if wp_sink:
+    sink_name = wp_sink
+    mon_target = f'{wp_sink}.monitor'
 
-        if def_sink:
-            sink_name = def_sink
-            mon_target = f'{def_sink}.monitor'
-        elif sinks:
-            sink_name = sinks[0]
-            mon_target = f'{sinks[0]}.monitor'
+# Strategy 2: pw-dump (Native PipeWire JSON)
+if not mon_target or not mic_target:
+    pw_raw = cmd(['pw-dump'])
+    if pw_raw:
+        try:
+            data = json.loads(pw_raw)
+            def_sink = ''
+            def_source = ''
+            for item in data:
+                if item.get('type') == 'PipeWire:Interface:Metadata' and item.get('props', {}).get('metadata.name') == 'default':
+                    for meta in item.get('metadata', []):
+                        k = meta.get('key', '')
+                        v = meta.get('value', {})
+                        val_str = v.get('name', '') if isinstance(v, dict) else str(v)
+                        if k == 'default.audio.sink':
+                            def_sink = val_str
+                        elif k == 'default.audio.source':
+                            def_source = val_str
 
-        if def_source and not def_source.endswith('.monitor') and 'output' not in def_source.lower() and 'sink' not in def_source.lower():
-            mic_target = def_source
-        elif sources:
-            mic_target = sources[0]
-    except Exception:
-        pass
+            sinks = []
+            sources = []
+            for item in data:
+                if item.get('type') == 'PipeWire:Interface:Node':
+                    props = item.get('info', {}).get('props', {})
+                    mc = str(props.get('media.class', ''))
+                    nn = str(props.get('node.name', ''))
+                    if not nn:
+                        continue
+                    if 'Sink' in mc and not nn.endswith('.monitor'):
+                        sinks.append(nn)
+                    elif 'Source' in mc and not nn.endswith('.monitor') and 'output' not in nn.lower() and 'sink' not in nn.lower():
+                        sources.append(nn)
 
-# Strategy 2: pactl
+            if not sink_name and def_sink:
+                sink_name = def_sink
+                mon_target = f'{def_sink}.monitor'
+            elif not mon_target and sinks:
+                sink_name = sinks[0]
+                mon_target = f'{sinks[0]}.monitor'
+
+            if not mic_target and def_source and not def_source.endswith('.monitor') and 'output' not in def_source.lower():
+                mic_target = def_source
+            elif not mic_target and sources:
+                mic_target = sources[0]
+        except Exception:
+            pass
+
+# Strategy 3: pactl
 if not mon_target or not mic_target:
     p_sink = cmd(['pactl', 'get-default-sink']).strip()
     p_source = cmd(['pactl', 'get-default-source']).strip()
@@ -320,6 +352,20 @@ print(f'{mon_target} {mic_target} {sink_name}')
         MON_NAME="@DEFAULT_AUDIO_SINK@.monitor"
         MIC_NAME="@DEFAULT_AUDIO_SOURCE@"
     fi
+
+    # Optimize microphone hardware volume to eliminate fan clipping
+    case "$audio_choice" in
+        *"Microphone"*|*"Both"*)
+            if command -v wpctl &>/dev/null; then
+                wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0 2>/dev/null || true
+                local cur_vol
+                cur_vol=$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null | awk '{print $2}' || echo "0.60")
+                if awk "BEGIN {exit !($cur_vol > 0.70)}"; then
+                    wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 0.65 2>/dev/null || true
+                fi
+            fi
+            ;;
+    esac
 
     local AUDIO_ARGS=()
 
