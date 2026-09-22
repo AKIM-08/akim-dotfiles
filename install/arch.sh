@@ -99,6 +99,9 @@ sudo pacman -Syu --needed --noconfirm \
     zsh-autosuggestions \
     imagemagick \
     luajit \
+    power-profiles-daemon \
+    swappy \
+    wf-recorder \
     || die "Core package installation failed"
 
 # 2b. Optional applications

@@ -120,6 +120,8 @@ APT_CORE_PKGS=(
     zsh-autosuggestions
     imagemagick
     policykit-1-gnome
+    power-profiles-daemon
+    swappy
 )
 
 # 2b. Enable trixie-backports (required for Hyprland packages)
@@ -140,6 +142,7 @@ APT_EXTRA_PKGS=(
     qt6-style-kvantum
     pavucontrol
     bluez
+    wf-recorder
 )
 
 # Hyprland packages from backports (REQUIRED, not optional)

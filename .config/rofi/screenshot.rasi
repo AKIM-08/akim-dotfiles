@@ -1,0 +1,119 @@
+@import "~/.cache/wal/colors-rofi-dark"
+
+configuration {
+    font: "JetBrainsMono Nerd Font 11";
+    show-icons: false;
+    location: 0;
+    yoffset: 0;
+    xoffset: 0;
+    fixed-num-lines: true;
+    hide-scrollbar: true;
+    click-to-exit: true;
+    cycle: true;
+}
+
+* {
+    background-color: transparent;
+}
+
+window {
+    width: 460px;
+    border-radius: 18px;
+    border: 2px;
+    border-color: @border-color;
+    background-color: @background-color;
+    padding: 0px;
+}
+
+mainbox {
+    border-radius: 18px;
+    padding: 18px;
+    spacing: 12px;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 10px 14px;
+    spacing: 10px;
+    border: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    children: [ prompt, entry ];
+}
+
+prompt {
+    text-color: @selected-normal-background;
+    font: "JetBrainsMono Nerd Font Bold 13";
+    vertical-align: 0.5;
+}
+
+entry {
+    placeholder: "Choose capture mode...";
+    placeholder-color: rgba(255, 255, 255, 0.35);
+    text-color: @text-color;
+    vertical-align: 0.5;
+}
+
+listview {
+    lines: 7;
+    columns: 1;
+    spacing: 8px;
+    padding: 4px 0px 0px 0px;
+    scrollbar: false;
+}
+
+element {
+    padding: 10px 14px;
+    border-radius: 12px;
+    spacing: 12px;
+    background-color: rgba(255, 255, 255, 0.04);
+    text-color: @text-color;
+    cursor: pointer;
+    border: 1px;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+element normal.normal {
+    background-color: rgba(255, 255, 255, 0.04);
+    text-color: @text-color;
+}
+
+element normal.urgent {
+    background-color: @urgent-background;
+    text-color: @urgent-foreground;
+}
+
+element normal.active {
+    background-color: rgba(255, 255, 255, 0.08);
+    text-color: @selected-normal-background;
+}
+
+element selected.normal {
+    background-color: @selected-normal-background;
+    text-color: @selected-normal-foreground;
+    border-radius: 12px;
+    border-color: @selected-normal-background;
+}
+
+element selected.urgent {
+    background-color: @urgent-background;
+    text-color: @urgent-foreground;
+}
+
+element selected.active {
+    background-color: @selected-normal-background;
+    text-color: @selected-normal-foreground;
+}
+
+element alternate.normal {
+    background-color: rgba(255, 255, 255, 0.04);
+    text-color: @text-color;
+}
+
+element-text {
+    vertical-align: 0.5;
+    cursor: inherit;
+    text-color: inherit;
+    font: "JetBrainsMono Nerd Font 11";
+}

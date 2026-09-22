@@ -222,8 +222,12 @@ bind = $mainMod, M, exit,
 bind = $mainMod, F, exec, $fileManager
 bind = $mainMod, V, exec, ~/.config/hypr/scripts/cliphist-toggle.sh
 bind = $mainMod, B, exec, ~/.config/hypr/scripts/open-browser.sh
-bind = $mainMod, P, exec, ~/.config/hypr/scripts/screenshot.sh region
+bind = , Print, exec, ~/.config/hypr/scripts/screenshot.sh
+bind = $mainMod, Print, exec, ~/.config/hypr/scripts/screenshot.sh full
+bind = $mainMod, P, exec, ~/.config/hypr/scripts/screenshot.sh
+bind = $mainMod SHIFT, S, exec, ~/.config/hypr/scripts/screenshot.sh region
 bind = $mainMod ALT, P, exec, ~/.config/hypr/scripts/screenshot.sh full
+bind = $mainMod SHIFT, R, exec, ~/.config/hypr/scripts/screenshot.sh record
 bind = $mainMod, escape, exec, ~/.config/hypr/scripts/snmenu-toggle.sh
 bind = $mainMod, X, exec, gnome-characters || flatpak run org.gnome.Characters
 bind = $mainMod, J, layoutmsg, togglesplit
@@ -345,6 +349,10 @@ bind = $mainMod ALT, left, exec, ~/.config/hypr/scripts/switch-wallpaper.sh prev
 bind = $mainMod, C, exec, ~/.config/hypr/scripts/caffeine-toggle.sh
 bind = $mainMod SHIFT, C, exec, ~/.config/hypr/scripts/caffeine-toggle.sh
 bind = $mainMod ALT, C, exec, ~/.config/hypr/scripts/caffeine-toggle.sh
+
+# Power Mode selector (SUPER + F12 or SUPER + SHIFT + P)
+bind = $mainMod, F12, exec, ~/.config/hypr/scripts/power-mode.sh menu
+bind = $mainMod SHIFT, P, exec, ~/.config/hypr/scripts/power-mode.sh menu
 
 
 ##############################

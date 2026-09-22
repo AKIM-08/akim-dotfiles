@@ -76,7 +76,9 @@
         "format-discharging": "{capacity}% {icon}",
         "format-full": "{capacity}% 󰁹",
         "format-icons": ["󰂃", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
-        "tooltip": false
+        "tooltip": true,
+        "tooltip-format": "{capacity}%\nClick: Power Mode Menu",
+        "on-click": "~/.config/hypr/scripts/power-mode.sh menu"
     },
     "tray": {
         "icon-size": 16,
