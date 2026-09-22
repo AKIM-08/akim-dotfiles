@@ -94,7 +94,7 @@ capture_swappy() {
     local geom
     geom=$(slurp "${SLURP_ARGS[@]}") || exit 0
     if command -v swappy &>/dev/null; then
-        grim -g "$geom" - | swappy -f - -o "$FILE"
+        grim -g "$geom" - | env GTK_THEME=Adwaita:dark swappy -f - -o "$FILE" 2>/dev/null || grim -g "$geom" - | swappy -f - -o "$FILE"
         if [ -f "$FILE" ]; then
             post_capture "$FILE" "Annotated Screenshot"
         fi

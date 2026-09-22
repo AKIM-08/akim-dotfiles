@@ -198,3 +198,49 @@ scrollbar slider {
 scrollbar slider:hover {
     background-color: rgba(255, 255, 255, 0.4);
 }
+
+/* Swappy Screenshot Annotation Editor */
+window.swappy, .swappy, #swappy {
+    background-color: #14121a;
+    color: #ffffff;
+}
+
+window.swappy headerbar,
+window.swappy toolbar,
+window.swappy .toolbar,
+window.swappy box.horizontal {
+    background-color: #1a1824;
+    color: #ffffff;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 10px;
+}
+
+window.swappy button {
+    background-color: #2b273f;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 2px 4px;
+    min-height: 32px;
+    min-width: 32px;
+}
+
+window.swappy button image {
+    color: #ffffff;
+    -gtk-icon-style: regular;
+}
+
+window.swappy button:hover {
+    background-color: #443e63;
+    border-color: @theme_selected_bg_color;
+    color: #ffffff;
+}
+
+window.swappy button:active,
+window.swappy button:checked {
+    background-color: @theme_selected_bg_color;
+    border-color: #ffffff;
+    color: #ffffff;
+}
+

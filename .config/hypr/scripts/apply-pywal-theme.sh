@@ -149,6 +149,51 @@ scrollbar slider {
     background-color: alpha(@theme_fg_color, 0.2);
     border-radius: 6px;
 }
+
+/* Swappy Screenshot Annotation Editor */
+window.swappy, .swappy, #swappy {
+    background-color: @theme_bg_color;
+    color: @theme_fg_color;
+}
+
+window.swappy headerbar,
+window.swappy toolbar,
+window.swappy .toolbar,
+window.swappy box.horizontal {
+    background-color: alpha(@theme_fg_color, 0.08);
+    color: @theme_fg_color;
+    border-bottom: 2px solid alpha(@theme_fg_color, 0.15);
+    padding: 6px 10px;
+}
+
+window.swappy button {
+    background-color: alpha(@theme_fg_color, 0.12);
+    color: @theme_fg_color;
+    border: 1px solid alpha(@theme_fg_color, 0.25);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 2px 4px;
+    min-height: 32px;
+    min-width: 32px;
+}
+
+window.swappy button image {
+    color: @theme_fg_color;
+    -gtk-icon-style: regular;
+}
+
+window.swappy button:hover {
+    background-color: alpha(@theme_selected_bg_color, 0.35);
+    border-color: @theme_selected_bg_color;
+    color: @theme_fg_color;
+}
+
+window.swappy button:active,
+window.swappy button:checked {
+    background-color: @theme_selected_bg_color;
+    border-color: @theme_selected_fg_color;
+    color: @theme_selected_fg_color;
+}
 EOF
 
     # GTK4 et Libadwaita (Nautilus)
