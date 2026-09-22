@@ -238,6 +238,8 @@ chmod +x ~/.config/wlogout/hibernate.sh
 | `Super + Shift + S` | Envoyer / retirer la fenêtre du **scratchpad** (toggle) |
 | `Super + Alt + →` | Fond d'écran suivant + nouveau thème |
 | `Super + Alt + ←` | Fond d'écran précédent + nouveau thème |
+| `Super + C` | Mode caféine (**Caffeine toggle**, empêche la veille) |
+| `Super + F12` | Menu profil d'alimentation (**Performance / Équilibré / Économie d'énergie**) |
 
 Les workspaces `Super + &`, `Super + é`, `Super + "`, etc. correspondent aux touches **1–10** sur un clavier AZERTY.
 
