@@ -225,7 +225,7 @@ bind = $mainMod, B, exec, ~/.config/hypr/scripts/open-browser.sh
 bind = , Print, exec, ~/.config/hypr/scripts/screenshot.sh
 bind = $mainMod, Print, exec, ~/.config/hypr/scripts/screenshot.sh full
 bind = $mainMod, P, exec, ~/.config/hypr/scripts/screenshot.sh
-bind = $mainMod SHIFT, S, exec, ~/.config/hypr/scripts/screenshot.sh region
+bind = $mainMod SHIFT, P, exec, ~/.config/hypr/scripts/screenshot.sh region
 bind = $mainMod ALT, P, exec, ~/.config/hypr/scripts/screenshot.sh full
 bind = $mainMod SHIFT, R, exec, ~/.config/hypr/scripts/screenshot.sh record
 bind = $mainMod, escape, exec, ~/.config/hypr/scripts/snmenu-toggle.sh
@@ -305,7 +305,7 @@ bind = $mainMod ALT SHIFT, agrave, movetoworkspace, 20
 
 # Example special workspace (scratchpad)
 bind = $mainMod, S, togglespecialworkspace, magic
-bind = $mainMod SHIFT, S, movetoworkspace, special:magic
+bind = $mainMod SHIFT, S, exec, ~/.config/hypr/scripts/scratchpad-toggle.sh
 
 # Scroll through existing workspaces with mainMod + scroll
 bind = $mainMod, mouse_down, workspace, e+1

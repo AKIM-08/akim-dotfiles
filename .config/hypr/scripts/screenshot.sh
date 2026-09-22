@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # screenshot.sh - Multi-choice Screenshot and Screen Recording tool for Hyprland
 # Features:
-# - Full toggle support (SUPER+SHIFT+P or SUPER+P opens and closes menu)
+# - Full toggle support (SUPER+P opens and closes menu, SUPER+SHIFT+P captures region)
 # - Clean transparent marquee selection
 # - Persistent on-screen red bounding box during region video recording
 # - Audio source selection: Device / System Audio, Microphone, Both, or No Audio

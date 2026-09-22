@@ -224,8 +224,10 @@ chmod +x ~/.config/wlogout/hibernate.sh
 | `Super + F` | Gestionnaire de fichiers (Nautilus) |
 | `Super + B` | Navigateur web (Firefox, Brave ou Chromium) |
 | `Super + V` | Historique du presse-papier — **toggle** |
-| `Super + P` | Capture d'écran **zone** → `~/Pictures/Screenshots/` + presse-papier |
+| `Super + P` | Menu capture d'écran / enregistrement (**Rofi**) |
+| `Super + Shift + P` | Capture d'écran **zone** → `~/Pictures/Screenshots/` + presse-papier |
 | `Super + Alt + P` | Capture d'écran **plein écran** |
+| `Super + Shift + R` | Enregistrement vidéo (**wf-recorder**) |
 | `Super + Escape` | Menu d'alimentation (**snmenu**) |
 | `Super + N` | Centre de notifications (SwayNC) |
 | `Super + D` | Discord |
@@ -233,7 +235,7 @@ chmod +x ~/.config/wlogout/hibernate.sh
 | `Super + Tab` | Basculer flottant / tuilé |
 | `Super + T` | Flottant **centré** (toggle) |
 | `Super + S` | Afficher / cacher le **scratchpad** |
-| `Super + Shift + S` | Envoyer la fenêtre dans le scratchpad |
+| `Super + Shift + S` | Envoyer / retirer la fenêtre du **scratchpad** (toggle) |
 | `Super + Alt + →` | Fond d'écran suivant + nouveau thème |
 | `Super + Alt + ←` | Fond d'écran précédent + nouveau thème |
 
