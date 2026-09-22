@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # screenshot.sh - Multi-choice Screenshot and Screen Recording tool for Hyprland
-# Parity with GNOME Screenshot tool (Selection, Screen, Window, Swappy Annotation, Screen Recording, Color Picker)
+# Clean transparent selection marquee, Swappy annotation, Screen Recording, and Color Picker with fallbacks.
 
 set -euo pipefail
 
@@ -11,6 +11,9 @@ mkdir -p "$DIR" "$VID_DIR"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 FILE="$DIR/screenshot-${TIMESTAMP}.png"
 REC_FILE="$VID_DIR/recording-${TIMESTAMP}.mp4"
+
+# Slurp appearance: Clean subtle dark dim outside, white crisp border, 100% TRANSPARENT inside (no blue tint)
+SLURP_ARGS=(-d -b "#00000055" -c "#ffffff" -s "#00000000" -w 2)
 
 # Notify and copy helper
 post_capture() {
@@ -39,17 +42,16 @@ except Exception:
     fi
 }
 
-# 1. Selection (Region)
+# 1. Selection (Region) - 100% transparent marquee selection
 capture_region() {
     local geom
-    geom=$(slurp -d -b "#00000088" -c "#89b4fa" -s "#89b4fa22") || exit 0
+    geom=$(slurp "${SLURP_ARGS[@]}") || exit 0
     grim -g "$geom" "$FILE"
     post_capture "$FILE" "Region Screenshot"
 }
 
 # 2. Entire Screen (Full)
 capture_full() {
-    # Brief delay if triggered from menu
     sleep 0.2
     grim "$FILE"
     post_capture "$FILE" "Fullscreen Screenshot"
@@ -79,18 +81,18 @@ try:
     print('\n'.join(boxes))
 except Exception:
     pass
-" | slurp -d) || exit 0
+" | slurp "${SLURP_ARGS[@]}") || exit 0
     else
-        geom=$(slurp -d) || exit 0
+        geom=$(slurp "${SLURP_ARGS[@]}") || exit 0
     fi
     grim -g "$geom" "$FILE"
     post_capture "$FILE" "Window Screenshot"
 }
 
-# 5. Region + Swappy Annotation Editor
+# 5. Region + Draw / Annotate (Swappy Editor)
 capture_swappy() {
     local geom
-    geom=$(slurp -d -b "#00000088" -c "#89b4fa" -s "#89b4fa22") || exit 0
+    geom=$(slurp "${SLURP_ARGS[@]}") || exit 0
     if command -v swappy &>/dev/null; then
         grim -g "$geom" - | swappy -f - -o "$FILE"
         if [ -f "$FILE" ]; then
@@ -99,65 +101,104 @@ capture_swappy() {
     else
         grim -g "$geom" "$FILE"
         post_capture "$FILE" "Region Screenshot"
+        if command -v notify-send &>/dev/null; then
+            notify-send -a "Screenshot" "Tip" "Install swappy to draw arrows/text on screenshots: sudo apt install swappy" -u low
+        fi
     fi
 }
 
 # 6. Screen Recording Toggle (wf-recorder / wl-screenrec)
 toggle_recording() {
+    # If already running, stop recording
     if pgrep -x wf-recorder &>/dev/null; then
-        killall -INT wf-recorder || true
+        pkill -INT -x wf-recorder || true
+        sleep 0.5
         if command -v notify-send &>/dev/null; then
             notify-send -a "Screen Recorder" "Recording Stopped" "Video saved to $VID_DIR" -i video-x-generic -u normal
         fi
         exit 0
     elif pgrep -x wl-screenrec &>/dev/null; then
-        killall -INT wl-screenrec || true
+        pkill -INT -x wl-screenrec || true
+        sleep 0.5
         if command -v notify-send &>/dev/null; then
             notify-send -a "Screen Recorder" "Recording Stopped" "Video saved to $VID_DIR" -i video-x-generic -u normal
         fi
         exit 0
     fi
 
-    # Start recording
-    if command -v notify-send &>/dev/null; then
-        notify-send -a "Screen Recorder" "Select recording area" "Draw an area or press ESC for fullscreen" -u low
+    # Check recorder availability
+    local RECORDER=""
+    if command -v wf-recorder &>/dev/null; then
+        RECORDER="wf-recorder"
+    elif command -v wl-screenrec &>/dev/null; then
+        RECORDER="wl-screenrec"
     fi
 
-    local geom=""
-    geom=$(slurp -d -b "#ff005533" -c "#ff0055" || true)
+    if [ -z "$RECORDER" ]; then
+        if command -v notify-send &>/dev/null; then
+            notify-send -a "Screen Recorder" "Recorder Not Installed" "Install wf-recorder: <b>sudo apt install wf-recorder</b>" -u critical
+        fi
+        exit 1
+    fi
 
-    if command -v wf-recorder &>/dev/null; then
+    # Optional region select (Press ESC or click for full screen)
+    local geom=""
+    geom=$(slurp -d -b "#00000055" -c "#ff3366" -s "#00000000" -w 2 || true)
+
+    if [ "$RECORDER" = "wf-recorder" ]; then
         if [ -n "$geom" ]; then
-            wf-recorder -g "$geom" -f "$REC_FILE" --audio &
+            wf-recorder -g "$geom" -f "$REC_FILE" &
         else
-            wf-recorder -f "$REC_FILE" --audio &
-        fi
-        if command -v notify-send &>/dev/null; then
-            notify-send -a "Screen Recorder" "Recording Started" "Press SUPER+SHIFT+R or Screenshot menu to stop" -i media-record -u critical
-        fi
-    elif command -v wl-screenrec &>/dev/null; then
-        if [ -n "$geom" ]; then
-            wl-screenrec -g "$geom" -f "$REC_FILE" --audio &
-        else
-            wl-screenrec -f "$REC_FILE" --audio &
-        fi
-        if command -v notify-send &>/dev/null; then
-            notify-send -a "Screen Recorder" "Recording Started" "Press SUPER+SHIFT+R or Screenshot menu to stop" -i media-record -u critical
+            wf-recorder -f "$REC_FILE" &
         fi
     else
-        if command -v notify-send &>/dev/null; then
-            notify-send -a "Screen Recorder" "Error" "Please install wf-recorder or wl-screenrec" -u critical
+        if [ -n "$geom" ]; then
+            wl-screenrec -g "$geom" -f "$REC_FILE" &
+        else
+            wl-screenrec -f "$REC_FILE" &
         fi
+    fi
+
+    if command -v notify-send &>/dev/null; then
+        notify-send -a "Screen Recorder" "Recording Started" "Press SUPER+SHIFT+R or open menu to stop" -i media-record -u critical
     fi
 }
 
-# 7. Color Picker
+# 7. Color Picker (Hyprpicker with Python/PIL fallback)
 pick_color() {
+    local color=""
     if command -v hyprpicker &>/dev/null; then
-        local color
-        color=$(hyprpicker -a -n) || exit 0
-        if [ -n "$color" ] && command -v notify-send &>/dev/null; then
-            notify-send -a "Color Picker" "Color Copied" "Hex: $color" -u normal
+        color=$(hyprpicker -n 2>/dev/null || true)
+    fi
+
+    # Fallback to grim + slurp single pixel + python PIL if hyprpicker is unavailable
+    if [ -z "$color" ]; then
+        local pt
+        pt=$(slurp -p -d -b "#00000055" -c "#ffffff" || true)
+        if [ -n "$pt" ]; then
+            local tmp_pixel="/tmp/pixel_pick.png"
+            grim -g "$pt" "$tmp_pixel" 2>/dev/null
+            if [ -f "$tmp_pixel" ]; then
+                color=$(python3 -c "
+from PIL import Image
+try:
+    im = Image.open('$tmp_pixel')
+    px = im.getpixel((0,0))
+    print('#{:02x}{:02x}{:02x}'.format(px[0], px[1], px[2]))
+except Exception:
+    pass
+" 2>/dev/null || true)
+                rm -f "$tmp_pixel"
+            fi
+        fi
+    fi
+
+    if [ -n "$color" ]; then
+        if command -v wl-copy &>/dev/null; then
+            echo -n "$color" | wl-copy
+        fi
+        if command -v notify-send &>/dev/null; then
+            notify-send -a "Color Picker" "Color Copied" "Hex: <b>$color</b>" -u normal
         fi
     fi
 }
@@ -173,8 +214,8 @@ show_menu() {
     local opt_screen="󰍹  Entire Screen"
     local opt_window="󱂬  Active Window"
     local opt_pick_win="󰒉  Select a Window"
-    local opt_swappy="󰄄  Selection + Annotate (Swappy)"
-    local opt_color="󱃚  Color Picker (Hyprpicker)"
+    local opt_swappy="󰄄  Selection + Draw / Annotate"
+    local opt_color="󱃚  Color Picker (Magnifier)"
 
     local selected
     selected=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" \
@@ -192,7 +233,7 @@ show_menu() {
         *"Entire Screen"*)       capture_full ;;
         *"Active Window"*)       capture_window ;;
         *"Select a Window"*)     capture_select_window ;;
-        *"Selection + Annotate"*) capture_swappy ;;
+        *"Selection + Draw"*)    capture_swappy ;;
         *"Screen Record"*|*"STOP Screen Recording"*) toggle_recording ;;
         *"Color Picker"*)        pick_color ;;
     esac
@@ -217,7 +258,7 @@ case "$MODE" in
     window-select|select-window)
         capture_select_window
         ;;
-    swappy|edit)
+    swappy|edit|draw)
         capture_swappy
         ;;
     record|toggle-record|recording)

@@ -85,7 +85,6 @@ show_menu() {
     local p_perf="󰓅  Performance"
     local p_bal="󰾆  Balanced"
     local p_save="󰌪  Power Saver"
-    local p_set="󰒓  Power Settings"
 
     case "$current" in
         performance) p_perf="󰓅  Performance  ✓" ;;
@@ -94,22 +93,13 @@ show_menu() {
     esac
 
     local selected
-    selected=$(printf "%s\n%s\n%s\n%s" "$p_perf" "$p_bal" "$p_save" "$p_set" | \
+    selected=$(printf "%s\n%s\n%s" "$p_perf" "$p_bal" "$p_save" | \
         rofi -dmenu -i -p "󰌪 Power Mode" -theme "$HOME/.config/rofi/powermode.rasi")
 
     case "$selected" in
         *"Performance"*) set_profile "performance" ;;
         *"Balanced"*)    set_profile "balanced" ;;
         *"Power Saver"*) set_profile "power-saver" ;;
-        *"Power Settings"*)
-            if command -v gnome-control-center &>/dev/null; then
-                gnome-control-center power &
-            elif command -v xfce4-power-manager-settings &>/dev/null; then
-                xfce4-power-manager-settings &
-            else
-                kitty --class btop-system -e btop &
-            fi
-            ;;
     esac
 }
 
