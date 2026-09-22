@@ -122,6 +122,8 @@ APT_CORE_PKGS=(
     policykit-1-gnome
     power-profiles-daemon
     swappy
+    pulseaudio-utils
+    ffmpeg
 )
 
 # 2b. Enable trixie-backports (required for Hyprland packages)

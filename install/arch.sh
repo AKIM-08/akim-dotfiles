@@ -102,6 +102,7 @@ sudo pacman -Syu --needed --noconfirm \
     power-profiles-daemon \
     swappy \
     wf-recorder \
+    ffmpeg \
     || die "Core package installation failed"
 
 # 2b. Optional applications

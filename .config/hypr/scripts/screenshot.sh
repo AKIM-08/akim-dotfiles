@@ -112,6 +112,8 @@ capture_swappy() {
     fi
 }
 
+REC_META="/tmp/wf_rec_active.info"
+
 # Helper: Unload any active loopback modules to prevent mic bleeding into desktop/speaker audio
 cleanup_loopback() {
     if [ -f "$LOOPBACK_FILE" ]; then
@@ -131,7 +133,7 @@ cleanup_loopback() {
 
 # 6. Screen Recording Toggle with Audio Source and Persistent Red Border
 toggle_recording() {
-    # If already running, STOP recording and clean up
+    # If already running, STOP recording, filter noise, and clean up
     if pgrep -x wf-recorder &>/dev/null || pgrep -x wl-screenrec &>/dev/null; then
         pkill -INT -x wf-recorder 2>/dev/null || true
         pkill -INT -x wl-screenrec 2>/dev/null || true
@@ -139,7 +141,31 @@ toggle_recording() {
         
         cleanup_loopback
 
+        local saved_mode=""
+        local saved_file=""
+        if [ -f "$REC_META" ]; then
+            saved_mode=$(awk -F'|' '{print $1}' "$REC_META" 2>/dev/null || true)
+            saved_file=$(awk -F'|' '{print $2}' "$REC_META" 2>/dev/null || true)
+            rm -f "$REC_META"
+        fi
+
         sleep 0.5
+
+        # Noise reduction & clarity enhancer for microphone audio
+        if [ -n "$saved_file" ] && [ -f "$saved_file" ] && command -v ffmpeg &>/dev/null; then
+            case "$saved_mode" in
+                *"Microphone"*|*"Both"*)
+                    local tmp_clean="${saved_file%.mp4}_clean.mp4"
+                    # Filter: highpass cuts fan vibration (<80Hz), afftdn removes fan/air noise floor, volume boosts clarity
+                    if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=80,lowpass=f=11000,afftdn=nf=-24,volume=1.2" -c:a aac -b:a 192k "$tmp_clean" 2>/dev/null; then
+                        mv "$tmp_clean" "$saved_file" 2>/dev/null || true
+                    else
+                        rm -f "$tmp_clean"
+                    fi
+                    ;;
+            esac
+        fi
+
         if command -v notify-send &>/dev/null; then
             notify-send -a "Screen Recorder" "Recording Stopped" "Video saved to $VID_DIR" -i video-x-generic -u normal
         fi
@@ -163,7 +189,7 @@ toggle_recording() {
 
     # 1. Ask for Audio Choice via quick rofi menu
     local opt_sys="󰓃  Device / System Audio (Desktop Sounds)"
-    local opt_mic="󰍬  Microphone (Voice)"
+    local opt_mic="󰍬  Microphone (Voice - Noise Filtered)"
     local opt_both="󰓃󰍬 Both (System Audio + Microphone)"
     local opt_none="󰝟  No Audio (Muted Video)"
 
@@ -179,67 +205,106 @@ toggle_recording() {
     # Always clear existing loopbacks first so microphone is not leaking into output sinks
     cleanup_loopback
 
-    # Discover devices accurately (monitor and microphone)
+    # Discover devices accurately using PipeWire pw-dump, pactl, or wpctl
     local AUDIO_TARGET=""
     local SINK_NAME=""
     local MIC_NAME=""
     local MON_NAME=""
 
-    if command -v python3 &>/dev/null && command -v pactl &>/dev/null; then
+    if command -v python3 &>/dev/null; then
         read -r MON_NAME MIC_NAME SINK_NAME <<< "$(python3 -c "
-import subprocess
+import subprocess, json, sys
 
 def cmd(args):
     try:
-        return subprocess.check_output(args, text=True, stderr=subprocess.DEVNULL).strip()
+        return subprocess.check_output(args, text=True, stderr=subprocess.DEVNULL)
     except Exception:
         return ''
 
-sink = cmd(['pactl', 'get-default-sink'])
-source = cmd(['pactl', 'get-default-source'])
-sources_raw = cmd(['pactl', 'list', 'short', 'sources'])
-
-monitors = []
-mics = []
-for line in sources_raw.splitlines():
-    parts = line.split()
-    if len(parts) >= 2:
-        name = parts[1]
-        if name.endswith('.monitor'):
-            monitors.append(name)
-        else:
-            mics.append(name)
-
-# Resolve monitor for system audio
 mon_target = ''
-if sink:
-    expected = f'{sink}.monitor'
-    if expected in monitors:
-        mon_target = expected
-    else:
-        for m in monitors:
-            if sink in m:
-                mon_target = m
-                break
-        if not mon_target and monitors:
-            mon_target = monitors[0]
-elif monitors:
-    mon_target = monitors[0]
+mic_target = ''
+sink_name = ''
 
+# Strategy 1: pw-dump (Native PipeWire JSON)
+pw_raw = cmd(['pw-dump'])
+if pw_raw:
+    try:
+        data = json.loads(pw_raw)
+        def_sink = ''
+        def_source = ''
+        for item in data:
+            if item.get('type') == 'PipeWire:Interface:Metadata' and item.get('props', {}).get('metadata.name') == 'default':
+                for meta in item.get('metadata', []):
+                    k = meta.get('key', '')
+                    v = meta.get('value', {})
+                    val_str = v.get('name', '') if isinstance(v, dict) else str(v)
+                    if k == 'default.audio.sink':
+                        def_sink = val_str
+                    elif k == 'default.audio.source':
+                        def_source = val_str
+
+        sinks = []
+        sources = []
+        for item in data:
+            if item.get('type') == 'PipeWire:Interface:Node':
+                props = item.get('info', {}).get('props', {})
+                mc = props.get('media.class', '')
+                nn = props.get('node.name', '')
+                if mc == 'Audio/Sink' and nn:
+                    sinks.append(nn)
+                elif mc == 'Audio/Source' and nn:
+                    sources.append(nn)
+
+        if def_sink:
+            sink_name = def_sink
+            mon_target = f'{def_sink}.monitor'
+        elif sinks:
+            sink_name = sinks[0]
+            mon_target = f'{sinks[0]}.monitor'
+
+        if def_source:
+            mic_target = def_source
+        elif sources:
+            mic_target = sources[0]
+    except Exception:
+        pass
+
+# Strategy 2: pactl
+if not mon_target or not mic_target:
+    p_sink = cmd(['pactl', 'get-default-sink']).strip()
+    p_source = cmd(['pactl', 'get-default-source']).strip()
+    p_sources = cmd(['pactl', 'list', 'short', 'sources'])
+
+    monitors = []
+    mics = []
+    for line in p_sources.splitlines():
+        parts = line.split()
+        if len(parts) >= 2:
+            n = parts[1]
+            if n.endswith('.monitor'):
+                monitors.append(n)
+            else:
+                mics.append(n)
+
+    if p_sink:
+        sink_name = p_sink
+        expected = f'{p_sink}.monitor'
+        mon_target = expected if expected in monitors else (monitors[0] if monitors else expected)
+    elif monitors and not mon_target:
+        mon_target = monitors[0]
+
+    if p_source and not p_source.endswith('.monitor'):
+        mic_target = p_source
+    elif mics and not mic_target:
+        mic_target = mics[0]
+
+# Fallbacks
 if not mon_target:
     mon_target = '@DEFAULT_AUDIO_SINK@.monitor'
-
-# Resolve mic
-mic_target = ''
-if source and not source.endswith('.monitor'):
-    mic_target = source
-elif mics:
-    mic_target = mics[0]
-
 if not mic_target:
     mic_target = '@DEFAULT_AUDIO_SOURCE@'
 
-print(f'{mon_target} {mic_target} {sink}')
+print(f'{mon_target} {mic_target} {sink_name}')
 " 2>/dev/null || echo "@DEFAULT_AUDIO_SINK@.monitor @DEFAULT_AUDIO_SOURCE@ default")"
     else
         MON_NAME="@DEFAULT_AUDIO_SINK@.monitor"
@@ -277,6 +342,9 @@ print(f'{mon_target} {mic_target} {sink}')
             AUDIO_ARGS=(--audio --audio-device "$AUDIO_TARGET")
         fi
     fi
+
+    # Record metadata for stop handler
+    echo "${audio_choice}|${REC_FILE}" > "$REC_META"
 
     # 2. Select region or ESC for fullscreen
     if command -v notify-send &>/dev/null; then
