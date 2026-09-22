@@ -151,16 +151,22 @@ toggle_recording() {
 
         sleep 0.5
 
-        # Noise reduction & clarity enhancer for microphone audio
-        if [ -n "$saved_file" ] && [ -f "$saved_file" ] && command -v ffmpeg &>/dev/null; then
+        # Advanced noise reduction & clarity enhancer for microphone audio
+        if [ -n "$saved_file" ] && [ -f "$saved_file" ]; then
             case "$saved_mode" in
                 *"Microphone"*|*"Both"*)
-                    local tmp_clean="${saved_file%.mp4}_clean.mp4"
-                    # Filter: highpass cuts fan vibration (<80Hz), afftdn removes fan/air noise floor, volume boosts clarity
-                    if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=80,lowpass=f=11000,afftdn=nf=-24,volume=1.2" -c:a aac -b:a 192k "$tmp_clean" 2>/dev/null; then
-                        mv "$tmp_clean" "$saved_file" 2>/dev/null || true
+                    if command -v ffmpeg &>/dev/null; then
+                        local tmp_clean="${saved_file%.mp4}_clean.mp4"
+                        # Filter: highpass=120Hz kills fan motor drone, lowpass=9500Hz cuts coil hiss, afftdn=-28dB wipes air hiss, volume=1.35 brings voice up
+                        if ffmpeg -y -i "$saved_file" -c:v copy -af "highpass=f=120,lowpass=f=9500,afftdn=nf=-28,volume=1.35" -c:a aac -b:a 192k "$tmp_clean" 2>/dev/null; then
+                            mv "$tmp_clean" "$saved_file" 2>/dev/null || true
+                        else
+                            rm -f "$tmp_clean"
+                        fi
                     else
-                        rm -f "$tmp_clean"
+                        if command -v notify-send &>/dev/null; then
+                            notify-send -a "Screen Recorder" "Fan Noise Warning" "Install ffmpeg to automatically remove fan noise: sudo apt install ffmpeg" -u normal
+                        fi
                     fi
                     ;;
             esac
@@ -248,11 +254,14 @@ if pw_raw:
         for item in data:
             if item.get('type') == 'PipeWire:Interface:Node':
                 props = item.get('info', {}).get('props', {})
-                mc = props.get('media.class', '')
-                nn = props.get('node.name', '')
-                if mc == 'Audio/Sink' and nn:
+                mc = str(props.get('media.class', ''))
+                nn = str(props.get('node.name', ''))
+                if not nn:
+                    continue
+                if 'Sink' in mc and not nn.endswith('.monitor'):
                     sinks.append(nn)
-                elif mc == 'Audio/Source' and nn:
+                # Microphone MUST be an Audio/Source, and NOT a monitor, and NOT an output sink
+                elif 'Source' in mc and not nn.endswith('.monitor') and 'output' not in nn.lower() and 'sink' not in nn.lower():
                     sources.append(nn)
 
         if def_sink:
@@ -262,7 +271,7 @@ if pw_raw:
             sink_name = sinks[0]
             mon_target = f'{sinks[0]}.monitor'
 
-        if def_source:
+        if def_source and not def_source.endswith('.monitor') and 'output' not in def_source.lower() and 'sink' not in def_source.lower():
             mic_target = def_source
         elif sources:
             mic_target = sources[0]
@@ -283,20 +292,21 @@ if not mon_target or not mic_target:
             n = parts[1]
             if n.endswith('.monitor'):
                 monitors.append(n)
-            else:
+            elif 'input' in n.lower() or not n.endswith('.monitor'):
                 mics.append(n)
 
-    if p_sink:
-        sink_name = p_sink
-        expected = f'{p_sink}.monitor'
-        mon_target = expected if expected in monitors else (monitors[0] if monitors else expected)
-    elif monitors and not mon_target:
-        mon_target = monitors[0]
+    if not mon_target:
+        if p_sink:
+            sink_name = p_sink
+            mon_target = f'{p_sink}.monitor'
+        elif monitors:
+            mon_target = monitors[0]
 
-    if p_source and not p_source.endswith('.monitor'):
-        mic_target = p_source
-    elif mics and not mic_target:
-        mic_target = mics[0]
+    if not mic_target:
+        if p_source and not p_source.endswith('.monitor') and 'output' not in p_source.lower():
+            mic_target = p_source
+        elif mics:
+            mic_target = mics[0]
 
 # Fallbacks
 if not mon_target:
