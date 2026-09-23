@@ -39,8 +39,10 @@ get_active_window_geom() {
 import sys, json
 try:
     data = json.load(sys.stdin)
-    if 'at' in data and 'size' in data:
-        print(f\"{data['at'][0]},{data['at'][1]} {data['size'][0]}x{data['size'][1]}\")
+    if 'at' in data and 'size' in data and data['size'][0] > 0 and data['size'][1] > 0:
+        cls = data.get('class', '').lower()
+        if 'rofi' not in cls and cls != '':
+            print(f\"{data['at'][0]},{data['at'][1]} {data['size'][0]}x{data['size'][1]}\")
 except Exception:
     sys.exit(1)
 "
@@ -49,6 +51,7 @@ except Exception:
 
 # 1. Selection (Region)
 capture_region() {
+    sleep 0.2
     local geom
     geom=$(slurp "${SLURP_ARGS[@]}") || exit 0
     grim -g "$geom" "$FILE"
@@ -57,18 +60,24 @@ capture_region() {
 
 # 2. Entire Screen (Full)
 capture_full() {
-    sleep 0.2
+    sleep 0.35
     grim "$FILE"
     post_capture "$FILE" "Fullscreen Screenshot"
 }
 
 # 3. Active Window
 capture_window() {
+    # Ensure Rofi menu has finished closing and compositor fade-out animation completes
+    sleep 0.35
     local geom
-    geom=$(get_active_window_geom) || geom=""
+    geom=$(get_active_window_geom 2>/dev/null) || geom=""
+    if [ -z "$geom" ]; then
+        geom="${PREV_WINDOW_GEOM:-}"
+    fi
+
     if [ -n "$geom" ]; then
         grim -g "$geom" "$FILE"
-        post_capture "$FILE" "Window Screenshot"
+        post_capture "$FILE" "Active Window Screenshot"
     else
         capture_region
     fi
@@ -76,13 +85,14 @@ capture_window() {
 
 # 4. Select a Window (Interactive click)
 capture_select_window() {
+    sleep 0.2
     local geom
     if command -v hyprctl &>/dev/null; then
         geom=$(hyprctl clients -j | python3 -c "
 import sys, json
 try:
     clients = json.load(sys.stdin)
-    boxes = [f\"{c['at'][0]},{c['at'][1]} {c['size'][0]}x{c['size'][1]}\" for c in clients if c.get('mapped', True)]
+    boxes = [f\"{c['at'][0]},{c['at'][1]} {c['size'][0]}x{c['size'][1]}\" for c in clients if c.get('mapped', True) and 'rofi' not in c.get('class', '').lower()]
     print('\n'.join(boxes))
 except Exception:
     pass
@@ -96,6 +106,7 @@ except Exception:
 
 # 5. Region + Draw / Annotate (Swappy Editor)
 capture_swappy() {
+    sleep 0.2
     local geom
     geom=$(slurp "${SLURP_ARGS[@]}") || exit 0
     if command -v swappy &>/dev/null; then
@@ -476,6 +487,9 @@ show_menu() {
         pkill -x rofi
         exit 0
     fi
+
+    # Save active window geometry before Rofi takes focus
+    PREV_WINDOW_GEOM=$(get_active_window_geom 2>/dev/null || true)
 
     local is_recording="󰑋  Screen Record (Start / Stop)"
     if pgrep -x wf-recorder &>/dev/null || pgrep -x wl-screenrec &>/dev/null; then

@@ -60,6 +60,7 @@ sudo pacman -Syu --needed --noconfirm \
     wireplumber \
     xdg-desktop-portal \
     xdg-desktop-portal-hyprland \
+    polkit-gnome \
     bluez \
     btop \
     xdg-user-dirs \
