@@ -156,6 +156,23 @@ sync_gtk_settings() {
             fi
         fi
     done
+
+    # Synchronize dark theme to root & system-wide GTK configs (for GParted, Synaptic, etc.)
+    echo "--> Synchronizing GTK Dark Theme for root & administrative applications..."
+    if command -v sudo &>/dev/null; then
+        sudo mkdir -p /root/.config/gtk-3.0 /root/.config/gtk-4.0 /etc/gtk-3.0 /etc/gtk-4.0 2>/dev/null || true
+        [ -f "$HOME/.config/gtk-3.0/settings.ini" ] && sudo cp "$HOME/.config/gtk-3.0/settings.ini" /root/.config/gtk-3.0/ 2>/dev/null || true
+        [ -f "$HOME/.config/gtk-3.0/settings.ini" ] && sudo cp "$HOME/.config/gtk-3.0/settings.ini" /etc/gtk-3.0/ 2>/dev/null || true
+        [ -f "$HOME/.config/gtk-4.0/settings.ini" ] && sudo cp "$HOME/.config/gtk-4.0/settings.ini" /root/.config/gtk-4.0/ 2>/dev/null || true
+        [ -f "$HOME/.config/gtk-4.0/settings.ini" ] && sudo cp "$HOME/.config/gtk-4.0/settings.ini" /etc/gtk-4.0/ 2>/dev/null || true
+        if [ -f "$HOME/.config/gtk-3.0/gtk.css" ]; then
+            sudo cp "$HOME/.config/gtk-3.0/gtk.css" /root/.config/gtk-3.0/ 2>/dev/null || true
+            sudo cp "$HOME/.config/gtk-3.0/gtk.css" /etc/gtk-3.0/ 2>/dev/null || true
+        fi
+        if [ -d "$HOME/.local/share/themes" ]; then
+            sudo cp -rn "$HOME/.local/share/themes"/* /usr/share/themes/ 2>/dev/null || true
+        fi
+    fi
 }
 sync_gtk_settings
 
