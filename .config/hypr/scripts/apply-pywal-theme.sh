@@ -150,6 +150,60 @@ scrollbar slider {
     border-radius: 6px;
 }
 
+/* Dropdowns & Comboboxes (GParted device selector, etc.) */
+combobox,
+combobox button,
+combobox.linked button,
+combobox cellview,
+combobox entry,
+combobox box,
+toolbar combobox,
+toolbar combobox button,
+toolbar combobox cellview,
+toolbar .combo,
+.combo,
+.combobox-entry {
+    background-color: alpha(@theme_fg_color, 0.08) !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
+    border: 1px solid alpha(@theme_fg_color, 0.22) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+combobox:hover,
+combobox button:hover,
+toolbar combobox button:hover,
+toolbar combobox:hover {
+    background-color: alpha(@theme_fg_color, 0.16) !important;
+    background-image: none !important;
+    border-color: @theme_selected_bg_color !important;
+    color: @theme_fg_color !important;
+}
+
+combobox cellview,
+combobox cellview label,
+combobox label,
+combobox text,
+combobox entry,
+combobox arrow,
+toolbar combobox cellview,
+toolbar combobox label {
+    color: @theme_fg_color !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    text-shadow: none !important;
+}
+
+combobox window,
+combobox menu,
+combobox popover {
+    background-color: @theme_bg_color !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
+}
+
 /* Swappy Screenshot Annotation Editor */
 window.swappy, .swappy, #swappy {
     background-color: @theme_bg_color;

@@ -160,12 +160,58 @@ treeview.view header button {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Dropdowns & Comboboxes */
-combobox, combobox button {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 6px;
+/* Dropdowns & Comboboxes (GParted device selector, etc.) */
+combobox,
+combobox button,
+combobox.linked button,
+combobox cellview,
+combobox entry,
+combobox box,
+toolbar combobox,
+toolbar combobox button,
+toolbar combobox cellview,
+toolbar .combo,
+.combo,
+.combobox-entry {
+    background-color: #211e2e !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+combobox:hover,
+combobox button:hover,
+toolbar combobox button:hover,
+toolbar combobox:hover {
+    background-color: #2d293d !important;
+    background-image: none !important;
+    border-color: @theme_selected_bg_color !important;
+    color: #ffffff !important;
+}
+
+combobox cellview,
+combobox cellview label,
+combobox label,
+combobox text,
+combobox entry,
+combobox arrow,
+toolbar combobox cellview,
+toolbar combobox label {
+    color: #ffffff !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    text-shadow: none !important;
+}
+
+combobox window,
+combobox menu,
+combobox popover {
+    background-color: #1c1928 !important;
+    background-image: none !important;
+    color: #ffffff !important;
 }
 
 menu, popover {
