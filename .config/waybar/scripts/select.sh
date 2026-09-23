@@ -1,4 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# select.sh — Interactive Waybar Theme / Layout Selector with toggle support
+
+# Toggle support: If Waybar selector is already running, close it and exit
+if pgrep -f "waybar.rasi" >/dev/null; then
+    pkill -f "waybar.rasi"
+    exit 0
+fi
+
+if pgrep -f "Select Waybar" >/dev/null; then
+    pkill -f "Select Waybar"
+    exit 0
+fi
+
 WAYBAR_DIR="$HOME/.config/waybar"
 STYLECSS="$WAYBAR_DIR/style.css"
 CONFIG="$WAYBAR_DIR/config"
@@ -21,11 +34,14 @@ apply_theme() {
 # Menu options with rich Nerd Font icons and descriptions
 OPTIONS="󰕮  Default       —  Classic Floating Pill Bar\n󰤄  Line          —  Minimal Edge-to-Edge Top Bar\n󰾍  Zen           —  Clean Centered Floating Island\n󰘚  Experimental  —  Dynamic Multi-Module Bar\n󰍹  Capsule       —  Modular Floating Capsule Islands"
 
+choice=""
 if command -v rofi &>/dev/null; then
-    choice=$(echo -e "$OPTIONS" | rofi -dmenu -i -theme "$HOME/.config/rofi/waybar.rasi")
+    choice=$(echo -e "$OPTIONS" | rofi -dmenu -i -theme "$HOME/.config/rofi/waybar.rasi") || true
 elif command -v wofi &>/dev/null; then
-    choice=$(printf "default\nline\nzen\nexperimental\ncapsule" | wofi --dmenu --prompt "Select Waybar Theme")
+    choice=$(printf "default\nline\nzen\nexperimental\ncapsule" | wofi --dmenu --prompt "Select Waybar Theme") || true
 fi
+
+[ -z "$choice" ] && exit 0
 
 case "$choice" in
     *Default*) apply_theme default ;;

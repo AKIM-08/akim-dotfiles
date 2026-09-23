@@ -232,7 +232,7 @@ chmod +x ~/.config/wlogout/hibernate.sh
 | `Super + Escape` | Menu d'alimentation (**snmenu**) |
 | `Super + N` | Centre de notifications (SwayNC) |
 | `Super + D` | Discord |
-| `Super + Shift + T` | Changer le thème Waybar |
+| `Super + Shift + T` | Sélecteur de thème Waybar (**toggle**) |
 | `Super + Tab` | Basculer flottant / tuilé |
 | `Super + T` | Flottant **centré** (toggle) |
 | `Super + S` | Afficher / cacher le **scratchpad** |
