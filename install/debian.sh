@@ -124,6 +124,7 @@ APT_CORE_PKGS=(
     swappy
     pulseaudio-utils
     ffmpeg
+    x11-xserver-utils
 )
 
 # 2b. Enable trixie-backports (required for Hyprland packages)

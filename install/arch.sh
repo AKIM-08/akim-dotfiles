@@ -61,6 +61,7 @@ sudo pacman -Syu --needed --noconfirm \
     xdg-desktop-portal \
     xdg-desktop-portal-hyprland \
     polkit-gnome \
+    xorg-xhost \
     bluez \
     btop \
     xdg-user-dirs \

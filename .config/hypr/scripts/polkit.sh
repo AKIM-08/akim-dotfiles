@@ -2,6 +2,11 @@
 # polkit.sh - Start PolicyKit authentication agent for Hyprland
 # Ensures GUI apps requiring elevated/root privileges (GParted, Synaptic, etc.) prompt for password.
 
+# Authorize local root user to connect to XWayland display server (e.g. for GParted, Synaptic)
+if command -v xhost &>/dev/null; then
+    xhost +SI:localuser:root >/dev/null 2>&1 || true
+fi
+
 # Prevent multiple agents running simultaneously
 if pgrep -f "polkit.*agent" >/dev/null || pgrep -x lxpolkit >/dev/null; then
     exit 0

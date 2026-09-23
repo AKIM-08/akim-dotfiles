@@ -4,6 +4,7 @@
 
 exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 exec-once = ~/.config/hypr/scripts/polkit.sh
+exec-once = xhost +SI:localuser:root
 exec-once = awww-daemon
 exec-once = ~/.config/swaync/start.sh
 exec-once = waybar
