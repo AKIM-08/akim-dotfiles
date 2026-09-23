@@ -173,6 +173,14 @@ sync_gtk_settings() {
             sudo cp -rn "$HOME/.local/share/themes"/* /usr/share/themes/ 2>/dev/null || true
         fi
     fi
+
+    # Set GNOME / XDG interface color-scheme to prefer-dark for portals and browsers
+    if command -v gsettings &>/dev/null; then
+        echo "--> Configuring system interface to prefer-dark via gsettings..."
+        gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface gtk-theme 'catppuccin-mocha-blue-standard+default' 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
+    fi
 }
 sync_gtk_settings
 

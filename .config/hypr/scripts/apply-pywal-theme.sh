@@ -38,65 +38,135 @@ view, textview text, treeview.view, list, row {
 }
 
 headerbar, toolbar, menubar, .titlebar {
-    background-color: @theme_bg_color;
-    color: @theme_fg_color;
-    border-bottom: 1px solid alpha(@theme_fg_color, 0.12);
+    background-color: @theme_bg_color !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
+    border-bottom: 1px solid alpha(@theme_fg_color, 0.12) !important;
 }
 
 headerbar .title, headerbar .subtitle, headerbar label {
-    color: @theme_fg_color;
+    color: @theme_fg_color !important;
 }
 
-button {
-    background-color: alpha(@theme_fg_color, 0.08);
-    color: @theme_fg_color;
-    border: 1px solid alpha(@theme_fg_color, 0.12);
-    border-radius: 8px;
+button,
+headerbar button,
+toolbar button,
+.titlebar button {
+    background-color: alpha(@theme_fg_color, 0.08) !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
+    border: 1px solid alpha(@theme_fg_color, 0.16) !important;
+    border-radius: 8px !important;
     padding: 6px 12px;
+    box-shadow: none !important;
+    text-shadow: none !important;
 }
 
-button:hover {
-    background-color: alpha(@theme_selected_bg_color, 0.25);
-    border-color: @theme_selected_bg_color;
-    color: @theme_fg_color;
+button label,
+headerbar button label,
+toolbar button label {
+    color: @theme_fg_color !important;
+    text-shadow: none !important;
 }
 
-button:active, button:checked {
-    background-color: @theme_selected_bg_color;
-    color: @theme_selected_fg_color;
+button:hover,
+headerbar button:hover,
+toolbar button:hover {
+    background-color: alpha(@theme_selected_bg_color, 0.25) !important;
+    background-image: none !important;
+    border-color: @theme_selected_bg_color !important;
+    color: @theme_fg_color !important;
 }
 
-button.suggested-action {
-    background-color: @theme_selected_bg_color;
-    color: @theme_selected_fg_color;
-    border: 1px solid @theme_selected_bg_color;
+button:active, button:checked,
+headerbar button:checked {
+    background-color: @theme_selected_bg_color !important;
+    background-image: none !important;
+    color: @theme_selected_fg_color !important;
 }
 
-filechooser, filechooserdialog, .filechooser, dialog {
-    background-color: @theme_bg_color;
-    color: @theme_fg_color;
+button.suggested-action,
+headerbar button.suggested-action {
+    background-color: @theme_selected_bg_color !important;
+    background-image: none !important;
+    color: @theme_selected_fg_color !important;
+    border: 1px solid @theme_selected_bg_color !important;
 }
 
-.path-bar button, pathbar button {
-    background-color: alpha(@theme_fg_color, 0.08);
-    color: @theme_fg_color;
-    border: 1px solid alpha(@theme_fg_color, 0.12);
-    border-radius: 6px;
+filechooser, filechooserdialog, .filechooser, dialog, window.dialog {
+    background-color: @theme_bg_color !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
+}
+
+filechooser box,
+filechooser .horizontal,
+filechooser box.horizontal,
+filechooser actionbar,
+filechooser actionbar box,
+filechooser searchbar,
+actionbar,
+actionbar box {
+    background-color: @theme_bg_color !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
+    border: none !important;
+}
+
+pathbar,
+.path-bar,
+filechooser pathbar,
+filechooser .path-bar {
+    background-color: @theme_bg_color !important;
+    background-image: none !important;
+}
+
+.path-bar button, pathbar button,
+.path-bar button label, pathbar button label,
+.path-bar button image, pathbar button image {
+    background-color: alpha(@theme_fg_color, 0.08) !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
+    border: 1px solid alpha(@theme_fg_color, 0.16) !important;
+    border-radius: 6px !important;
     margin: 2px;
+    box-shadow: none !important;
+    text-shadow: none !important;
 }
 
 .path-bar button:hover, pathbar button:hover {
-    background-color: alpha(@theme_fg_color, 0.18);
-    color: @theme_fg_color;
+    background-color: alpha(@theme_fg_color, 0.20) !important;
+    background-image: none !important;
+    border-color: @theme_selected_bg_color !important;
+    color: @theme_fg_color !important;
 }
 
 .path-bar button:checked, pathbar button:checked {
-    background-color: @theme_selected_bg_color;
-    color: @theme_selected_fg_color;
+    background-color: @theme_selected_bg_color !important;
+    background-image: none !important;
+    color: @theme_selected_fg_color !important;
 }
 
-.path-bar button label, pathbar button label {
-    color: @theme_fg_color;
+treeview.view header,
+treeview.view header button,
+treeview.view header button box,
+treeview.view header button label,
+treeview.view header button image,
+treeview header,
+treeview header button {
+    background-color: @theme_base_color !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
+    border: none !important;
+    border-bottom: 1px solid alpha(@theme_fg_color, 0.15) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+treeview.view header button:hover {
+    background-color: alpha(@theme_selected_bg_color, 0.25) !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
 }
 
 entry, searchbar entry {

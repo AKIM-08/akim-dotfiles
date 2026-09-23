@@ -9,158 +9,245 @@
 
 /* Global Window and Background */
 window, .background {
-    background-color: @theme_bg_color;
-    color: @theme_fg_color;
+    background-color: @theme_bg_color !important;
+    background-image: none !important;
+    color: @theme_fg_color !important;
 }
 
 view, textview text, treeview.view, list, row {
-    background-color: @theme_base_color;
-    color: @theme_text_color;
+    background-color: @theme_base_color !important;
+    color: @theme_text_color !important;
 }
 
 /* Headerbars, Toolbars, and Menubars */
 headerbar, toolbar, menubar, .titlebar {
-    background-color: #14121a;
-    color: #ffffff;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: #14121a !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 headerbar .title, headerbar .subtitle, headerbar label {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
-/* Buttons */
-button {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
+/* Buttons (Including Cancel, Open, dialog buttons) */
+button,
+headerbar button,
+toolbar button,
+.titlebar button {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-radius: 8px !important;
     padding: 6px 12px;
+    box-shadow: none !important;
+    text-shadow: none !important;
 }
 
-button:hover {
-    background-color: rgba(255, 255, 255, 0.16);
-    border-color: @theme_selected_bg_color;
-    color: #ffffff;
+button label,
+headerbar button label,
+toolbar button label {
+    color: #ffffff !important;
+    text-shadow: none !important;
 }
 
-button:active, button:checked {
-    background-color: @theme_selected_bg_color;
-    color: #ffffff;
+button:hover,
+headerbar button:hover,
+toolbar button:hover {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+    background-image: none !important;
+    border-color: @theme_selected_bg_color !important;
+    color: #ffffff !important;
 }
 
-button.suggested-action {
-    background-color: @theme_selected_bg_color;
-    color: #ffffff;
-    border: 1px solid @theme_selected_bg_color;
+button:active,
+button:checked,
+headerbar button:checked {
+    background-color: @theme_selected_bg_color !important;
+    background-image: none !important;
+    color: #ffffff !important;
 }
 
-button.suggested-action:hover {
-    background-color: alpha(@theme_selected_bg_color, 0.85);
+button.suggested-action,
+headerbar button.suggested-action {
+    background-color: @theme_selected_bg_color !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1px solid @theme_selected_bg_color !important;
 }
 
-button.destructive-action {
-    background-color: #eb6f92;
-    color: #ffffff;
+button.suggested-action:hover,
+headerbar button.suggested-action:hover {
+    background-color: alpha(@theme_selected_bg_color, 0.85) !important;
+    background-image: none !important;
+    color: #ffffff !important;
 }
 
-/* File Chooser & Dialog Specific Fixes */
-filechooser, filechooserdialog, .filechooser, dialog {
-    background-color: #14121a;
-    color: #ffffff;
+button.destructive-action,
+headerbar button.destructive-action {
+    background-color: #eb6f92 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   File Chooser & Dialog Specific Styles
+   ========================================================================== */
+filechooser,
+filechooserdialog,
+.filechooser,
+dialog,
+window.dialog {
+    background-color: #14121a !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+/* File chooser boxes, containers, search bars, action bars */
+filechooser box,
+filechooser .horizontal,
+filechooser box.horizontal,
+filechooser actionbar,
+filechooser actionbar box,
+filechooser searchbar,
+actionbar,
+actionbar box {
+    background-color: #14121a !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: none !important;
 }
 
 /* Path Bar (Breadcrumbs e.g. Home > Downloads) */
-.path-bar button, pathbar button {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 6px;
+pathbar,
+.path-bar,
+filechooser pathbar,
+filechooser .path-bar {
+    background-color: #14121a !important;
+    background-image: none !important;
+}
+
+pathbar button,
+.path-bar button,
+pathbar button label,
+.path-bar button label,
+pathbar button image,
+.path-bar button image {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-radius: 6px !important;
     margin: 2px;
+    box-shadow: none !important;
+    text-shadow: none !important;
 }
 
-.path-bar button:hover, pathbar button:hover {
-    background-color: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
+pathbar button:hover,
+.path-bar button:hover {
+    background-color: rgba(255, 255, 255, 0.20) !important;
+    background-image: none !important;
+    border-color: @theme_selected_bg_color !important;
+    color: #ffffff !important;
 }
 
-.path-bar button:checked, pathbar button:checked {
-    background-color: @theme_selected_bg_color;
-    color: #ffffff;
-}
-
-.path-bar button label, pathbar button label {
-    color: #ffffff;
+pathbar button:checked,
+.path-bar button:checked {
+    background-color: @theme_selected_bg_color !important;
+    background-image: none !important;
+    color: #ffffff !important;
 }
 
 /* Text Entries and Search inputs */
 entry, searchbar entry {
-    background-color: #1c1928;
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background-color: #1c1928 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
     border-radius: 6px;
     padding: 6px 10px;
     caret-color: #ffffff;
+    box-shadow: none !important;
 }
 
 entry:focus, searchbar entry:focus {
-    border-color: @theme_selected_bg_color;
-    background-color: #211d30;
-    color: #ffffff;
+    border-color: @theme_selected_bg_color !important;
+    background-color: #211d30 !important;
+    background-image: none !important;
+    color: #ffffff !important;
 }
 
 entry selection {
-    background-color: @theme_selected_bg_color;
-    color: #ffffff;
+    background-color: @theme_selected_bg_color !important;
+    color: #ffffff !important;
 }
 
 /* Places Sidebar (Left Navigation) */
 placessidebar, placesview, .sidebar {
-    background-color: #110f17;
-    color: #e0def4;
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: #110f17 !important;
+    background-image: none !important;
+    color: #e0def4 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 placessidebar row, placesview row {
-    color: #e0def4;
+    color: #e0def4 !important;
     padding: 6px;
     border-radius: 6px;
 }
 
 placessidebar row:hover, placesview row:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
 }
 
 placessidebar row:selected, placesview row:selected {
-    background-color: @theme_selected_bg_color;
-    color: #ffffff;
+    background-color: @theme_selected_bg_color !important;
+    color: #ffffff !important;
 }
 
-/* TreeView and File List */
+/* TreeView & Column Headers (Name, Size, Type, Modified) */
 treeview.view {
-    background-color: #14121a;
-    color: #e0def4;
+    background-color: #14121a !important;
+    background-image: none !important;
+    color: #e0def4 !important;
     border: none;
 }
 
 treeview.view:hover {
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: rgba(255, 255, 255, 0.04) !important;
 }
 
 treeview.view:selected, treeview.view:selected:focus {
-    background-color: @theme_selected_bg_color;
-    color: #ffffff;
+    background-color: @theme_selected_bg_color !important;
+    color: #ffffff !important;
 }
 
-treeview.view header button {
-    background-color: #110f17;
-    color: rgba(255, 255, 255, 0.7);
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+treeview.view header,
+treeview.view header button,
+treeview.view header button box,
+treeview.view header button label,
+treeview.view header button image,
+treeview header,
+treeview header button {
+    background-color: #181622 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
 }
 
-/* Dropdowns & Comboboxes (GParted device selector, etc.) */
+treeview.view header button:hover {
+    background-color: #242033 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+/* Dropdowns & Comboboxes (GParted device selector, Custom Files filter) */
 combobox,
 combobox button,
 combobox.linked button,
@@ -215,78 +302,73 @@ combobox popover {
 }
 
 menu, popover {
-    background-color: #1c1928;
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: #1c1928 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 8px;
     padding: 4px;
 }
 
 menuitem {
-    color: #ffffff;
+    color: #ffffff !important;
     border-radius: 4px;
     padding: 6px 12px;
 }
 
 menuitem:hover {
-    background-color: @theme_selected_bg_color;
-    color: #ffffff;
+    background-color: @theme_selected_bg_color !important;
+    color: #ffffff !important;
 }
 
 /* Scrollbars */
 scrollbar slider {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    background-image: none !important;
     border-radius: 6px;
     min-width: 6px;
     min-height: 6px;
 }
 
 scrollbar slider:hover {
-    background-color: rgba(255, 255, 255, 0.4);
+    background-color: rgba(255, 255, 255, 0.4) !important;
 }
 
 /* Swappy Screenshot Annotation Editor */
 window.swappy, .swappy, #swappy {
-    background-color: #14121a;
-    color: #ffffff;
+    background-color: #14121a !important;
+    color: #ffffff !important;
 }
 
 window.swappy headerbar,
 window.swappy toolbar,
 window.swappy .toolbar,
 window.swappy box.horizontal {
-    background-color: #1a1824;
-    color: #ffffff;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
     padding: 6px 10px;
 }
 
 window.swappy button {
-    background-color: #2b273f;
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 8px !important;
     padding: 8px 12px;
     margin: 2px 4px;
     min-height: 32px;
     min-width: 32px;
 }
 
-window.swappy button image {
-    color: #ffffff;
-    -gtk-icon-style: regular;
-}
-
 window.swappy button:hover {
-    background-color: #443e63;
-    border-color: @theme_selected_bg_color;
-    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.24) !important;
+    border-color: @theme_selected_bg_color !important;
 }
 
-window.swappy button:active,
 window.swappy button:checked {
-    background-color: @theme_selected_bg_color;
-    border-color: #ffffff;
-    color: #ffffff;
+    background-color: @theme_selected_bg_color !important;
+    border-color: @theme_selected_bg_color !important;
+    color: #ffffff !important;
 }
-
