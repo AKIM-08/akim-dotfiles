@@ -147,17 +147,23 @@ APT_EXTRA_PKGS=(
     wf-recorder
 )
 
-# Hyprland packages from backports (REQUIRED, not optional)
-BACKPORTS_PKGS=(
+# Hyprland packages (REQUIRED)
+HYPRLAND_PKGS=(
     hyprland
     hyprlock
     hypridle
     xdg-desktop-portal-hyprland
 )
 
-echo "--> Installing Hyprland packages from trixie-backports..."
-for pkg in "${BACKPORTS_PKGS[@]}"; do
-    sudo apt-get install -y -t trixie-backports "$pkg" || echo "WARNING: Failed to install $pkg from backports"
+echo "--> Installing Hyprland core packages..."
+for pkg in "${HYPRLAND_PKGS[@]}"; do
+    echo "    Installing $pkg..."
+    if ! sudo apt-get install -y "$pkg"; then
+        echo "    Trying backports for $pkg..."
+        sudo apt-get install -y -t trixie-backports "$pkg" 2>/dev/null \
+            || sudo apt-get install -y -t bookworm-backports "$pkg" 2>/dev/null \
+            || warn "Failed to install $pkg from APT or backports."
+    fi
 done
 
 for pkg in "${APT_CORE_PKGS[@]}"; do
