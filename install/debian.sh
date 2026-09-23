@@ -119,7 +119,7 @@ APT_CORE_PKGS=(
     zsh-syntax-highlighting
     zsh-autosuggestions
     imagemagick
-    policykit-1-gnome
+    mate-polkit
     power-profiles-daemon
     swappy
     pulseaudio-utils

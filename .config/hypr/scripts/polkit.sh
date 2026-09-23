@@ -3,20 +3,23 @@
 # Ensures GUI apps requiring elevated/root privileges (GParted, Synaptic, etc.) prompt for password.
 
 # Prevent multiple agents running simultaneously
-if pgrep -f "polkit.*authentication-agent-1" >/dev/null; then
+if pgrep -f "polkit.*agent" >/dev/null || pgrep -x lxpolkit >/dev/null; then
     exit 0
 fi
 
 # List of known polkit agent paths (Debian, Arch, Fedora)
 AGENTS=(
+    "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
+    "/usr/libexec/polkit-mate-authentication-agent-1"
     "/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1"
     "/usr/libexec/polkit-gnome-authentication-agent-1"
     "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+    "/usr/bin/lxpolkit"
+    "/usr/lib/hyprpolkitagent"
+    "/usr/libexec/hyprpolkitagent"
     "/usr/lib/x86_64-linux-gnu/libexec/polkit-gnome-authentication-agent-1"
     "/usr/lib/polkit-kde-authentication-agent-1"
     "/usr/lib/x86_64-linux-gnu/libexec/polkit-kde-authentication-agent-1"
-    "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
-    "/usr/libexec/polkit-mate-authentication-agent-1"
     "/usr/bin/lxqt-policykit-agent"
 )
 
