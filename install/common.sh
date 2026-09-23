@@ -143,7 +143,9 @@ sync_gtk_settings() {
             sed -i "s/^gtk-theme-name=.*/gtk-theme-name=${theme}/" "$settings"
             echo "--> GTK theme set to: $theme ($settings)"
         else
-            warn "Catppuccin Mocha GTK theme not found — check $settings manually"
+            theme="Adwaita-dark"
+            sed -i "s/^gtk-theme-name=.*/gtk-theme-name=${theme}/" "$settings"
+            echo "--> Catppuccin theme not found; using built-in Adwaita-dark ($settings)"
         fi
 
         if [ "$settings" = "$HOME/.config/gtk-3.0/settings.ini" ]; then
@@ -177,8 +179,9 @@ sync_gtk_settings() {
     # Set GNOME / XDG interface color-scheme to prefer-dark for portals and browsers
     if command -v gsettings &>/dev/null; then
         echo "--> Configuring system interface to prefer-dark via gsettings..."
+        local active_gtk_theme="${theme:-Adwaita-dark}"
         gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface gtk-theme 'catppuccin-mocha-blue-standard+default' 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface gtk-theme "$active_gtk_theme" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
     fi
 }
