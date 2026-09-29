@@ -209,6 +209,12 @@ chmod +x "$HOME/.config/swaync/"*.sh 2>/dev/null || true
 chmod +x "$HOME/.config/swaync/"*.py 2>/dev/null || true
 chmod +x "$HOME/.config/waypaper/wallpaper_script.sh" 2>/dev/null || true
 
+# 8b. Sync web app icons for Rofi & system
+if [ -x "$HOME/.config/hypr/scripts/sync-app-icons.sh" ]; then
+    echo "--> Syncing web app icons for Rofi..."
+    "$HOME/.config/hypr/scripts/sync-app-icons.sh" 2>/dev/null || true
+fi
+
 # 9. Generate dynamic pywal theme
 echo "--> Generating initial color scheme from wallpaper..."
 if [ -x "$HOME/.config/hypr/scripts/apply-pywal-theme.sh" ]; then

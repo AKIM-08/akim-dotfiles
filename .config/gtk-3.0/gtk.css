@@ -1,4 +1,4 @@
-/* Dark High-Contrast GTK 3 Theme & File Chooser Styles */
+/* Dark High-Contrast GTK 3 Theme & Comprehensive File Chooser Styles */
 
 @define-color theme_bg_color #14121a;
 @define-color theme_fg_color #ffffff;
@@ -6,40 +6,104 @@
 @define-color theme_text_color #e0def4;
 @define-color theme_selected_bg_color #b53c7a;
 @define-color theme_selected_fg_color #ffffff;
+@define-color theme_tooltip_bg_color #181622;
+@define-color theme_tooltip_fg_color #ffffff;
+
+@define-color accent_color #b53c7a;
+@define-color accent_bg_color #b53c7a;
+@define-color accent_fg_color #ffffff;
+@define-color borders #3b334d;
+@define-color unfocused_borders #3b334d;
+@define-color insensitive_bg_color #1e1b29;
+@define-color insensitive_fg_color #827c96;
+@define-color insensitive_base_color #181622;
+
+@define-color sidebar_bg #14121a;
+@define-color sidebar_fg #ffffff;
+@define-color sidebar_backdrop_color #14121a;
+
+@define-color window_bg_color #14121a;
+@define-color window_fg_color #ffffff;
+@define-color view_bg_color #181622;
+@define-color view_fg_color #ffffff;
+
+@define-color headerbar_bg_color #14121a;
+@define-color headerbar_fg_color #ffffff;
+@define-color headerbar_border_color rgba(255, 255, 255, 0.12);
+@define-color headerbar_backdrop_color #14121a;
+@define-color headerbar_shade_color #14121a;
+
+@define-color card_bg_color rgba(255, 255, 255, 0.08);
+@define-color card_fg_color #ffffff;
+@define-color card_shade_color #14121a;
+
+@define-color dialog_bg_color #14121a;
+@define-color dialog_fg_color #ffffff;
+@define-color popover_bg_color #14121a;
+@define-color popover_fg_color #ffffff;
+
+@define-color base_color #181622;
+@define-color text_color #ffffff;
+@define-color bg_color #14121a;
+@define-color fg_color #ffffff;
+@define-color selected_bg_color #b53c7a;
+@define-color selected_fg_color #ffffff;
+@define-color wm_bg #14121a;
+@define-color wm_title #ffffff;
+@define-color content_view_bg #181622;
 
 /* Global Window and Background */
-window, .background {
+window, .background, dialog, window.dialog, messagedialog, window.messagedialog {
     background-color: @theme_bg_color !important;
     background-image: none !important;
     color: @theme_fg_color !important;
 }
 
-view, textview text, treeview.view, list, row {
+view, textview text, treeview.view, list, row, scrolledwindow, viewport {
     background-color: @theme_base_color !important;
     color: @theme_text_color !important;
 }
 
 /* Headerbars, Toolbars, and Menubars */
-headerbar, toolbar, menubar, .titlebar {
-    background-color: #14121a !important;
+headerbar,
+headerbar.titlebar,
+toolbar,
+menubar,
+.titlebar,
+headerbar:backdrop,
+headerbar.default-decoration,
+.dialog-action-box,
+.dialog-action-area {
+    background-color: @theme_bg_color !important;
     background-image: none !important;
-    color: #ffffff !important;
+    color: @theme_fg_color !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-headerbar .title, headerbar .subtitle, headerbar label {
-    color: #ffffff !important;
+headerbar .title,
+headerbar .subtitle,
+headerbar label,
+headerbar stack label,
+.titlebar label {
+    color: @theme_fg_color !important;
+    text-shadow: none !important;
 }
 
-/* Buttons (Including Cancel, Open, dialog buttons) */
+/* Universal Buttons (Headerbar, Dialog, Pathbar, Regular) */
 button,
 headerbar button,
 toolbar button,
-.titlebar button {
+.titlebar button,
+dialog button,
+pathbar button,
+.path-bar button,
+filechooser button,
+.dialog-action-area button,
+.dialog-action-box button {
     background-color: rgba(255, 255, 255, 0.08) !important;
     background-image: none !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    color: @theme_fg_color !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
     border-radius: 8px !important;
     padding: 6px 12px;
     box-shadow: none !important;
@@ -48,33 +112,53 @@ toolbar button,
 
 button label,
 headerbar button label,
-toolbar button label {
-    color: #ffffff !important;
+toolbar button label,
+dialog button label,
+pathbar button label,
+.path-bar button label,
+filechooser button label {
+    color: @theme_fg_color !important;
     text-shadow: none !important;
+}
+
+button image,
+headerbar button image,
+toolbar button image,
+pathbar button image,
+.path-bar button image {
+    color: @theme_fg_color !important;
 }
 
 button:hover,
 headerbar button:hover,
-toolbar button:hover {
-    background-color: rgba(255, 255, 255, 0.18) !important;
+toolbar button:hover,
+dialog button:hover,
+pathbar button:hover,
+.path-bar button:hover,
+filechooser button:hover {
+    background-color: rgba(255, 255, 255, 0.20) !important;
     background-image: none !important;
     border-color: @theme_selected_bg_color !important;
-    color: #ffffff !important;
+    color: @theme_fg_color !important;
 }
 
 button:active,
 button:checked,
-headerbar button:checked {
+headerbar button:checked,
+pathbar button:checked,
+.path-bar button:checked {
     background-color: @theme_selected_bg_color !important;
     background-image: none !important;
-    color: #ffffff !important;
+    color: @theme_selected_fg_color !important;
+    border-color: @theme_selected_bg_color !important;
 }
 
 button.suggested-action,
-headerbar button.suggested-action {
+headerbar button.suggested-action,
+dialog button.suggested-action {
     background-color: @theme_selected_bg_color !important;
     background-image: none !important;
-    color: #ffffff !important;
+    color: @theme_selected_fg_color !important;
     border: 1px solid @theme_selected_bg_color !important;
 }
 
@@ -82,7 +166,7 @@ button.suggested-action:hover,
 headerbar button.suggested-action:hover {
     background-color: @theme_selected_bg_color !important;
     background-image: none !important;
-    color: #ffffff !important;
+    color: @theme_selected_fg_color !important;
 }
 
 button.destructive-action,
@@ -93,52 +177,70 @@ headerbar button.destructive-action {
 }
 
 /* ==========================================================================
-   File Chooser & Dialog Specific Styles
+   File Chooser & Dialog Specific Styles (No White Areas)
    ========================================================================== */
 filechooser,
 filechooserdialog,
 .filechooser,
 dialog,
-window.dialog {
-    background-color: #14121a !important;
+window.dialog,
+window.dialog.filechooser,
+dialog.filechooser {
+    background-color: @theme_bg_color !important;
     background-image: none !important;
-    color: #ffffff !important;
+    color: @theme_fg_color !important;
 }
 
-/* File chooser boxes, containers, search bars, action bars */
 filechooser box,
 filechooser .horizontal,
 filechooser box.horizontal,
+filechooser .vertical,
+filechooser box.vertical,
 filechooser actionbar,
 filechooser actionbar box,
 filechooser searchbar,
+filechooser searchbar box,
+filechooser stack,
+filechooser paned,
+filechooser scrolledwindow,
+filechooser .dialog-vbox,
+filechooser .dialog-action-box,
+filechooser .dialog-action-area,
 actionbar,
-actionbar box {
-    background-color: #14121a !important;
+actionbar box,
+.dialog-vbox,
+.dialog-action-box,
+.dialog-action-area {
+    background-color: @theme_bg_color !important;
     background-image: none !important;
-    color: #ffffff !important;
+    color: @theme_fg_color !important;
     border: none !important;
 }
 
-/* Path Bar (Breadcrumbs e.g. Home > Downloads) */
+/* Path Bar & Breadcrumbs Container */
 pathbar,
 .path-bar,
 filechooser pathbar,
-filechooser .path-bar {
-    background-color: #14121a !important;
+filechooser .path-bar,
+filechooser .path-bar-box,
+filechooser box.path-bar-box,
+box.path-bar-box,
+box.linked.path-bar,
+box.linked {
+    background-color: @theme_bg_color !important;
     background-image: none !important;
+    border: none !important;
 }
 
 pathbar button,
 .path-bar button,
-pathbar button label,
-.path-bar button label,
-pathbar button image,
-.path-bar button image {
+filechooser .path-bar-box button,
+filechooser .path-bar button,
+box.linked.path-bar button {
     background-color: rgba(255, 255, 255, 0.08) !important;
     background-image: none !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    color: @theme_fg_color !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
     border-radius: 6px !important;
     margin: 2px;
     box-shadow: none !important;
@@ -146,22 +248,27 @@ pathbar button image,
 }
 
 pathbar button:hover,
-.path-bar button:hover {
-    background-color: rgba(255, 255, 255, 0.20) !important;
+.path-bar button:hover,
+filechooser .path-bar-box button:hover {
+    background-color: rgba(255, 255, 255, 0.22) !important;
     background-image: none !important;
     border-color: @theme_selected_bg_color !important;
-    color: #ffffff !important;
+    color: @theme_fg_color !important;
 }
 
 pathbar button:checked,
-.path-bar button:checked {
+.path-bar button:checked,
+filechooser .path-bar-box button:checked {
     background-color: @theme_selected_bg_color !important;
     background-image: none !important;
-    color: #ffffff !important;
+    color: @theme_selected_fg_color !important;
 }
 
 /* Text Entries and Search inputs */
-entry, searchbar entry {
+entry,
+searchbar entry,
+filechooser entry,
+headerbar entry {
     background-color: #1c1928 !important;
     background-image: none !important;
     color: #ffffff !important;
@@ -172,7 +279,10 @@ entry, searchbar entry {
     box-shadow: none !important;
 }
 
-entry:focus, searchbar entry:focus {
+entry:focus,
+searchbar entry:focus,
+filechooser entry:focus,
+headerbar entry:focus {
     border-color: @theme_selected_bg_color !important;
     background-color: #211d30 !important;
     background-image: none !important;
@@ -185,25 +295,33 @@ entry selection {
 }
 
 /* Places Sidebar (Left Navigation) */
-placessidebar, placesview, .sidebar {
+placessidebar,
+placesview,
+.sidebar,
+.navigation-sidebar,
+filechooser placessidebar,
+filechooser placesview {
     background-color: #110f17 !important;
     background-image: none !important;
     color: #e0def4 !important;
     border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-placessidebar row, placesview row {
+placessidebar row,
+placesview row {
     color: #e0def4 !important;
     padding: 6px;
     border-radius: 6px;
 }
 
-placessidebar row:hover, placesview row:hover {
+placessidebar row:hover,
+placesview row:hover {
     background-color: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
 }
 
-placessidebar row:selected, placesview row:selected {
+placessidebar row:selected,
+placesview row:selected {
     background-color: @theme_selected_bg_color !important;
     color: #ffffff !important;
 }
@@ -220,7 +338,8 @@ treeview.view:hover {
     background-color: rgba(255, 255, 255, 0.04) !important;
 }
 
-treeview.view:selected, treeview.view:selected:focus {
+treeview.view:selected,
+treeview.view:selected:focus {
     background-color: @theme_selected_bg_color !important;
     color: #ffffff !important;
 }
@@ -247,13 +366,17 @@ treeview.view header button:hover {
     color: #ffffff !important;
 }
 
-/* Dropdowns & Comboboxes (GParted device selector, Custom Files filter) */
+/* Dropdowns & Comboboxes (Custom Files filter, GParted selector) */
 combobox,
 combobox button,
 combobox.linked button,
 combobox cellview,
 combobox entry,
 combobox box,
+filechooser combobox,
+filechooser combobox button,
+filechooser combobox cellview,
+filechooser combobox box,
 toolbar combobox,
 toolbar combobox button,
 toolbar combobox cellview,
@@ -271,6 +394,7 @@ toolbar .combo,
 
 combobox:hover,
 combobox button:hover,
+filechooser combobox button:hover,
 toolbar combobox button:hover,
 toolbar combobox:hover {
     background-color: #2d293d !important;
@@ -285,6 +409,8 @@ combobox label,
 combobox text,
 combobox entry,
 combobox arrow,
+filechooser combobox cellview,
+filechooser combobox label,
 toolbar combobox cellview,
 toolbar combobox label {
     color: #ffffff !important;
@@ -301,7 +427,7 @@ combobox popover {
     color: #ffffff !important;
 }
 
-menu, popover {
+menu, popover, popover.background, popover contents {
     background-color: #1c1928 !important;
     background-image: none !important;
     color: #ffffff !important;
@@ -310,14 +436,39 @@ menu, popover {
     padding: 4px;
 }
 
-menuitem {
+menuitem, modelbutton {
     color: #ffffff !important;
     border-radius: 4px;
     padding: 6px 12px;
 }
 
-menuitem:hover {
+menuitem:hover, modelbutton:hover {
     background-color: @theme_selected_bg_color !important;
+    color: #ffffff !important;
+}
+
+/* Checkboxes and Radios ("Open files read-only") */
+checkbutton,
+checkbutton check,
+checkbutton label,
+radiobutton,
+radiobutton radio,
+radiobutton label {
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+
+checkbutton check,
+radiobutton radio {
+    background-color: rgba(255, 255, 255, 0.10) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 4px;
+}
+
+checkbutton check:checked,
+radiobutton radio:checked {
+    background-color: @theme_selected_bg_color !important;
+    border-color: @theme_selected_bg_color !important;
     color: #ffffff !important;
 }
 
@@ -332,6 +483,16 @@ scrollbar slider {
 
 scrollbar slider:hover {
     background-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Labels */
+label {
+    color: #ffffff !important;
+}
+
+label.dim-label,
+label:disabled {
+    color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Swappy Screenshot Annotation Editor */
