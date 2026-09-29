@@ -15,9 +15,9 @@ else
     PROMPT='%n@%m %~ ❯ '
 fi
 
-# Distro-agnostic plugin paths (Arch & Debian compatible)
-for _p in /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh \
-          /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh; do
+# Zsh plugin paths (Debian / APT)
+for _p in /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
+          /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh; do
     if [[ -f "$_p" ]]; then
         source "$_p"
         break

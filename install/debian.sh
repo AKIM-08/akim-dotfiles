@@ -127,15 +127,22 @@ APT_CORE_PKGS=(
     x11-xserver-utils
 )
 
-# 2b. Enable trixie-backports (required for Hyprland packages)
-echo "--> Enabling trixie-backports repository..."
-BACKPORTS_FILE="/etc/apt/sources.list.d/backports.list"
-if ! grep -q "trixie-backports" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
-    echo "deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware" | sudo tee "$BACKPORTS_FILE" > /dev/null
-    sudo apt-get update || die "apt-get update failed after adding backports."
-    echo "    ✓ trixie-backports added"
-else
-    echo "    ✓ trixie-backports already configured"
+# 2b. Enable backports repository if applicable
+CODENAME="${VERSION_CODENAME:-trixie}"
+[ "$CODENAME" = "stable" ] && CODENAME="bookworm"
+[ "$CODENAME" = "testing" ] && CODENAME="trixie"
+
+if [ "$CODENAME" != "sid" ] && [ "$CODENAME" != "unstable" ]; then
+    BACKPORT_SUITE="${CODENAME}-backports"
+    echo "--> Checking $BACKPORT_SUITE repository..."
+    BACKPORTS_FILE="/etc/apt/sources.list.d/backports.list"
+    if ! grep -q "$BACKPORT_SUITE" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+        echo "deb http://deb.debian.org/debian $BACKPORT_SUITE main contrib non-free non-free-firmware" | sudo tee "$BACKPORTS_FILE" > /dev/null
+        sudo apt-get update || warn "apt-get update failed after adding backports."
+        echo "    ✓ $BACKPORT_SUITE added"
+    else
+        echo "    ✓ $BACKPORT_SUITE already configured"
+    fi
 fi
 
 # Optional packages available in standard APT

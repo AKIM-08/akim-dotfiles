@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# system-update.sh - Interactive system updater for Waybar
+# system-update.sh - Interactive system updater for Debian
 
 BOLD="\033[1m"
 GREEN="\033[1;32m"
@@ -11,29 +11,16 @@ RESET="\033[0m"
 
 clear
 echo -e "${CYAN}========================================================================${RESET}"
-echo -e "${BOLD}                     󰅢  SYSTEM UPDATE & UPGRADE                       ${RESET}"
+echo -e "${BOLD}                     󰅢  DEBIAN SYSTEM UPDATE & UPGRADE                 ${RESET}"
 echo -e "${CYAN}========================================================================${RESET}"
 echo ""
 
-# Detect Distribution & Package Manager
-if command -v yay &>/dev/null; then
-    echo -e "${BLUE}==>${RESET} ${BOLD}Detected Arch Linux with yay (Pacman + AUR)...${RESET}"
-    echo ""
-    yay -Syu
-elif command -v paru &>/dev/null; then
-    echo -e "${BLUE}==>${RESET} ${BOLD}Detected Arch Linux with paru (Pacman + AUR)...${RESET}"
-    echo ""
-    paru -Syu
-elif command -v pacman &>/dev/null; then
-    echo -e "${BLUE}==>${RESET} ${BOLD}Detected Arch Linux (pacman)...${RESET}"
-    echo ""
-    sudo pacman -Syu
-elif command -v nala &>/dev/null; then
-    echo -e "${BLUE}==>${RESET} ${BOLD}Detected Debian/Ubuntu with nala...${RESET}"
+if command -v nala &>/dev/null; then
+    echo -e "${BLUE}==>${RESET} ${BOLD}Updating packages with nala...${RESET}"
     echo ""
     sudo nala update && sudo nala upgrade
-elif command -v apt-get &>/dev/null; then
-    echo -e "${BLUE}==>${RESET} ${BOLD}Detected Debian/Ubuntu (APT)...${RESET}"
+elif command -v apt &>/dev/null; then
+    echo -e "${BLUE}==>${RESET} ${BOLD}Updating packages with APT...${RESET}"
     echo ""
     echo -e "${YELLOW}--> Updating package lists...${RESET}"
     sudo apt update
@@ -43,12 +30,8 @@ elif command -v apt-get &>/dev/null; then
     echo ""
     echo -e "${YELLOW}--> Cleaning unused dependencies...${RESET}"
     sudo apt autoremove -y
-elif command -v dnf &>/dev/null; then
-    echo -e "${BLUE}==>${RESET} ${BOLD}Detected Fedora (DNF)...${RESET}"
-    echo ""
-    sudo dnf upgrade
 else
-    echo -e "${RED}Error: No supported package manager found (apt, nala, yay, paru, pacman, dnf).${RESET}"
+    echo -e "${RED}Error: APT package manager not found.${RESET}"
 fi
 
 EXIT_CODE=$?

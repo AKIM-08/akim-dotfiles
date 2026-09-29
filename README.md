@@ -1,13 +1,13 @@
 # akim-dotfiles
 
-Configuration Hyprland multi-distribution pour **Arch Linux** et **Debian** (laptop, écran unique, clavier **AZERTY**), avec thème dynamique généré depuis le fond d'écran via **pywal16**.
+Configuration Hyprland optimisée exclusivement pour **Debian** (13 Trixie, Testing, Sid ou Bookworm backports), pour laptop avec écran unique et clavier **AZERTY**, avec thème dynamique généré depuis le fond d'écran via **pywal16**.
 
 ## Stack
 
 | Composant | Outil |
 |-----------|-------|
-| OS | Arch Linux / Debian (13 Trixie, Testing, Sid ou Bookworm backports) |
-| Écran de connexion | SDDM (Arch) / GDM (Debian — coexistence GNOME préservée) |
+| OS | Debian GNU/Linux (13 Trixie / Testing / Sid ou Bookworm backports) |
+| Écran de connexion | GDM / LightDM (coexistence GNOME & session Wayland préservées) |
 | Compositrice | Hyprland |
 | Terminal | Kitty |
 | Barre d'état | Waybar (4 thèmes) |
@@ -26,16 +26,14 @@ Configuration Hyprland multi-distribution pour **Arch Linux** et **Debian** (lap
 
 ```
 akim-dotfiles/
-├── install.sh              # Lanceur universel (détection automatique Arch / Debian)
+├── install.sh              # Script d'installation automatisé pour Debian
 ├── install/
-│   ├── arch.sh             # Couche d'installation paquets Arch Linux & AUR
-│   ├── debian.sh           # Couche d'installation paquets Debian (APT, pipx, thèmes)
-│   ├── common.sh           # Déploiement configs partagées, pywal, scripts, sauvegardes
+│   ├── debian.sh           # Couche paquets Debian (APT, backports, pipx, thèmes)
+│   ├── common.sh           # Déploiement configs, pywal, scripts, sauvegardes
 │   └── rollback.sh         # Script de restauration / annulation des modifications
 ├── .gitignore
 ├── README.md
-├── .zshrc                  # Compatible Arch et Debian (auto-détection des plugins)
-├── sddm/akim/              # Thème SDDM personnalisé (split-screen pour Arch)
+├── .zshrc                  # Configuration Zsh (chargement des plugins Debian)
 ├── omz-custom/             # Thème fishy (copié vers ~/.oh-my-zsh/themes/ à l'install)
 │   └── themes/fishy.zsh-theme
 ├── assets/
@@ -61,7 +59,7 @@ akim-dotfiles/
 
 ## Prérequis
 
-- Arch Linux ou Debian (Debian 13 Trixie / Sid / Testing recommandé)
+- Debian GNU/Linux (Debian 13 Trixie / Sid / Testing recommandé, ou Bookworm avec backports)
 - Accès `sudo`
 - Connexion internet
 - Laptop avec un seul écran (config moniteur auto-détectée)
@@ -69,7 +67,7 @@ akim-dotfiles/
 
 ## Installation
 
-### Automatique (détection intelligente de l'OS)
+### Automatique (Recommandé)
 
 ```bash
 git clone <url-du-repo> akim-dotfiles
@@ -78,24 +76,23 @@ chmod +x install.sh install/*.sh
 ./install.sh
 ```
 
-Options manuelles disponibles :
+Options disponibles :
 ```bash
-./install.sh --debian    # Forcer le mode Debian
-./install.sh --arch      # Forcer le mode Arch Linux
+./install.sh             # Installation standard Debian
 ./install.sh --rollback  # Restaurer les configurations précédentes
+./install.sh --help      # Afficher l'aide
 ```
 
-### Comportement sur Debian
-- **Coexistence GNOME :** GDM et GNOME restent intacts. Hyprland apparaît dans le menu de session de GDM (icône engrenage).
+### Ce qui est configuré sur Debian :
+- **Coexistence GNOME & GDM :** GDM et votre environnement de bureau par défaut restent intacts. La session `Hyprland` est enregistrée dans `/usr/share/wayland-sessions/hyprland.desktop` et disponible depuis le menu de session de GDM (icône engrenage).
 - **Sécurité des configurations :** Chaque dossier dans `~/.config/` et `~/.zshrc` est automatiquement sauvegardé (`.backup-before-akim-dotfiles-...`) avant remplacement.
-- **Thèmes & Polices :** Les polices JetBrainsMono Nerd Font, le thème GTK Catppuccin Mocha et les curseurs Nordzy sont automatiquement téléchargés et configurés.
-
-### Comportement sur Arch Linux
-- Installe les paquets officiels et AUR (via `yay`), configure SDDM avec le thème akim.
+- **Thèmes & Polices :** Les polices JetBrainsMono Nerd Font, le thème GTK Catppuccin Mocha et les curseurs Nordzy sont automatiquement configurés.
+- **Outils compilés / pipx :** `pywal16`, `waypaper`, `awww`, et `snmenu` sont installés via pipx et binaires optimisés pour Debian.
+- **Authentification PAM :** Configuration `/etc/pam.d/hyprlock` pour le déverrouillage hyprlock avec les identifiants Debian.
 
 ### Mise à jour après `git pull`
 
-Sur un PC qui a **déjà** cloné le dépôt et installé les dotfiles :
+Sur un PC qui a déjà cloné le dépôt et installé les dotfiles :
 
 ```bash
 cd ~/akim-dotfiles          # adapter le chemin si besoin
@@ -105,7 +102,7 @@ git pull
 cp -r .config/* ~/.config/
 cp .zshrc ~/.zshrc 2>/dev/null || true
 
-# Scripts exécutables
+# Rendre les scripts exécutables
 chmod +x ~/.config/hypr/scripts/*.sh
 chmod +x ~/.config/hypr/scripts/pywal-fallback.py
 chmod +x ~/.config/waybar/scripts/*.sh
@@ -113,24 +110,8 @@ chmod +x ~/.config/swaync/refresh.sh
 chmod +x ~/.config/waypaper/wallpaper_script.sh
 chmod +x ~/.config/wlogout/hibernate.sh
 
-# Paquets ajoutés récemment (sans erreur si déjà installés)
-sudo pacman -S --needed --noconfirm pipewire-pulse bluez btop qt6-declarative qt6-quickcontrols2
-sudo systemctl enable --now bluetooth 2>/dev/null || true
-
-# Fond d'écran : symlink (qualité préservée)
-mkdir -p ~/Pictures/wallpapers
-[ -f ~/Pictures/wallpapers/image1.jpg ] && ln -sf ~/Pictures/wallpapers/image1.jpg ~/Pictures/wallpapers/current.jpg
-
-# Thème SDDM akim
-sudo mkdir -p /usr/share/sddm/themes/akim
-sudo cp -r sddm/akim/* /usr/share/sddm/themes/akim/
-sudo cp -L ~/Pictures/wallpapers/current.jpg /usr/share/sddm/themes/akim/background.jpg 2>/dev/null \
-  || sudo cp ~/Pictures/wallpapers/image1.jpg /usr/share/sddm/themes/akim/background.jpg 2>/dev/null || true
-sudo sed -i 's/^Current=.*/Current=akim/' /etc/sddm.conf.d/akim-dotfiles.conf 2>/dev/null || true
-sudo rm -f /etc/sddm.conf.d/akim-dotfiles-theme.conf 2>/dev/null || true
-
-# Tester le thème SDDM (doit afficher "Success" ou aucune erreur QML)
-sddm-greeter --test-mode --theme akim
+# Mettre à jour les paquets Debian si nécessaire
+sudo apt update && sudo apt upgrade -y
 
 # Régénérer le thème pywal + GTK
 ~/.config/hypr/scripts/apply-pywal-theme.sh ~/Pictures/wallpapers/current.jpg
@@ -141,57 +122,20 @@ pkill waybar; waybar &
 swaync-client --reload-css 2>/dev/null || (pkill swaync; swaync &)
 ```
 
-> **Option rapide** : relancer `./install.sh` depuis le repo fait aussi une grande partie de la mise à jour (paquets, SDDM, pywal). Les commandes ci-dessus évitent une réinstallation complète.
+> **Option rapide** : relancer `./install.sh` depuis le repo permet d'appliquer rapidement toute mise à jour.
 
-### Écran de connexion (SDDM)
+### Connexion et verrouillage
 
-Au démarrage, **SDDM** affiche le thème **akim** : panneau gauche (Welcome, horloge, login, session) et fond d'écran visible à droite.
+- **GDM / LightDM** = connexion initiale au boot (sélectionnez la session *Hyprland* sur l'écran de login)
+- **hyprlock** = verrouillage *pendant* la session (déclenché par hypridle ou le raccourci)
 
-- **hyprlock** = verrouillage *pendant* la session (hypridle)
-- **SDDM** = connexion *au boot*
-
-Changer le fond SDDM :
-
-```bash
-sudo cp -L ~/Pictures/wallpapers/current.jpg /usr/share/sddm/themes/akim/background.jpg
-```
-
-Avatar (même image que hyprlock) :
-
+Avatar (utilisé par hyprlock) :
 ```bash
 cp ~/Pictures/akim-avatar.png ~/.face
 cp ~/Pictures/akim-avatar.png ~/.face.icon
 ```
 
-À l'écran SDDM : choisir la session **Hyprland (Wayland)** si proposée.
-
-#### SDDM : « Main.qml: No such file » ou thème par défaut
-
-SDDM doit utiliser **`Current=akim`** (nom du thème), **pas** un chemin vers `~/akim-dotfiles/sddm/`.
-
-```bash
-cd ~/akim-dotfiles
-git pull
-~/.config/hypr/scripts/fix-sddm-theme.sh
-sudo reboot
-```
-
-#### SDDM ne démarre pas / écran noir
-
-1. Voir les logs : `journalctl -u sddm -b --no-pager`
-2. Tester le thème : `sddm-greeter --test-mode --theme akim`
-3. Si erreur QML ou Wayland, passer en X11 dans `/etc/sddm.conf.d/akim-dotfiles.conf` :
-   ```ini
-   [General]
-   DisplayServer=x11
-   ```
-4. Réinstaller le thème :
-   ```bash
-   sudo cp -r ~/akim-dotfiles/sddm/akim/* /usr/share/sddm/themes/akim/
-   sudo systemctl restart sddm
-   ```
-
-### Manuelle (partielle)
+### Installation manuelle (partielle)
 
 ```bash
 cp -r .config/* ~/.config/
@@ -207,10 +151,10 @@ chmod +x ~/.config/wlogout/hibernate.sh
 
 ### Shell (Zsh + Oh My Zsh)
 
-- **Oh My Zsh** s'installe dans `~/.oh-my-zsh` via `install.sh` (pas versionné dans le dépôt).
-- **`omz-custom/`** contient uniquement le thème `fishy` copié à l'installation.
-- **Plugins** : `git` (via OMZ) + `zsh-autosuggestions` + `zsh-syntax-highlighting` (paquets Arch, chargés dans l'ordre correct).
-- Si OMZ est absent, `.zshrc` affiche un prompt minimal et un message d'erreur.
+- **Oh My Zsh** s'installe dans `~/.oh-my-zsh` via `install.sh` (non versionné dans le dépôt).
+- **`omz-custom/`** contient le thème `fishy` copié à l'installation.
+- **Plugins** : `git` (via OMZ) + `zsh-autosuggestions` + `zsh-syntax-highlighting` (paquets APT Debian, chargés dans l'ordre correct).
+- Si OMZ est absent, `.zshrc` affiche un prompt minimal.
 
 ## Utilisation
 
@@ -267,13 +211,13 @@ Widgets : média, notifications, **volume**, **luminosité**, grille de raccourc
 | 15 min | Verrouillage (**hyprlock** + avatar AKIM) + écran éteint |
 | 20 min | Mise en veille (suspend) |
 
-**Hibernation à 1 %** (sur batterie, sans secteur) : script `battery-hibernate-watch.sh` (nécessite une partition **swap** active).
+**Hibernation à 1 %** (sur batterie, sans secteur) : script `battery-hibernate-watch.sh` (nécessite une partition ou fichier **swap** actif).
 
 ### Menu d'alimentation (snmenu)
 
 `Super + Escape` ouvre le menu circulaire **snmenu** : **Logout**, **Shutdown**, **Hibernate**, **Reboot**, **Suspend**, **Lock**.
 
-> **Hibernation** : vérifie la présence d'une partition **swap** active (`swapon --show`). Sans swap, une notification s'affiche et l'action est annulée.
+> **Hibernation** : vérifie la présence d'une partition/fichier **swap** actif (`swapon --show`). Sans swap, une notification s'affiche et l'action est annulée.
 
 ### Thème dynamique (pywal16)
 
@@ -284,7 +228,7 @@ Script central : `~/.config/hypr/scripts/apply-pywal-theme.sh`
 - Appelé à l'installation, au changement de fond (`Super + Alt + ←/→`), et par Waypaper
 - Si pywal16 échoue, `pywal-fallback.py` extrait quand même une palette depuis l'image (Pillow)
 - **GTK** : `~/.config/gtk-3.0/gtk.css` et `gtk-4.0/gtk.css` mis à jour depuis pywal (relancer les apps GTK pour voir l'effet)
-- **Hyprland** : opacité ~0.93 sur Firefox, Brave, Discord, Telegram, Code, VLC, etc.
+- **Hyprland** : bordures et styles de fenêtres synchronisés
 
 Composants mis à jour :
 
@@ -308,7 +252,7 @@ L'horloge affiche les **secondes** et se met à jour chaque seconde (`interval: 
 
 ### Gestionnaire de fonds d'écran (Waypaper)
 
-GUI installée via AUR (`waypaper`). Lancez `waypaper` depuis un terminal ou ajoutez un raccourci. Pointe vers `~/Pictures/wallpapers/` ; chaque changement exécute `wallpaper_script.sh` → `apply-pywal-theme.sh`.
+GUI installée via pipx (`waypaper`). Lancez `waypaper` depuis un terminal ou ajoutez un raccourci. Pointe vers `~/Pictures/wallpapers/` ; chaque changement exécute `wallpaper_script.sh` → `apply-pywal-theme.sh`.
 
 ### Ajouter un fond d'écran
 
@@ -327,7 +271,7 @@ GUI installée via AUR (`waypaper`). Lancez `waypaper` depuis un terminal ou ajo
 
 ## GPU NVIDIA (optionnel)
 
-Par défaut, les variables NVIDIA sont **commentées** pour Intel/AMD. Si vous avez un GPU NVIDIA, ouvrez `.config/hypr/hyprland.conf` et décommentez :
+Par défaut, les variables NVIDIA sont **commentées** pour Intel/AMD. Si vous avez un GPU NVIDIA, ouvrez `.config/hypr/hyprland.hl` et décommentez :
 
 ```conf
 env = LIBVA_DRIVER_NAME,nvidia
@@ -340,11 +284,10 @@ Puis rechargez Hyprland : `hyprctl reload`.
 
 | Fichier | À adapter |
 |---------|-----------|
-| `.config/hypr/hyprland.conf` | Raccourcis, opacité, règles fenêtres |
+| `.config/hypr/hyprland.hl` | Raccourcis, opacité, règles fenêtres |
 | `.config/hypr/hypridle.conf` | Délais de verrouillage / veille |
 | `.config/gtk-3.0/settings.ini` | Thème GTK Catppuccin Mocha et curseur |
 | `.config/gtk-4.0/settings.ini` | Thème GTK 4 pour apps libadwaita |
-| `sddm/akim/` | Écran de connexion SDDM |
 | `wallpapers/` | Vos propres images |
 
 Le moniteur est configuré en `monitor=,preferred,auto,1` (auto-détection laptop). Pour un écran externe, voir la [doc Hyprland Monitors](https://wiki.hyprland.org/Configuring/Monitors/).
@@ -353,18 +296,16 @@ Le moniteur est configuré en `monitor=,preferred,auto,1` (auto-détection lapto
 
 | Symptôme | Cause probable | Action |
 |----------|----------------|--------|
-| `misc:vfr does not exist` | Hyprland trop ancien | `git pull` puis recopier `hyprland.conf` |
+| `misc:vfr does not exist` | Hyprland trop ancien | `git pull` puis recopier `hyprland.hl` |
 | Wi‑Fi Waybar `span color=""` | Icône réseau + couleur vide | `git pull`, recopier `waybar/config` + `style.css` |
-| `ERROR: Cannot fetch updates` | `checkupdates` / miroirs pacman | Normal hors ligne ; module pacman vérifie toutes les heures |
-| `Discharging` dans le terminal | Bruit waybar / batterie | Sans impact ; ignorable |
+| Erreur mise à jour Waybar | APT / Dépôts en cours d'actualisation | Cliquer sur le module ou exécuter `sudo apt update` |
 | Boutons SwayNC violet clair | GTK par défaut | `apply-pywal-theme.sh` + `swaync-client --reload-css` |
-| SDDM cassé | Thème QML invalide | Voir section SDDM ci-dessus |
+| Erreur session Wayland GDM | Paquet de session manquant | Vérifier `/usr/share/wayland-sessions/hyprland.desktop` |
 
 ## Notes
 
-- Ne supprimez pas `current.jpg` : symlink vers le fond actif pour hyprpaper et pywal16.
+- Ne supprimez pas `current.jpg` : symlink vers le fond actif pour awww et pywal16.
 - Les scripts dans `.config/*/scripts/` doivent être exécutables (`chmod +x`).
-- Police unique : **JetBrains Mono Nerd Font** (Kitty, hyprlock, Waybar, SDDM).
-- **pywal-discord** (sync thème Discord) : optionnel — `yay -S pywal-discord` si souhaité.
-- **Bluetooth** : service `bluetooth` requis ; sans adaptateur, Blueman affichera une erreur.
+- Police unique : **JetBrains Mono Nerd Font** (Kitty, hyprlock, Waybar).
+- **Bluetooth** : service `bluetooth` requis (`sudo systemctl enable --now bluetooth`).
 - **fastfetch** : lancez `fastfetch` dans Kitty pour les infos système.

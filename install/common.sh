@@ -1,6 +1,5 @@
 #!/bin/bash
-# install/common.sh - Shared configuration deployment for akim-dotfiles
-# Used by both Arch Linux and Debian installation workflows.
+# install/common.sh - Configuration deployment for akim-dotfiles (Debian)
 
 set -o pipefail
 
