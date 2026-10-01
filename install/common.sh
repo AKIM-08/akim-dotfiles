@@ -231,7 +231,7 @@ setup_nautilus_kitty() {
     
     if command -v gsettings &>/dev/null; then
         gsettings set com.github.stunkymonkey.nautilus-open-any-terminal terminal 'kitty' 2>/dev/null || true
-        gsettings set com.github.stunkymonkey.nautilus-open-any-terminal keybinding '<Shift>F4' 2>/dev/null || true
+        gsettings set com.github.stunkymonkey.nautilus-open-any-terminal keybindings '<Shift>F4' 2>/dev/null || true
         gsettings set com.github.stunkymonkey.nautilus-open-any-terminal new-tab false 2>/dev/null || true
     fi
 }
