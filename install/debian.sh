@@ -320,6 +320,18 @@ sudo usermod -aG input,video "$USER" 2>/dev/null || true
 echo "--> Ensuring GDM is active and disabling any conflicting SDDM..."
 sudo systemctl disable sddm 2>/dev/null || true
 
+# 11. Set Kitty as default system terminal emulator
+echo "--> Configuring Kitty as default terminal emulator..."
+if command -v kitty &>/dev/null; then
+    KITTY_BIN=$(command -v kitty)
+    sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$KITTY_BIN" 50 2>/dev/null || true
+    sudo update-alternatives --set x-terminal-emulator "$KITTY_BIN" 2>/dev/null || true
+    if command -v gsettings &>/dev/null; then
+        gsettings set org.gnome.desktop.default-applications.terminal exec 'kitty' 2>/dev/null || true
+        gsettings set org.gnome.desktop.default-applications.terminal exec-arg '-e' 2>/dev/null || true
+    fi
+fi
+
 echo "=========================================================================="
 echo " Debian package and dependency layer installation complete."
 echo "=========================================================================="

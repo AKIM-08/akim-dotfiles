@@ -41,3 +41,4 @@ ZSH_HIGHLIGHT_STYLES[single-hyphen-option]='fg=magenta'
 ZSH_HIGHLIGHT_STYLES[double-hyphen-option]='fg=magenta'
 
 export PATH="$PATH:$HOME/.local/bin"
+export TERMINAL="kitty"
