@@ -222,16 +222,49 @@ if [ -x "$HOME/.config/hypr/scripts/apply-pywal-theme.sh" ]; then
         || warn "Initial pywal theme generation failed — run: ~/.config/hypr/scripts/apply-pywal-theme.sh"
 fi
 
-# 10. Configure Discord desktop entry for Wayland screen sharing if installed
-setup_discord_wayland() {
-    mkdir -p "$HOME/.local/share/applications"
-    if [ -f "/usr/share/applications/discord.desktop" ]; then
-        echo "--> Configuring Discord desktop entry for Wayland screen sharing..."
-        cp "/usr/share/applications/discord.desktop" "$HOME/.local/share/applications/"
-        sed -i 's|Exec=discord|Exec=discord --enable-features=WebRTCPipeWireCapturer|g' "$HOME/.local/share/applications/discord.desktop"
-    fi
+# 11. Configure Nautilus 'Open in Kitty' extension
+setup_nautilus_kitty() {
+    echo "--> Configuring Nautilus 'Open in Kitty' extension..."
+    mkdir -p "$HOME/.local/share/nautilus-python/extensions"
+    cat << 'EOF' > "$HOME/.local/share/nautilus-python/extensions/open-kitty.py"
+import os
+from urllib.parse import unquote
+from gi.repository import Nautilus, GObject
+
+class OpenInKittyExtension(GObject.GObject, Nautilus.MenuProvider):
+    def get_file_items(self, *args):
+        files = args[-1]
+        if len(files) != 1 or not files[0].is_directory():
+            return []
+        
+        file = files[0]
+        item = Nautilus.MenuItem(
+            name='NautilusPython::open_in_kitty',
+            label='Open in Kitty',
+            tip='Open this directory in Kitty terminal'
+        )
+        uri = file.get_uri()
+        path = unquote(uri.replace('file://', '')) if uri.startswith('file://') else file.get_location().get_path()
+        item.connect('activate', self.open_in_kitty, path)
+        return [item]
+
+    def get_background_items(self, *args):
+        current_folder = args[-1]
+        item = Nautilus.MenuItem(
+            name='NautilusPython::open_in_kitty_bg',
+            label='Open in Kitty',
+            tip='Open the current directory in Kitty terminal'
+        )
+        uri = current_folder.get_uri()
+        path = unquote(uri.replace('file://', '')) if uri.startswith('file://') else current_folder.get_location().get_path()
+        item.connect('activate', self.open_in_kitty, path)
+        return [item]
+
+    def open_in_kitty(self, menu, path):
+        os.system(f'kitty --directory "{path}" &')
+EOF
 }
-setup_discord_wayland
+setup_nautilus_kitty
 
 echo "=========================================================================="
 echo " Common configuration deployment complete."

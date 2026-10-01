@@ -114,6 +114,7 @@ APT_CORE_PKGS=(
     fastfetch
     chafa
     nautilus
+    python3-nautilus
     blueman
     network-manager
     zsh-syntax-highlighting
