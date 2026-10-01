@@ -222,47 +222,18 @@ if [ -x "$HOME/.config/hypr/scripts/apply-pywal-theme.sh" ]; then
         || warn "Initial pywal theme generation failed — run: ~/.config/hypr/scripts/apply-pywal-theme.sh"
 fi
 
-# 11. Configure Nautilus 'Open in Kitty' extension
+# 11. Configure Nautilus 'Open in Kitty' extension with keyboard shortcut
 setup_nautilus_kitty() {
-    echo "--> Configuring Nautilus 'Open in Kitty' extension..."
+    echo "--> Configuring Nautilus 'Open in Kitty' extension with shortcut support..."
     mkdir -p "$HOME/.local/share/nautilus-python/extensions"
-    cat << 'EOF' > "$HOME/.local/share/nautilus-python/extensions/open-kitty.py"
-import os
-from urllib.parse import unquote
-from gi.repository import Nautilus, GObject
-
-class OpenInKittyExtension(GObject.GObject, Nautilus.MenuProvider):
-    def get_file_items(self, *args):
-        files = args[-1]
-        if len(files) != 1 or not files[0].is_directory():
-            return []
-        
-        file = files[0]
-        item = Nautilus.MenuItem(
-            name='NautilusPython::open_in_kitty',
-            label='Open in Kitty',
-            tip='Open this directory in Kitty terminal'
-        )
-        uri = file.get_uri()
-        path = unquote(uri.replace('file://', '')) if uri.startswith('file://') else file.get_location().get_path()
-        item.connect('activate', self.open_in_kitty, path)
-        return [item]
-
-    def get_background_items(self, *args):
-        current_folder = args[-1]
-        item = Nautilus.MenuItem(
-            name='NautilusPython::open_in_kitty_bg',
-            label='Open in Kitty',
-            tip='Open the current directory in Kitty terminal'
-        )
-        uri = current_folder.get_uri()
-        path = unquote(uri.replace('file://', '')) if uri.startswith('file://') else current_folder.get_location().get_path()
-        item.connect('activate', self.open_in_kitty, path)
-        return [item]
-
-    def open_in_kitty(self, menu, path):
-        os.system(f'kitty --directory "{path}" &')
-EOF
+    curl -sSL "https://raw.githubusercontent.com/Stunkymonkey/nautilus-open-any-terminal/master/nautilus_open_any_terminal/nautilus_open_any_terminal.py" \
+        -o "$HOME/.local/share/nautilus-python/extensions/nautilus_open_any_terminal.py" 2>/dev/null || true
+    
+    if command -v gsettings &>/dev/null; then
+        gsettings set com.github.stunkymonkey.nautilus-open-any-terminal terminal 'kitty' 2>/dev/null || true
+        gsettings set com.github.stunkymonkey.nautilus-open-any-terminal keybinding '<Shift>F4' 2>/dev/null || true
+        gsettings set com.github.stunkymonkey.nautilus-open-any-terminal new-tab false 2>/dev/null || true
+    fi
 }
 setup_nautilus_kitty
 

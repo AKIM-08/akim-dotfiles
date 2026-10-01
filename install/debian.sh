@@ -333,6 +333,14 @@ if command -v kitty &>/dev/null; then
     fi
 fi
 
+# 12. Set up Nautilus Terminal shortcut schema
+if [ -d /usr/share/glib-2.0/schemas ]; then
+    echo "--> Installing Nautilus Terminal shortcut schema..."
+    sudo curl -sSL https://raw.githubusercontent.com/Stunkymonkey/nautilus-open-any-terminal/master/nautilus_open_any_terminal/schemas/com.github.stunkymonkey.nautilus-open-any-terminal.gschema.xml \
+        -o /usr/share/glib-2.0/schemas/com.github.stunkymonkey.nautilus-open-any-terminal.gschema.xml 2>/dev/null || true
+    sudo glib-compile-schemas /usr/share/glib-2.0/schemas/ 2>/dev/null || true
+fi
+
 echo "=========================================================================="
 echo " Debian package and dependency layer installation complete."
 echo "=========================================================================="
