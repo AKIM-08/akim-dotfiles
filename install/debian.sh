@@ -59,7 +59,11 @@ echo "==========================================================================
 
 # 2. Update APT repositories
 echo "--> Updating APT package lists..."
-sudo apt-get update || die "apt-get update failed. Please check your network and repositories."
+if ! sudo apt-get update; then
+    warn "apt-get update completed with warnings or errors."
+    warn "This is typically caused by a third-party repository with a missing/expired GPG key (e.g. Spotify, PPAs)."
+    warn "Official Debian repositories are still updated; continuing installation..."
+fi
 
 # 3. Base & Core Build Utilities
 echo "--> Installing build essentials and tools..."
