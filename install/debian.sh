@@ -331,9 +331,28 @@ systemctl --user mask hypridle.service 2>/dev/null || true
 echo "--> Ensuring user is in input and video groups..."
 sudo usermod -aG input,video "$USER" 2>/dev/null || true
 
-# 10. Ensure only GDM is active (disable SDDM if previously enabled)
-echo "--> Ensuring GDM is active and disabling any conflicting SDDM..."
+# 10. Ensure GDM is enabled and active as default display manager
+echo "--> Ensuring GDM (GNOME Display Manager) is active..."
 sudo systemctl disable sddm 2>/dev/null || true
+
+# Explicitly unmask and enable GDM3 service
+if command -v gdm3 &>/dev/null || [ -f /lib/systemd/system/gdm3.service ] || [ -f /etc/systemd/system/gdm3.service ]; then
+    sudo systemctl unmask gdm3 2>/dev/null || true
+    sudo systemctl enable gdm3 2>/dev/null || true
+elif command -v gdm &>/dev/null || [ -f /lib/systemd/system/gdm.service ]; then
+    sudo systemctl unmask gdm 2>/dev/null || true
+    sudo systemctl enable gdm 2>/dev/null || true
+fi
+
+# Ensure graphical target is default boot target (prevents black screen / TTY text boot)
+sudo systemctl set-default graphical.target 2>/dev/null || true
+
+# Set Debian default-display-manager configuration file
+if [ -x /usr/sbin/gdm3 ]; then
+    echo "/usr/sbin/gdm3" | sudo tee /etc/X11/default-display-manager >/dev/null
+elif [ -x /usr/sbin/gdm ]; then
+    echo "/usr/sbin/gdm" | sudo tee /etc/X11/default-display-manager >/dev/null
+fi
 
 # 11. Set Kitty as default system terminal emulator
 echo "--> Configuring Kitty as default terminal emulator..."
