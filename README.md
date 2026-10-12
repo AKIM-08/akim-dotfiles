@@ -241,13 +241,12 @@ Composants mis à jour :
 
 `Super + Alt + ←/→` change le fond d'écran et régénère le thème complet.
 
-### Thèmes & Position Waybar
+### Thèmes Waybar
 
-Cinq styles : **default**, **line**, **zen**, **experimental**, **capsule**.
-Positions personnalisables : **top**, **bottom**, **left**, **right**.
+Cinq styles : **default**, **line**, **zen**, **experimental**, **capsule** (placés en haut de l'écran).
 
-- Raccourci : `Super + Shift + T` (choix du thème puis sélection de la position, ou changement de position seule)
-- Ou direct en ligne de commande : `~/.config/waybar/scripts/position.sh [top|bottom|left|right]`
+- Raccourci : `Super + Shift + T`
+- Ou : `~/.config/waybar/scripts/select.sh`
 
 L'horloge affiche les **secondes** et se met à jour chaque seconde (`interval: 1`).
 
