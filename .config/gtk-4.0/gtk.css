@@ -19,45 +19,45 @@
 @define-color accent_fg_color #ffffff;
 
 window, .background, dialog, window.dialog {
-    background-color: @window_bg_color !important;
-    color: @window_fg_color !important;
+    background-color: @window_bg_color;
+    color: @window_fg_color;
 }
 
 headerbar, .titlebar {
-    background-color: @headerbar_bg_color !important;
-    color: @headerbar_fg_color !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background-color: @headerbar_bg_color;
+    color: @headerbar_fg_color;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 headerbar .title, headerbar .subtitle, headerbar label {
-    color: @headerbar_fg_color !important;
+    color: @headerbar_fg_color;
 }
 
 button, headerbar button, dialog button {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    color: @window_fg_color !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-radius: 8px !important;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: @window_fg_color;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
 }
 
 button:hover, headerbar button:hover {
-    background-color: rgba(255, 255, 255, 0.20) !important;
-    border-color: @accent_bg_color !important;
+    background-color: rgba(255, 255, 255, 0.20);
+    border-color: @accent_bg_color;
 }
 
 button:checked, button:active {
-    background-color: @accent_bg_color !important;
-    color: @accent_fg_color !important;
+    background-color: @accent_bg_color;
+    color: @accent_fg_color;
 }
 
 entry {
-    background-color: #1c1928 !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-radius: 6px !important;
+    background-color: #1c1928;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
 }
 
 .navigation-sidebar, placessidebar {
-    background-color: #110f17 !important;
-    color: #e0def4 !important;
+    background-color: #110f17;
+    color: #e0def4;
 }

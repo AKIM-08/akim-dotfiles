@@ -211,7 +211,7 @@ Widgets : média, notifications, **volume**, **luminosité**, grille de raccourc
 | 15 min | Verrouillage (**hyprlock** + avatar AKIM) + écran éteint |
 | 20 min | Mise en veille (suspend) |
 
-**Hibernation à 1 %** (sur batterie, sans secteur) : script `battery-hibernate-watch.sh` (nécessite une partition ou fichier **swap** actif).
+**Hibernation automatique** (~5 minutes restantes avant extinction ou batterie ≤ 4 % sur batterie) : script `battery-hibernate-watch.sh` (désactive automatiquement le mode caféine s'il est actif, puis hiberne ou met en veille si pas de swap).
 
 ### Menu d'alimentation (snmenu)
 
@@ -241,12 +241,13 @@ Composants mis à jour :
 
 `Super + Alt + ←/→` change le fond d'écran et régénère le thème complet.
 
-### Thèmes Waybar
+### Thèmes & Position Waybar
 
-Quatre styles : **default**, **line**, **zen**, **experimental**.
+Cinq styles : **default**, **line**, **zen**, **experimental**, **capsule**.
+Positions personnalisables : **top**, **bottom**, **left**, **right**.
 
-- Raccourci : `Super + Shift + T`
-- Ou : `~/.config/waybar/scripts/select.sh`
+- Raccourci : `Super + Shift + T` (choix du thème puis sélection de la position, ou changement de position seule)
+- Ou direct en ligne de commande : `~/.config/waybar/scripts/position.sh [top|bottom|left|right]`
 
 L'horloge affiche les **secondes** et se met à jour chaque seconde (`interval: 1`).
 

@@ -34,17 +34,20 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Verify Debian platform
-if [ ! -f /etc/debian_version ] && ! command -v apt-get &>/dev/null; then
-    die "This configuration is dedicated exclusively to Debian (or Debian-based systems with APT)."
+# Verify and handle platform
+if [ -f /etc/arch-release ] || command -v pacman &>/dev/null; then
+    echo "--> Target platform verified: Arch Linux"
+    if [ -f "$SCRIPT_DIR/install/arch.sh" ]; then
+        bash "$SCRIPT_DIR/install/arch.sh" || die "Arch Linux package installation failed."
+    fi
+elif [ -f /etc/debian_version ] || command -v apt-get &>/dev/null; then
+    echo "--> Target platform verified: Debian"
+    bash "$SCRIPT_DIR/install/debian.sh" || die "Debian package installation failed."
+else
+    echo "--> Platform not specifically Debian/Arch; proceeding with shared configuration deployment..."
 fi
 
-echo "--> Target platform verified: Debian"
-
-# Run Debian package & dependency layer installer
-bash "$SCRIPT_DIR/install/debian.sh" || die "Debian package installation failed."
-
-# Run dotfiles deployment and initial pywal setup
+# Run dotfiles deployment, font verification, and initial pywal setup
 bash "$SCRIPT_DIR/install/common.sh" || die "Dotfiles deployment failed."
 
 echo "=========================================================================="

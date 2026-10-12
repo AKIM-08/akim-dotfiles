@@ -47,6 +47,48 @@ mkdir -p "$HOME/.local/share/fonts"
 mkdir -p "$HOME/Pictures/wallpapers"
 mkdir -p "$HOME/Pictures/Screenshots"
 
+# 1b. JetBrainsMono Nerd Font check & installation (prevents broken icons/squares)
+setup_nerd_fonts() {
+    echo "--> Verifying JetBrainsMono Nerd Font..."
+    mkdir -p "$HOME/.local/share/fonts"
+    local has_font=false
+
+    if ls "$HOME/.local/share/fonts"/JetBrainsMono*Nerd* >/dev/null 2>&1 || \
+       ls "$HOME/.local/share/fonts"/JetBrains*Mono*Nerd* >/dev/null 2>&1 || \
+       (command -v fc-list &>/dev/null && fc-list : family | grep -qi "JetBrainsMono Nerd Font"); then
+        has_font=true
+    fi
+
+    if [ "$has_font" = false ]; then
+        echo "--> Downloading & installing JetBrainsMono Nerd Font..."
+        local font_dir="/tmp/jbm-nerd-font"
+        mkdir -p "$font_dir"
+        local archive="$font_dir/JetBrainsMono.tar.xz"
+        local url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"
+        local downloaded=false
+
+        if command -v curl &>/dev/null; then
+            curl -fsSL "$url" -o "$archive" 2>/dev/null && downloaded=true
+        elif command -v wget &>/dev/null; then
+            wget -q --show-progress -O "$archive" "$url" 2>/dev/null && downloaded=true
+        fi
+
+        if [ "$downloaded" = true ] && [ -f "$archive" ]; then
+            tar -xf "$archive" -C "$HOME/.local/share/fonts/" 2>/dev/null
+            rm -rf "$font_dir"
+            if command -v fc-cache &>/dev/null; then
+                fc-cache -fv "$HOME/.local/share/fonts" >/dev/null 2>&1
+            fi
+            echo "--> JetBrainsMono Nerd Font installed successfully."
+        else
+            warn "Could not download JetBrainsMono Nerd Font automatically. Please install it into ~/.local/share/fonts/"
+        fi
+    else
+        echo "--> JetBrainsMono Nerd Font is already installed."
+    fi
+}
+setup_nerd_fonts
+
 # 2. Cava + pywal16 integration
 echo "--> Setting up Cava color theme integration with pywal16..."
 mkdir -p "$HOME/.config/cava"

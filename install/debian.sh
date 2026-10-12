@@ -193,15 +193,25 @@ fi
 ## 5a. Nerd Fonts (JetBrainsMono Nerd Font)
 echo "--> Setting up JetBrainsMono Nerd Font icons..."
 mkdir -p "$HOME/.local/share/fonts"
-if ! fc-list : family | grep -qi "JetBrainsMono Nerd Font"; then
+if ! ls "$HOME/.local/share/fonts"/JetBrainsMono*Nerd* >/dev/null 2>&1 && ! (command -v fc-list &>/dev/null && fc-list : family | grep -qi "JetBrainsMono Nerd Font"); then
     echo "    Downloading JetBrainsMono Nerd Font symbols..."
     mkdir -p /tmp/jbm-nerd-font
-    wget -q --show-progress -O /tmp/jbm-nerd-font/JetBrainsMono.tar.xz \
-        https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz 2>/dev/null \
-        && tar -xf /tmp/jbm-nerd-font/JetBrainsMono.tar.xz -C "$HOME/.local/share/fonts/" 2>/dev/null \
-        && rm -rf /tmp/jbm-nerd-font \
-        && fc-cache -fv "$HOME/.local/share/fonts" >/dev/null 2>&1 \
-        || warn "Could not download JetBrainsMono Nerd Font archive"
+    dl_ok=false
+    url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"
+    if command -v curl &>/dev/null; then
+        curl -fsSL "$url" -o /tmp/jbm-nerd-font/JetBrainsMono.tar.xz 2>/dev/null && dl_ok=true
+    elif command -v wget &>/dev/null; then
+        wget -q --show-progress -O /tmp/jbm-nerd-font/JetBrainsMono.tar.xz "$url" 2>/dev/null && dl_ok=true
+    fi
+    if [ "$dl_ok" = true ] && [ -f /tmp/jbm-nerd-font/JetBrainsMono.tar.xz ]; then
+        tar -xf /tmp/jbm-nerd-font/JetBrainsMono.tar.xz -C "$HOME/.local/share/fonts/" 2>/dev/null \
+            && rm -rf /tmp/jbm-nerd-font \
+            && fc-cache -fv "$HOME/.local/share/fonts" >/dev/null 2>&1 \
+            || warn "Could not unpack JetBrainsMono Nerd Font archive"
+        echo "    JetBrainsMono Nerd Font installed successfully."
+    else
+        warn "Could not download JetBrainsMono Nerd Font archive"
+    fi
 fi
 
 ## 5b. Python tools (pywal16 & waypaper via pipx)

@@ -54,14 +54,14 @@
 
 /* Global Window and Background */
 window, .background, dialog, window.dialog, messagedialog, window.messagedialog {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
 }
 
 view, textview text, treeview.view, list, row, scrolledwindow, viewport {
-    background-color: @theme_base_color !important;
-    color: @theme_text_color !important;
+    background-color: @theme_base_color;
+    color: @theme_text_color;
 }
 
 /* Headerbars, Toolbars, and Menubars */
@@ -74,10 +74,10 @@ headerbar:backdrop,
 headerbar.default-decoration,
 .dialog-action-box,
 .dialog-action-area {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 headerbar .title,
@@ -85,8 +85,8 @@ headerbar .subtitle,
 headerbar label,
 headerbar stack label,
 .titlebar label {
-    color: @theme_fg_color !important;
-    text-shadow: none !important;
+    color: @theme_fg_color;
+    text-shadow: none;
 }
 
 /* Universal Buttons (Headerbar, Dialog, Pathbar, Regular) */
@@ -100,14 +100,14 @@ pathbar button,
 filechooser button,
 .dialog-action-area button,
 .dialog-action-box button {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-radius: 8px !important;
+    background-color: rgba(255, 255, 255, 0.08);
+    background-image: none;
+    color: @theme_fg_color;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
     padding: 6px 12px;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 button label,
@@ -117,8 +117,8 @@ dialog button label,
 pathbar button label,
 .path-bar button label,
 filechooser button label {
-    color: @theme_fg_color !important;
-    text-shadow: none !important;
+    color: @theme_fg_color;
+    text-shadow: none;
 }
 
 button image,
@@ -126,7 +126,7 @@ headerbar button image,
 toolbar button image,
 pathbar button image,
 .path-bar button image {
-    color: @theme_fg_color !important;
+    color: @theme_fg_color;
 }
 
 button:hover,
@@ -136,10 +136,10 @@ dialog button:hover,
 pathbar button:hover,
 .path-bar button:hover,
 filechooser button:hover {
-    background-color: rgba(255, 255, 255, 0.20) !important;
-    background-image: none !important;
-    border-color: @theme_selected_bg_color !important;
-    color: @theme_fg_color !important;
+    background-color: rgba(255, 255, 255, 0.20);
+    background-image: none;
+    border-color: @theme_selected_bg_color;
+    color: @theme_fg_color;
 }
 
 button:active,
@@ -147,33 +147,33 @@ button:checked,
 headerbar button:checked,
 pathbar button:checked,
 .path-bar button:checked {
-    background-color: @theme_selected_bg_color !important;
-    background-image: none !important;
-    color: @theme_selected_fg_color !important;
-    border-color: @theme_selected_bg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    color: @theme_selected_fg_color;
+    border-color: @theme_selected_bg_color;
 }
 
 button.suggested-action,
 headerbar button.suggested-action,
 dialog button.suggested-action {
-    background-color: @theme_selected_bg_color !important;
-    background-image: none !important;
-    color: @theme_selected_fg_color !important;
-    border: 1px solid @theme_selected_bg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    color: @theme_selected_fg_color;
+    border: 1px solid @theme_selected_bg_color;
 }
 
 button.suggested-action:hover,
 headerbar button.suggested-action:hover {
-    background-color: @theme_selected_bg_color !important;
-    background-image: none !important;
-    color: @theme_selected_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    color: @theme_selected_fg_color;
 }
 
 button.destructive-action,
 headerbar button.destructive-action {
-    background-color: #eb6f92 !important;
-    background-image: none !important;
-    color: #ffffff !important;
+    background-color: #eb6f92;
+    background-image: none;
+    color: #ffffff;
 }
 
 /* ==========================================================================
@@ -186,9 +186,9 @@ dialog,
 window.dialog,
 window.dialog.filechooser,
 dialog.filechooser {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
 }
 
 filechooser box,
@@ -211,10 +211,10 @@ actionbar box,
 .dialog-vbox,
 .dialog-action-box,
 .dialog-action-area {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: none !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border: none;
 }
 
 /* Path Bar & Breadcrumbs Container */
@@ -227,9 +227,9 @@ filechooser box.path-bar-box,
 box.path-bar-box,
 box.linked.path-bar,
 box.linked {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    border: none !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    border: none;
 }
 
 pathbar button,
@@ -237,31 +237,31 @@ pathbar button,
 filechooser .path-bar-box button,
 filechooser .path-bar button,
 box.linked.path-bar button {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-radius: 6px !important;
+    background-color: rgba(255, 255, 255, 0.08);
+    background-image: none;
+    color: @theme_fg_color;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
     margin: 2px;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 pathbar button:hover,
 .path-bar button:hover,
 filechooser .path-bar-box button:hover {
-    background-color: rgba(255, 255, 255, 0.22) !important;
-    background-image: none !important;
-    border-color: @theme_selected_bg_color !important;
-    color: @theme_fg_color !important;
+    background-color: rgba(255, 255, 255, 0.22);
+    background-image: none;
+    border-color: @theme_selected_bg_color;
+    color: @theme_fg_color;
 }
 
 pathbar button:checked,
 .path-bar button:checked,
 filechooser .path-bar-box button:checked {
-    background-color: @theme_selected_bg_color !important;
-    background-image: none !important;
-    color: @theme_selected_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    color: @theme_selected_fg_color;
 }
 
 /* Text Entries and Search inputs */
@@ -269,29 +269,29 @@ entry,
 searchbar entry,
 filechooser entry,
 headerbar entry {
-    background-color: #1c1928 !important;
-    background-image: none !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    background-color: #1c1928;
+    background-image: none;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 6px;
     padding: 6px 10px;
     caret-color: #ffffff;
-    box-shadow: none !important;
+    box-shadow: none;
 }
 
 entry:focus,
 searchbar entry:focus,
 filechooser entry:focus,
 headerbar entry:focus {
-    border-color: @theme_selected_bg_color !important;
-    background-color: #211d30 !important;
-    background-image: none !important;
-    color: #ffffff !important;
+    border-color: @theme_selected_bg_color;
+    background-color: #211d30;
+    background-image: none;
+    color: #ffffff;
 }
 
 entry selection {
-    background-color: @theme_selected_bg_color !important;
-    color: #ffffff !important;
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
 }
 
 /* Places Sidebar (Left Navigation) */
@@ -301,47 +301,47 @@ placesview,
 .navigation-sidebar,
 filechooser placessidebar,
 filechooser placesview {
-    background-color: #110f17 !important;
-    background-image: none !important;
-    color: #e0def4 !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background-color: #110f17;
+    background-image: none;
+    color: #e0def4;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 placessidebar row,
 placesview row {
-    color: #e0def4 !important;
+    color: #e0def4;
     padding: 6px;
     border-radius: 6px;
 }
 
 placessidebar row:hover,
 placesview row:hover {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
 }
 
 placessidebar row:selected,
 placesview row:selected {
-    background-color: @theme_selected_bg_color !important;
-    color: #ffffff !important;
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
 }
 
 /* TreeView & Column Headers (Name, Size, Type, Modified) */
 treeview.view {
-    background-color: #14121a !important;
-    background-image: none !important;
-    color: #e0def4 !important;
+    background-color: #14121a;
+    background-image: none;
+    color: #e0def4;
     border: none;
 }
 
 treeview.view:hover {
-    background-color: rgba(255, 255, 255, 0.04) !important;
+    background-color: rgba(255, 255, 255, 0.04);
 }
 
 treeview.view:selected,
 treeview.view:selected:focus {
-    background-color: @theme_selected_bg_color !important;
-    color: #ffffff !important;
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
 }
 
 treeview.view header,
@@ -351,19 +351,19 @@ treeview.view header button label,
 treeview.view header button image,
 treeview header,
 treeview header button {
-    background-color: #181622 !important;
-    background-image: none !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    background-color: #181622;
+    background-image: none;
+    color: #ffffff;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: none;
+    text-shadow: none;
 }
 
 treeview.view header button:hover {
-    background-color: #242033 !important;
-    background-image: none !important;
-    color: #ffffff !important;
+    background-color: #242033;
+    background-image: none;
+    color: #ffffff;
 }
 
 /* Dropdowns & Comboboxes (Custom Files filter, GParted selector) */
@@ -383,13 +383,13 @@ toolbar combobox cellview,
 toolbar .combo,
 .combo,
 .combobox-entry {
-    background-color: #211e2e !important;
-    background-image: none !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.22) !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    background-color: #211e2e;
+    background-image: none;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 8px;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 combobox:hover,
@@ -397,10 +397,10 @@ combobox button:hover,
 filechooser combobox button:hover,
 toolbar combobox button:hover,
 toolbar combobox:hover {
-    background-color: #2d293d !important;
-    background-image: none !important;
-    border-color: @theme_selected_bg_color !important;
-    color: #ffffff !important;
+    background-color: #2d293d;
+    background-image: none;
+    border-color: @theme_selected_bg_color;
+    color: #ffffff;
 }
 
 combobox cellview,
@@ -413,38 +413,38 @@ filechooser combobox cellview,
 filechooser combobox label,
 toolbar combobox cellview,
 toolbar combobox label {
-    color: #ffffff !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    text-shadow: none !important;
+    color: #ffffff;
+    background-color: transparent;
+    background-image: none;
+    text-shadow: none;
 }
 
 combobox window,
 combobox menu,
 combobox popover {
-    background-color: #1c1928 !important;
-    background-image: none !important;
-    color: #ffffff !important;
+    background-color: #1c1928;
+    background-image: none;
+    color: #ffffff;
 }
 
 menu, popover, popover.background, popover contents {
-    background-color: #1c1928 !important;
-    background-image: none !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    background-color: #1c1928;
+    background-image: none;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     padding: 4px;
 }
 
 menuitem, modelbutton {
-    color: #ffffff !important;
+    color: #ffffff;
     border-radius: 4px;
     padding: 6px 12px;
 }
 
 menuitem:hover, modelbutton:hover {
-    background-color: @theme_selected_bg_color !important;
-    color: #ffffff !important;
+    background-color: @theme_selected_bg_color;
+    color: #ffffff;
 }
 
 /* Checkboxes and Radios ("Open files read-only") */
@@ -454,69 +454,69 @@ checkbutton label,
 radiobutton,
 radiobutton radio,
 radiobutton label {
-    color: #ffffff !important;
-    text-shadow: none !important;
+    color: #ffffff;
+    text-shadow: none;
 }
 
 checkbutton check,
 radiobutton radio {
-    background-color: rgba(255, 255, 255, 0.10) !important;
-    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    background-color: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 4px;
 }
 
 checkbutton check:checked,
 radiobutton radio:checked {
-    background-color: @theme_selected_bg_color !important;
-    border-color: @theme_selected_bg_color !important;
-    color: #ffffff !important;
+    background-color: @theme_selected_bg_color;
+    border-color: @theme_selected_bg_color;
+    color: #ffffff;
 }
 
 /* Scrollbars */
 scrollbar slider {
-    background-color: rgba(255, 255, 255, 0.2) !important;
-    background-image: none !important;
+    background-color: rgba(255, 255, 255, 0.2);
+    background-image: none;
     border-radius: 6px;
     min-width: 6px;
     min-height: 6px;
 }
 
 scrollbar slider:hover {
-    background-color: rgba(255, 255, 255, 0.4) !important;
+    background-color: rgba(255, 255, 255, 0.4);
 }
 
 /* Labels */
 label {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 label.dim-label,
 label:disabled {
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: rgba(255, 255, 255, 0.5);
 }
 
 /* Swappy Screenshot Annotation Editor */
 window.swappy, .swappy, #swappy {
-    background-color: #14121a !important;
-    color: #ffffff !important;
+    background-color: #14121a;
+    color: #ffffff;
 }
 
 window.swappy headerbar,
 window.swappy toolbar,
 window.swappy .toolbar,
 window.swappy box.horizontal {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    color: #ffffff !important;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.15);
     padding: 6px 10px;
 }
 
 window.swappy button {
-    background-color: rgba(255, 255, 255, 0.12) !important;
-    background-image: none !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.25) !important;
-    border-radius: 8px !important;
+    background-color: rgba(255, 255, 255, 0.12);
+    background-image: none;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
     padding: 8px 12px;
     margin: 2px 4px;
     min-height: 32px;
@@ -524,12 +524,12 @@ window.swappy button {
 }
 
 window.swappy button:hover {
-    background-color: rgba(255, 255, 255, 0.24) !important;
-    border-color: @theme_selected_bg_color !important;
+    background-color: rgba(255, 255, 255, 0.24);
+    border-color: @theme_selected_bg_color;
 }
 
 window.swappy button:checked {
-    background-color: @theme_selected_bg_color !important;
-    border-color: @theme_selected_bg_color !important;
-    color: #ffffff !important;
+    background-color: @theme_selected_bg_color;
+    border-color: @theme_selected_bg_color;
+    color: #ffffff;
 }

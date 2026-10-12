@@ -13,8 +13,8 @@
 @define-color accent_fg_color {background};
 @define-color borders {color8};
 @define-color unfocused_borders {color8};
-@define-color insensitive_bg_color mix({background}, {foreground}, 0.92);
-@define-color insensitive_fg_color mix({foreground}, {background}, 0.45);
+@define-color insensitive_bg_color {color8};
+@define-color insensitive_fg_color {color7};
 @define-color insensitive_base_color {color0};
 
 @define-color sidebar_bg {background};
@@ -28,11 +28,11 @@
 
 @define-color headerbar_bg_color {background};
 @define-color headerbar_fg_color {foreground};
-@define-color headerbar_border_color alpha({foreground}, 0.12);
+@define-color headerbar_border_color {color8};
 @define-color headerbar_backdrop_color {background};
 @define-color headerbar_shade_color {background};
 
-@define-color card_bg_color alpha({foreground}, 0.08);
+@define-color card_bg_color {color0};
 @define-color card_fg_color {foreground};
 @define-color card_shade_color {background};
 

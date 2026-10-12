@@ -29,14 +29,14 @@ apply_gtk_colors() {
 
 /* Global Window and Background */
 window, .background, dialog, window.dialog, messagedialog, window.messagedialog {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
 }
 
 view, textview text, treeview.view, list, row, scrolledwindow, viewport {
-    background-color: @theme_base_color !important;
-    color: @theme_text_color !important;
+    background-color: @theme_base_color;
+    color: @theme_text_color;
 }
 
 /* Headerbars, Toolbars, and Menubars */
@@ -49,10 +49,10 @@ headerbar:backdrop,
 headerbar.default-decoration,
 .dialog-action-box,
 .dialog-action-area {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border-bottom: 1px solid alpha(@theme_fg_color, 0.12) !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border-bottom: 1px solid @borders;
 }
 
 headerbar .title,
@@ -60,8 +60,8 @@ headerbar .subtitle,
 headerbar label,
 headerbar stack label,
 .titlebar label {
-    color: @theme_fg_color !important;
-    text-shadow: none !important;
+    color: @theme_fg_color;
+    text-shadow: none;
 }
 
 /* Universal Buttons (Headerbar, Dialog, Pathbar, Regular) */
@@ -75,14 +75,14 @@ pathbar button,
 filechooser button,
 .dialog-action-area button,
 .dialog-action-box button {
-    background-color: alpha(@theme_fg_color, 0.08) !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: 1px solid alpha(@theme_fg_color, 0.18) !important;
-    border-radius: 8px !important;
+    background-color: @theme_base_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border: 1px solid @borders;
+    border-radius: 8px;
     padding: 6px 12px;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 button label,
@@ -92,8 +92,8 @@ dialog button label,
 pathbar button label,
 .path-bar button label,
 filechooser button label {
-    color: @theme_fg_color !important;
-    text-shadow: none !important;
+    color: @theme_fg_color;
+    text-shadow: none;
 }
 
 button image,
@@ -101,7 +101,7 @@ headerbar button image,
 toolbar button image,
 pathbar button image,
 .path-bar button image {
-    color: @theme_fg_color !important;
+    color: @theme_fg_color;
 }
 
 button:hover,
@@ -111,10 +111,10 @@ dialog button:hover,
 pathbar button:hover,
 .path-bar button:hover,
 filechooser button:hover {
-    background-color: alpha(@theme_selected_bg_color, 0.25) !important;
-    background-image: none !important;
-    border-color: @theme_selected_bg_color !important;
-    color: @theme_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    border-color: @theme_selected_bg_color;
+    color: @theme_fg_color;
 }
 
 button:active,
@@ -122,33 +122,33 @@ button:checked,
 headerbar button:checked,
 pathbar button:checked,
 .path-bar button:checked {
-    background-color: @theme_selected_bg_color !important;
-    background-image: none !important;
-    color: @theme_selected_fg_color !important;
-    border-color: @theme_selected_bg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    color: @theme_selected_fg_color;
+    border-color: @theme_selected_bg_color;
 }
 
 button.suggested-action,
 headerbar button.suggested-action,
 dialog button.suggested-action {
-    background-color: @theme_selected_bg_color !important;
-    background-image: none !important;
-    color: @theme_selected_fg_color !important;
-    border: 1px solid @theme_selected_bg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    color: @theme_selected_fg_color;
+    border: 1px solid @theme_selected_bg_color;
 }
 
 button.suggested-action:hover,
 headerbar button.suggested-action:hover {
-    background-color: @theme_selected_bg_color !important;
-    background-image: none !important;
-    color: @theme_selected_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    color: @theme_selected_fg_color;
 }
 
 button.destructive-action,
 headerbar button.destructive-action {
-    background-color: #eb6f92 !important;
-    background-image: none !important;
-    color: #ffffff !important;
+    background-color: #eb6f92;
+    background-image: none;
+    color: #ffffff;
 }
 
 /* ==========================================================================
@@ -161,9 +161,9 @@ dialog,
 window.dialog,
 window.dialog.filechooser,
 dialog.filechooser {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
 }
 
 filechooser box,
@@ -186,10 +186,10 @@ actionbar box,
 .dialog-vbox,
 .dialog-action-box,
 .dialog-action-area {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: none !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border: none;
 }
 
 /* Path Bar & Breadcrumbs Container */
@@ -202,9 +202,9 @@ filechooser box.path-bar-box,
 box.path-bar-box,
 box.linked.path-bar,
 box.linked {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    border: none !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    border: none;
 }
 
 pathbar button,
@@ -212,31 +212,31 @@ pathbar button,
 filechooser .path-bar-box button,
 filechooser .path-bar button,
 box.linked.path-bar button {
-    background-color: alpha(@theme_fg_color, 0.08) !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: 1px solid alpha(@theme_fg_color, 0.18) !important;
-    border-radius: 6px !important;
+    background-color: @theme_base_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border: 1px solid @borders;
+    border-radius: 6px;
     margin: 2px;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 pathbar button:hover,
 .path-bar button:hover,
 filechooser .path-bar-box button:hover {
-    background-color: alpha(@theme_fg_color, 0.22) !important;
-    background-image: none !important;
-    border-color: @theme_selected_bg_color !important;
-    color: @theme_fg_color !important;
+    background-color: @borders;
+    background-image: none;
+    border-color: @theme_selected_bg_color;
+    color: @theme_fg_color;
 }
 
 pathbar button:checked,
 .path-bar button:checked,
 filechooser .path-bar-box button:checked {
-    background-color: @theme_selected_bg_color !important;
-    background-image: none !important;
-    color: @theme_selected_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    color: @theme_selected_fg_color;
 }
 
 /* TreeView Header */
@@ -247,19 +247,19 @@ treeview.view header button label,
 treeview.view header button image,
 treeview header,
 treeview header button {
-    background-color: @theme_base_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: none !important;
-    border-bottom: 1px solid alpha(@theme_fg_color, 0.15) !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    background-color: @theme_base_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border: none;
+    border-bottom: 1px solid @borders;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 treeview.view header button:hover {
-    background-color: alpha(@theme_selected_bg_color, 0.25) !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
 }
 
 /* Text Entries and Search inputs */
@@ -267,29 +267,29 @@ entry,
 searchbar entry,
 filechooser entry,
 headerbar entry {
-    background-color: alpha(@theme_fg_color, 0.06) !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: 1px solid alpha(@theme_fg_color, 0.18) !important;
+    background-color: @theme_base_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border: 1px solid @borders;
     border-radius: 6px;
     padding: 6px 10px;
     caret-color: @theme_fg_color;
-    box-shadow: none !important;
+    box-shadow: none;
 }
 
 entry:focus,
 searchbar entry:focus,
 filechooser entry:focus,
 headerbar entry:focus {
-    border-color: @theme_selected_bg_color !important;
-    background-color: alpha(@theme_fg_color, 0.10) !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
+    border-color: @theme_selected_bg_color;
+    background-color: @borders;
+    background-image: none;
+    color: @theme_fg_color;
 }
 
 entry selection {
-    background-color: @theme_selected_bg_color !important;
-    color: @theme_selected_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
 }
 
 /* Places Sidebar (Left Navigation) */
@@ -299,22 +299,22 @@ placesview,
 .navigation-sidebar,
 filechooser placessidebar,
 filechooser placesview {
-    background-color: @theme_base_color !important;
-    background-image: none !important;
-    color: @theme_text_color !important;
-    border-right: 1px solid alpha(@theme_fg_color, 0.08) !important;
+    background-color: @theme_base_color;
+    background-image: none;
+    color: @theme_text_color;
+    border-right: 1px solid @borders;
 }
 
 placessidebar row:hover,
 placesview row:hover {
-    background-color: alpha(@theme_fg_color, 0.08) !important;
-    color: @theme_fg_color !important;
+    background-color: @theme_base_color;
+    color: @theme_fg_color;
 }
 
 placessidebar row:selected,
 placesview row:selected {
-    background-color: @theme_selected_bg_color !important;
-    color: @theme_selected_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
 }
 
 /* Dropdowns & Comboboxes (Custom Files filter, GParted selector) */
@@ -334,13 +334,13 @@ toolbar combobox cellview,
 toolbar .combo,
 .combo,
 .combobox-entry {
-    background-color: alpha(@theme_fg_color, 0.08) !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: 1px solid alpha(@theme_fg_color, 0.22) !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    background-color: @theme_base_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border: 1px solid @borders;
+    border-radius: 8px;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 combobox:hover,
@@ -348,10 +348,10 @@ combobox button:hover,
 filechooser combobox button:hover,
 toolbar combobox button:hover,
 toolbar combobox:hover {
-    background-color: alpha(@theme_fg_color, 0.16) !important;
-    background-image: none !important;
-    border-color: @theme_selected_bg_color !important;
-    color: @theme_fg_color !important;
+    background-color: @borders;
+    background-image: none;
+    border-color: @theme_selected_bg_color;
+    color: @theme_fg_color;
 }
 
 combobox cellview,
@@ -364,38 +364,38 @@ filechooser combobox cellview,
 filechooser combobox label,
 toolbar combobox cellview,
 toolbar combobox label {
-    color: @theme_fg_color !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    text-shadow: none !important;
+    color: @theme_fg_color;
+    background-color: transparent;
+    background-image: none;
+    text-shadow: none;
 }
 
 combobox window,
 combobox menu,
 combobox popover {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
 }
 
 menu, popover, popover.background, popover contents {
-    background-color: @theme_bg_color !important;
-    background-image: none !important;
-    color: @theme_fg_color !important;
-    border: 1px solid alpha(@theme_fg_color, 0.15) !important;
+    background-color: @theme_bg_color;
+    background-image: none;
+    color: @theme_fg_color;
+    border: 1px solid @borders;
     border-radius: 8px;
     padding: 4px;
 }
 
 menuitem, modelbutton {
-    color: @theme_fg_color !important;
+    color: @theme_fg_color;
     border-radius: 4px;
     padding: 6px 12px;
 }
 
 menuitem:hover, modelbutton:hover {
-    background-color: @theme_selected_bg_color !important;
-    color: @theme_selected_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
 }
 
 /* Checkboxes and Radios ("Open files read-only") */
@@ -405,42 +405,42 @@ checkbutton label,
 radiobutton,
 radiobutton radio,
 radiobutton label {
-    color: @theme_fg_color !important;
-    text-shadow: none !important;
+    color: @theme_fg_color;
+    text-shadow: none;
 }
 
 checkbutton check,
 radiobutton radio {
-    background-color: alpha(@theme_fg_color, 0.10) !important;
-    border: 1px solid alpha(@theme_fg_color, 0.25) !important;
+    background-color: @borders;
+    border: 1px solid @borders;
     border-radius: 4px;
 }
 
 checkbutton check:checked,
 radiobutton radio:checked {
-    background-color: @theme_selected_bg_color !important;
-    border-color: @theme_selected_bg_color !important;
-    color: @theme_selected_fg_color !important;
+    background-color: @theme_selected_bg_color;
+    border-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
 }
 
 /* Labels */
 label {
-    color: @theme_fg_color !important;
+    color: @theme_fg_color;
 }
 
 label.dim-label,
 label:disabled {
-    color: alpha(@theme_fg_color, 0.5) !important;
+    color: @insensitive_fg_color;
 }
 
 /* Scrollbars */
 scrollbar slider {
-    background-color: alpha(@theme_fg_color, 0.2) !important;
+    background-color: @borders;
     border-radius: 6px;
 }
 
 scrollbar slider:hover {
-    background-color: alpha(@theme_fg_color, 0.4) !important;
+    background-color: @borders;
 }
 
 /* Swappy Screenshot Annotation Editor */
@@ -453,16 +453,16 @@ window.swappy headerbar,
 window.swappy toolbar,
 window.swappy .toolbar,
 window.swappy box.horizontal {
-    background-color: alpha(@theme_fg_color, 0.08);
+    background-color: @theme_base_color;
     color: @theme_fg_color;
-    border-bottom: 2px solid alpha(@theme_fg_color, 0.15);
+    border-bottom: 2px solid @borders;
     padding: 6px 10px;
 }
 
 window.swappy button {
-    background-color: alpha(@theme_fg_color, 0.12);
+    background-color: @borders;
     color: @theme_fg_color;
-    border: 1px solid alpha(@theme_fg_color, 0.25);
+    border: 1px solid @borders;
     border-radius: 8px;
     padding: 8px 12px;
     margin: 2px 4px;
@@ -476,7 +476,7 @@ window.swappy button image {
 }
 
 window.swappy button:hover {
-    background-color: alpha(@theme_selected_bg_color, 0.35);
+    background-color: @theme_selected_bg_color;
     border-color: @theme_selected_bg_color;
     color: @theme_fg_color;
 }
@@ -498,12 +498,12 @@ EOF
 @define-color view_fg_color @theme_text_color;
 @define-color headerbar_bg_color @theme_bg_color;
 @define-color headerbar_fg_color @theme_fg_color;
-@define-color headerbar_border_color alpha(@theme_fg_color, 0.12);
+@define-color headerbar_border_color @borders;
 @define-color headerbar_backdrop_color @theme_bg_color;
 @define-color headerbar_shade_color @theme_bg_color;
 @define-color popover_bg_color @theme_bg_color;
 @define-color popover_fg_color @theme_fg_color;
-@define-color card_bg_color alpha(@theme_fg_color, 0.08);
+@define-color card_bg_color @theme_base_color;
 @define-color card_fg_color @theme_fg_color;
 @define-color dialog_bg_color @theme_bg_color;
 @define-color dialog_fg_color @theme_fg_color;
@@ -512,47 +512,47 @@ EOF
 @define-color accent_fg_color @theme_selected_fg_color;
 
 window, .background, dialog, window.dialog {
-    background-color: @window_bg_color !important;
-    color: @window_fg_color !important;
+    background-color: @window_bg_color;
+    color: @window_fg_color;
 }
 
 headerbar, .titlebar {
-    background-color: @headerbar_bg_color !important;
-    color: @headerbar_fg_color !important;
-    border-bottom: 1px solid alpha(@window_fg_color, 0.12) !important;
+    background-color: @headerbar_bg_color;
+    color: @headerbar_fg_color;
+    border-bottom: 1px solid @borders;
 }
 
 headerbar .title, headerbar .subtitle, headerbar label {
-    color: @headerbar_fg_color !important;
+    color: @headerbar_fg_color;
 }
 
 button, headerbar button, dialog button {
-    background-color: alpha(@window_fg_color, 0.08) !important;
-    color: @window_fg_color !important;
-    border: 1px solid alpha(@window_fg_color, 0.18) !important;
-    border-radius: 8px !important;
+    background-color: @view_bg_color;
+    color: @window_fg_color;
+    border: 1px solid @borders;
+    border-radius: 8px;
 }
 
 button:hover, headerbar button:hover {
-    background-color: alpha(@window_fg_color, 0.20) !important;
-    border-color: @accent_bg_color !important;
+    background-color: @borders;
+    border-color: @accent_bg_color;
 }
 
 button:checked, button:active {
-    background-color: @accent_bg_color !important;
-    color: @accent_fg_color !important;
+    background-color: @accent_bg_color;
+    color: @accent_fg_color;
 }
 
 entry {
-    background-color: alpha(@window_fg_color, 0.06) !important;
-    color: @window_fg_color !important;
-    border: 1px solid alpha(@window_fg_color, 0.18) !important;
-    border-radius: 6px !important;
+    background-color: @view_bg_color;
+    color: @window_fg_color;
+    border: 1px solid @borders;
+    border-radius: 6px;
 }
 
 .navigation-sidebar, placessidebar {
-    background-color: @view_bg_color !important;
-    color: @view_fg_color !important;
+    background-color: @view_bg_color;
+    color: @view_fg_color;
 }
 EOF
 
