@@ -338,14 +338,36 @@ sudo usermod -aG input,video "$USER" 2>/dev/null || true
 echo "--> Ensuring GDM (GNOME Display Manager) is active..."
 sudo systemctl disable sddm 2>/dev/null || true
 
-# Explicitly unmask and enable GDM3 service
+# Explicitly unmask, enable, and link GDM3 service as display-manager
 if command -v gdm3 &>/dev/null || [ -f /lib/systemd/system/gdm3.service ] || [ -f /etc/systemd/system/gdm3.service ]; then
     sudo systemctl unmask gdm3 2>/dev/null || true
     sudo systemctl enable gdm3 2>/dev/null || true
+    sudo ln -sf /lib/systemd/system/gdm3.service /etc/systemd/system/display-manager.service 2>/dev/null || true
 elif command -v gdm &>/dev/null || [ -f /lib/systemd/system/gdm.service ]; then
     sudo systemctl unmask gdm 2>/dev/null || true
     sudo systemctl enable gdm 2>/dev/null || true
+    sudo ln -sf /lib/systemd/system/gdm.service /etc/systemd/system/display-manager.service 2>/dev/null || true
 fi
+
+# Add robust timing & auto-restart override (prevents cold boot GPU driver race condition / black screen)
+echo "--> Configuring GDM startup delay & auto-restart protection..."
+sudo mkdir -p /etc/systemd/system/gdm3.service.d 2>/dev/null || true
+sudo tee /etc/systemd/system/gdm3.service.d/override.conf > /dev/null << 'EOF'
+[Service]
+ExecStartPre=/bin/sleep 2
+Restart=always
+RestartSec=2
+EOF
+
+# Ensure GDM greeter uses X11 for maximum hardware compatibility on cold boot (sessions like Hyprland still run Wayland)
+for gdm_conf in /etc/gdm3/daemon.conf /etc/gdm3/custom.conf; do
+    if [ -f "$gdm_conf" ]; then
+        sudo sed -i 's/^#WaylandEnable=false/WaylandEnable=false/' "$gdm_conf" 2>/dev/null || true
+        sudo sed -i 's/^WaylandEnable=true/WaylandEnable=false/' "$gdm_conf" 2>/dev/null || true
+    fi
+done
+
+sudo systemctl daemon-reload 2>/dev/null || true
 
 # Ensure graphical target is default boot target (prevents black screen / TTY text boot)
 sudo systemctl set-default graphical.target 2>/dev/null || true
