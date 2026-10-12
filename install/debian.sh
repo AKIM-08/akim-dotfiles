@@ -299,18 +299,21 @@ fi
 # 6. Wayland Session Registration for GDM & PAM Configuration
 echo "--> Ensuring Hyprland Wayland session is registered with GDM..."
 sudo mkdir -p /usr/share/wayland-sessions
-if [ ! -f /usr/share/wayland-sessions/hyprland.desktop ]; then
-    echo "    Creating /usr/share/wayland-sessions/hyprland.desktop..."
-    sudo tee /usr/share/wayland-sessions/hyprland.desktop > /dev/null << 'EOF'
+HYPR_EXEC="Hyprland"
+if command -v start-hyprland &>/dev/null || [ -x /usr/bin/start-hyprland ]; then
+    HYPR_EXEC="start-hyprland"
+fi
+echo "    Configuring /usr/share/wayland-sessions/hyprland.desktop (Exec=$HYPR_EXEC)..."
+sudo tee /usr/share/wayland-sessions/hyprland.desktop > /dev/null << EOF
 [Desktop Entry]
 Name=Hyprland
 Comment=An intelligent dynamic tiling Wayland compositor
-Exec=Hyprland
+Exec=$HYPR_EXEC
 Type=Application
 DesktopNames=Hyprland
 Keywords=tiling;wm;windowmanager;window;manager;
 EOF
-fi
+sudo chmod 644 /usr/share/wayland-sessions/hyprland.desktop 2>/dev/null || true
 
 # 7. Configure PAM for hyprlock (essential for Debian authentication)
 echo "--> Configuring PAM for hyprlock..."

@@ -42,3 +42,9 @@ ZSH_HIGHLIGHT_STYLES[double-hyphen-option]='fg=magenta'
 
 export PATH="$PATH:$HOME/.local/bin"
 export TERMINAL="kitty"
+
+# Launch Hyprland via wrapper script if present (avoids "started without start-hyprland" warning)
+if command -v start-hyprland &>/dev/null; then
+    alias hyprland='start-hyprland'
+    alias Hyprland='start-hyprland'
+fi
