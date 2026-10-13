@@ -17,6 +17,7 @@
     "control-center-margin-left": 12,
     "notification-2fa-action": true,
     "notification-inline-replies": true,
+    "notification-grouping": false,
     "notification-window-width": 380,
     "notification-icon-size": 60,
     "notification-body-image-height": 180,

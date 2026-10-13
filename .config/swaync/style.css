@@ -42,20 +42,31 @@ blankwindow,
     background-color: transparent;
 }
 
-window {
-    background: transparent;
-    background-color: transparent;
+window,
+window.background,
+.background {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
 }
 
 window.control-center {
-    background: transparent;
-    background-color: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
-/* Ensure the notification popup window and all its wrapper containers are 100% transparent */
+/* Ensure the notification popup window and all its wrapper containers are 100% transparent with NO bounding box */
 notificationwindow,
+notificationwindow.background,
+notificationwindow scrolledwindow,
+notificationwindow viewport,
+notificationwindow list,
+notificationwindow row,
 blankwindow,
 window.floating-notifications,
+window.floating-notifications.background,
+window#swaync-notification-window,
+window#swaync-notification-window.background,
 .floating-notifications,
 .floating-notifications.background,
 .floating-notifications scrolledwindow,
@@ -64,12 +75,31 @@ window.floating-notifications,
 .floating-notifications row,
 .floating-notifications .notification-row,
 .floating-notifications .notification-background,
+.floating-notifications .notification-group,
+.floating-notifications .notification-group.background,
+.floating-notifications .notification-group-header,
+.floating-notifications .notification-group-headers,
+.notification-group,
+.notification-group.background,
 .notification-row,
 .notification-background {
-    background: transparent;
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+notificationwindow,
+notificationwindow scrolledwindow,
+notificationwindow viewport,
+notificationwindow list,
+.floating-notifications,
+.floating-notifications scrolledwindow,
+.floating-notifications viewport,
+.floating-notifications list {
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* Control Center Container — Frosted Glass Look */
@@ -190,13 +220,21 @@ window.floating-notifications,
     min-height: 80px;
 }
 
-.floating-notifications .notification-row .notification-background .notification {
-    margin: 6px 8px;
+.floating-notifications .notification-row .notification-background .notification,
+.floating-notifications .notification-group .notification-row .notification-background .notification {
+    margin: 6px 10px;
     padding: 10px 14px;
     border-radius: 16px;
-    background: alpha(@background, 0.88);
-    border: 2px solid @border-glow;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    background: alpha(@background, 0.90);
+    border: 1px solid alpha(@foreground, 0.08);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.floating-notifications .notification-row .notification-background .notification:hover,
+.floating-notifications .notification-group .notification-row .notification-background .notification:hover {
+    background: alpha(@background, 0.95);
+    border: 1px solid alpha(@foreground, 0.15);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
 }
 
 .notification-content {

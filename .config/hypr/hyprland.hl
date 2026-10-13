@@ -424,15 +424,24 @@ windowrule {
     opacity = 1.0 1.0
 }
 
-# Layer rules for SwayNC & Radial Power Menu
+# Layer rules for SwayNC & Radial Power Menu (supporting both Hyprland <0.53 and >=0.53)
+layerrule = blur, swaync-control-center
+layerrule = ignorezero, swaync-control-center
+layerrule = ignorealpha 0.5, swaync-control-center
 layerrule = blur on, match:namespace swaync-control-center
 layerrule = ignore_alpha 0.5, match:namespace swaync-control-center
-layerrule = blur off, match:namespace swaync-notification-window
-layerrule = ignore_alpha 1.0, match:namespace swaync-notification-window
-layerrule = blur off, match:namespace notifications
-layerrule = blur off, match:namespace swaync
+
+# Floating Notification Window: strictly prevent compositor blur backdrop box
+layerrule = ignorezero, swaync-notification-window
+layerrule = ignorealpha 0.99, swaync-notification-window
+layerrule = noanim, swaync-notification-window
+layerrule = ignore_alpha 0.99, match:namespace swaync-notification-window
+layerrule = noanim, match:namespace swaync-notification-window
+
 layerrule = blur on, match:namespace snmenu
 layerrule = ignore_alpha 0.4, match:namespace snmenu
+layerrule = blur, snmenu
+layerrule = ignorealpha 0.4, snmenu
 
 # User custom settings (mouse speed, default apps, etc.) managed via Quick Settings (Super + H)
 source = ~/.config/hypr/user-settings.hl
