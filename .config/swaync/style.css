@@ -45,14 +45,14 @@ blankwindow,
 window,
 window.background,
 .background {
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
+    background: transparent;
+    background-color: transparent;
+    background-image: none;
 }
 
 window.control-center {
-    background: transparent !important;
-    background-color: transparent !important;
+    background: transparent;
+    background-color: transparent;
 }
 
 /* Ensure the notification popup window and all its wrapper containers are 100% transparent with NO bounding box */
@@ -83,11 +83,11 @@ window#swaync-notification-window.background,
 .notification-group.background,
 .notification-row,
 .notification-background {
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    border: none !important;
-    box-shadow: none !important;
+    background: transparent;
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
 }
 
 notificationwindow,
@@ -98,8 +98,8 @@ notificationwindow list,
 .floating-notifications scrolledwindow,
 .floating-notifications viewport,
 .floating-notifications list {
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0;
+    padding: 0;
 }
 
 /* Control Center Container — Frosted Glass Look */
