@@ -69,5 +69,3 @@ awww img "$real_current" \
 
 
 "$APPLY_THEME" "$real_current"
-
-notify-send "Wallpaper Switcher" "Changed to: $filename ($((index+1))/$total)" -i "$real_current"
