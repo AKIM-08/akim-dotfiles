@@ -95,10 +95,10 @@ def load_layout():
                 sys.stderr.write(f"Failed to parse {path}: {e}\n")
 
     return [
-        {"label": "suspend", "action": "loginctl lock-session; systemctl suspend", "text": "Suspend", "icon_char": ""},
+        {"label": "suspend", "action": "pidof hyprlock >/dev/null || hyprlock & sleep 0.5; loginctl lock-session; systemctl suspend", "text": "Suspend", "icon_char": ""},
         {"label": "logout", "action": "hyprctl dispatch exit", "text": "Logout", "icon_char": ""},
         {"label": "shutdown", "action": "systemctl poweroff", "text": "Shutdown", "icon_char": ""},
-        {"label": "hibernate", "action": "loginctl lock-session; systemctl hibernate", "text": "Hibernate", "icon_char": ""},
+        {"label": "hibernate", "action": "pidof hyprlock >/dev/null || hyprlock & sleep 0.5; loginctl lock-session; systemctl hibernate", "text": "Hibernate", "icon_char": ""},
         {"label": "reboot", "action": "systemctl reboot", "text": "Reboot", "icon_char": ""},
         {"label": "lock", "action": "hyprlock", "text": "Lock", "icon_char": ""},
     ]

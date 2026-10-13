@@ -101,11 +101,7 @@ TARGET_WALLPAPER="$TARGET_WALLPAPERS_DIR/current.jpg"
 
 if [ -d "$REPO_WALLPAPERS_DIR" ]; then
     echo "--> Copying wallpapers from repo to $TARGET_WALLPAPERS_DIR..."
-    shopt -s nullglob
-    for wallpaper in "$REPO_WALLPAPERS_DIR"/image*.*; do
-        cp "$wallpaper" "$TARGET_WALLPAPERS_DIR/"
-    done
-    shopt -u nullglob
+    find "$REPO_WALLPAPERS_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -exec cp {} "$TARGET_WALLPAPERS_DIR/" \;
 fi
 
 if [ -f "$REPO_ROOT/assets/akim-avatar.png" ]; then
@@ -113,9 +109,14 @@ if [ -f "$REPO_ROOT/assets/akim-avatar.png" ]; then
     cp "$REPO_ROOT/assets/akim-avatar.png" "$HOME/Pictures/akim-avatar.png"
 fi
 
-if [ -f "$TARGET_WALLPAPERS_DIR/image1.jpg" ]; then
-    echo "--> Setting image1.jpg as current.jpg (symlink)..."
-    ln -sf "$TARGET_WALLPAPERS_DIR/image1.jpg" "$TARGET_WALLPAPER"
+# Pick the first available wallpaper as default current.jpg (supports any filename, 1 to 100+ images)
+first_wallpaper=$(find "$TARGET_WALLPAPERS_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -name 'current.jpg' 2>/dev/null | sort | head -1)
+
+if [ -n "$first_wallpaper" ]; then
+    if [ ! -e "$TARGET_WALLPAPER" ]; then
+        echo "--> Setting $(basename "$first_wallpaper") as current.jpg (symlink)..."
+        ln -sf "$first_wallpaper" "$TARGET_WALLPAPER"
+    fi
 elif [ ! -f "$TARGET_WALLPAPER" ]; then
     echo "--> Generating fallback background..."
     python3 -c "

@@ -38,7 +38,7 @@ akim-dotfiles/
 │   └── themes/fishy.zsh-theme
 ├── assets/
 │   └── akim-avatar.png     # Avatar hyprlock (copié vers ~/Pictures/)
-├── wallpapers/             # Fonds d'écran source (image1 … image8)
+├── wallpapers/             # Fonds d'écran source (supporte n'importe quel nom de fichier, JPG/PNG/WebP)
 └── .config/
     ├── hypr/               # Hyprland, hyprpaper, hyprlock, hypridle + scripts
     ├── waybar/             # Barre + thèmes + scripts
@@ -166,6 +166,8 @@ chmod +x ~/.config/wlogout/hibernate.sh
 | `Super + Q` | Lanceur d'applications (Rofi) — **toggle** (ouvre / ferme) |
 | `Super + G` | Aide & documentation des raccourcis (**Cheatsheet Rofi**, toggle) |
 | `Super + A` | Fermer la fenêtre active |
+| `Super + H` | Paramètres rapides (**Quick Settings** : vitesse souris, applications par défaut, profils...) |
+| `Super + L` | Verrouiller l'écran (**hyprlock**, comme sous Windows) |
 | `Super + F` | Gestionnaire de fichiers (Nautilus) |
 | `Super + B` | Navigateur web (Firefox, Brave ou Chromium) |
 | `Super + V` | Historique du presse-papier — **toggle** |
@@ -211,7 +213,7 @@ Widgets : média, notifications, **volume**, **luminosité**, grille de raccourc
 | 15 min | Verrouillage (**hyprlock** + avatar AKIM) + écran éteint |
 | 20 min | Mise en veille (suspend) |
 
-**Hibernation automatique** (~5 minutes restantes avant extinction ou batterie ≤ 4 % sur batterie) : script `battery-hibernate-watch.sh` (désactive automatiquement le mode caféine s'il est actif, puis hiberne ou met en veille si pas de swap).
+**Hibernation automatique** (~5 minutes restantes avant extinction ou batterie ≤ 4 % sur batterie) : script `battery-hibernate-watch.sh` (désactive le mode caféine si actif, verrouille impérativement l'écran avec **hyprlock** avant d'hiberner afin que le mot de passe soit obligatoirement exigé au rallumage, et bascule en veille si pas de swap configuré).
 
 ### Menu d'alimentation (snmenu)
 
@@ -254,11 +256,13 @@ L'horloge affiche les **secondes** et se met à jour chaque seconde (`interval: 
 
 GUI installée via pipx (`waypaper`). Lancez `waypaper` depuis un terminal ou ajoutez un raccourci. Pointe vers `~/Pictures/wallpapers/` ; chaque changement exécute `wallpaper_script.sh` → `apply-pywal-theme.sh`.
 
-### Ajouter un fond d'écran
+### Ajouter des fonds d'écran
 
-1. Nommer le fichier `image9.jpg` (ou suivre la numérotation) dans `wallpapers/` du dépôt ou `~/Pictures/wallpapers/`
-2. Parcourir avec `Super + Alt + ←/→`
-3. Ou utiliser Waypaper
+Déposez simplement vos images dans `wallpapers/` du dépôt ou dans `~/Pictures/wallpapers/` avec **n'importe quel nom de fichier** (aucun renommage nécessaire, que vous ayez 5 ou 100+ images : `.jpg`, `.jpeg`, `.png`, `.webp` sont reconnus automatiquement).
+
+- Parcourir séquentiellement : `Super + Alt + ←/→`
+- Ouvrir le sélecteur visuel avec vignettes : `Super + W`
+- Ou utiliser Waypaper (GUI)
 
 ### Qualité des fonds d'écran (éviter le flou)
 

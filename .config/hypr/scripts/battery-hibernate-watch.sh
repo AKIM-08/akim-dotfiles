@@ -104,7 +104,19 @@ while true; do
             "Battery Critical" "Battery almost depleted (~5 min left). Hibernating to preserve session..." 2>/dev/null || true
         sleep 2
 
-        # Lock session before hibernating
+        # CRITICAL SECURITY: Explicitly launch hyprlock and ensure screen is locked before hibernation
+        if ! pidof hyprlock >/dev/null 2>&1; then
+            hyprlock &
+            for _ in $(seq 1 30); do
+                if pidof hyprlock >/dev/null 2>&1; then
+                    break
+                fi
+                sleep 0.1
+            done
+            # Ensure hyprlock has grabbed the Wayland display and surface
+            sleep 1.5
+        fi
+
         loginctl lock-session 2>/dev/null || true
         sleep 1
 

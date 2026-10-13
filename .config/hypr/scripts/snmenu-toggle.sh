@@ -43,8 +43,8 @@ chosen=$(printf "  Lock\n  Logout\n  Suspend\n  Hibernate\n  Reboot\n  Shutdown"
 case "$chosen" in
     *Lock*) hyprlock ;;
     *Logout*) hyprctl dispatch exit ;;
-    *Suspend*) loginctl lock-session; systemctl suspend ;;
-    *Hibernate*) loginctl lock-session; systemctl hibernate ;;
+    *Suspend*) pidof hyprlock >/dev/null 2>&1 || hyprlock & sleep 0.5; loginctl lock-session; systemctl suspend ;;
+    *Hibernate*) pidof hyprlock >/dev/null 2>&1 || hyprlock & sleep 0.5; loginctl lock-session; systemctl hibernate ;;
     *Reboot*) systemctl reboot ;;
     *Shutdown*) systemctl poweroff ;;
 esac
