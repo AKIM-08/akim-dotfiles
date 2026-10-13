@@ -428,6 +428,7 @@ windowrule {
 layerrule = blur on, match:namespace swaync-control-center
 layerrule = ignore_alpha 0.5, match:namespace swaync-control-center
 layerrule = blur off, match:namespace swaync-notification-window
+layerrule = ignore_alpha 1.0, match:namespace swaync-notification-window
 layerrule = blur off, match:namespace notifications
 layerrule = blur off, match:namespace swaync
 layerrule = blur on, match:namespace snmenu

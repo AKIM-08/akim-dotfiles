@@ -36,6 +36,7 @@
     font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', sans-serif;
 }
 
+blankwindow,
 .blank-window {
     background: transparent;
     background-color: transparent;
@@ -51,9 +52,16 @@ window.control-center {
     background-color: transparent;
 }
 
+/* Ensure the notification popup window and all its wrapper containers are 100% transparent */
+notificationwindow,
+blankwindow,
 window.floating-notifications,
 .floating-notifications,
 .floating-notifications.background,
+.floating-notifications scrolledwindow,
+.floating-notifications viewport,
+.floating-notifications list,
+.floating-notifications row,
 .floating-notifications .notification-row,
 .floating-notifications .notification-background,
 .notification-row,
