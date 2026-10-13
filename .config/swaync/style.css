@@ -36,9 +36,12 @@
     font-family: 'JetBrainsMono Nerd Font', 'Symbols Nerd Font', 'Font Awesome 6 Free', sans-serif;
 }
 
-.blank-window {
-    background: transparent;
-    background-color: transparent;
+.blank-window,
+blankwindow {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 window {
@@ -51,17 +54,52 @@ window.control-center {
     background-color: transparent;
 }
 
+/* Ensure floating notifications and all surrounding wrappers (window, scrolledwindow, viewport, list)
+   are 100% transparent with NO heavy background, borders, or outer margins */
+notificationwindow,
+notificationwindow.background,
+notificationwindow scrolledwindow,
+notificationwindow viewport,
+notificationwindow list,
+notificationwindow row,
+blankwindow,
 window.floating-notifications,
+window.floating-notifications.background,
+window#swaync-notification-window,
+window#swaync-notification-window.background,
 .floating-notifications,
 .floating-notifications.background,
+.floating-notifications scrolledwindow,
+.floating-notifications viewport,
+.floating-notifications list,
+.floating-notifications row,
 .floating-notifications .notification-row,
 .floating-notifications .notification-background,
+.floating-notifications .notification-group,
+.floating-notifications .notification-group.background,
+.floating-notifications .notification-group-header,
+.floating-notifications .notification-group-headers,
 .notification-row,
 .notification-background {
-    background: transparent;
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+notificationwindow,
+notificationwindow scrolledwindow,
+notificationwindow viewport,
+notificationwindow list,
+.floating-notifications,
+.floating-notifications scrolledwindow,
+.floating-notifications viewport,
+.floating-notifications list,
+.floating-notifications .notification-row,
+.floating-notifications .notification-background {
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* Control Center Container — Frosted Glass Look */
@@ -182,7 +220,8 @@ window.floating-notifications,
     min-height: 80px;
 }
 
-.floating-notifications .notification-row .notification-background .notification {
+.floating-notifications .notification-row .notification-background .notification,
+.floating-notifications .notification-group .notification-row .notification-background .notification {
     margin: 6px 8px;
     padding: 10px 14px;
     border-radius: 16px;
@@ -236,10 +275,11 @@ window.floating-notifications,
    Notification Groups (App Grouping) & Actions
    ========================================================================== */
 .notification-group {
-    background: transparent;
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
     margin: 4px 0;
     padding: 0;
 }
@@ -247,10 +287,11 @@ window.floating-notifications,
 .notification-group.low,
 .notification-group.normal,
 .notification-group.critical {
-    background: transparent;
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .notification-group-header,
@@ -364,7 +405,11 @@ window.floating-notifications,
 }
 
 .notification-group .notification-row {
-    background-color: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
     padding: 2px 0;
 }
 

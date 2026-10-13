@@ -161,6 +161,9 @@ for item in .config/*; do
     cp -r "$item" "$HOME/.config/" || die "Failed to copy $item"
 done
 
+# Ensure user-settings.hl exists so Hyprland never errors on startup
+touch "$HOME/.config/hypr/user-settings.hl"
+
 backup_item "$HOME/.zshrc"
 cp "$REPO_ROOT/.zshrc" "$HOME/.zshrc" || die "Failed to copy .zshrc"
 

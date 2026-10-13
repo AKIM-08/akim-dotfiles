@@ -434,6 +434,6 @@ layerrule = blur on, match:namespace snmenu
 layerrule = ignore_alpha 0.4, match:namespace snmenu
 
 # User custom settings (mouse speed, default apps, etc.) managed via Quick Settings (Super + H)
-source = ~/.config/hypr/user-settings.hl*
+source = ~/.config/hypr/user-settings.hl
 
 

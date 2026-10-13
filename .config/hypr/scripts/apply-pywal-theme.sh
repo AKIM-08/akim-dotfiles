@@ -487,6 +487,32 @@ window.swappy button:checked {
     border-color: @theme_selected_fg_color;
     color: @theme_selected_fg_color;
 }
+
+/* Prevent GTK global window and container background colors from rendering on SwayNC popups */
+notificationwindow,
+notificationwindow.background,
+notificationwindow scrolledwindow,
+notificationwindow viewport,
+notificationwindow list,
+notificationwindow row,
+window.floating-notifications,
+window.floating-notifications.background,
+window#swaync-notification-window,
+window#swaync-notification-window.background,
+.floating-notifications,
+.floating-notifications.background,
+.floating-notifications scrolledwindow,
+.floating-notifications viewport,
+.floating-notifications list,
+.floating-notifications row,
+.floating-notifications .notification-row,
+.floating-notifications .notification-background,
+.blank-window {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
 EOF
 
     # GTK4 et Libadwaita (Nautilus, etc.)
