@@ -438,7 +438,8 @@ layerrule = ignore_alpha 0.4, match:namespace snmenu
 # User custom settings (mouse speed, default apps, etc.) managed via Quick Settings (Super + H)
 source = ~/.config/hypr/user-settings.hl
 
-# Window gap on the Waybar side, written by ~/.config/waybar/scripts/layout.py when the bar moves
-source = ~/.config/hypr/waybar-gaps.hl*
+# Window gap on the Waybar side, rewritten by ~/.config/waybar/scripts/layout.py when the bar moves.
+# (No glob: Hyprland reports an error when a glob matches nothing. The repo ships a default file.)
+source = ~/.config/hypr/waybar-gaps.hl
 
 

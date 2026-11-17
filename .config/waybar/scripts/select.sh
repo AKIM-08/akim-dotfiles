@@ -62,7 +62,7 @@ active=""
 for i in "${!THEMES[@]}"; do [ "${THEMES[$i]}" = "$cur_theme" ] && active="$i"; done
 
 idx=$(printf '%s\n' "${LABELS[@]}" | rofi -dmenu -i -format i ${active:+-a "$active"} \
-        -p "Waybar" -theme "$ROFI_THEME") || exit 0
+        -p "Waybar" -theme "$ROFI_THEME" -theme-str "listview { lines: ${#LABELS[@]}; }") || exit 0
 [ -z "$idx" ] && exit 0
 
 if [ "$idx" -lt "${#THEMES[@]}" ]; then
@@ -77,6 +77,6 @@ pactive=""
 for i in "${!EDGES[@]}"; do [ "${EDGES[$i]}" = "$cur_pos" ] && pactive="$i"; done
 
 pidx=$(printf '%s\n' "${EDGE_LABELS[@]}" | rofi -dmenu -i -format i ${pactive:+-a "$pactive"} \
-        -p "Position" -theme "$ROFI_THEME") || exit 0
+        -p "Position" -theme "$ROFI_THEME" -theme-str "listview { lines: ${#EDGE_LABELS[@]}; }") || exit 0
 [ -z "$pidx" ] && exit 0
 apply --position "${EDGES[$pidx]}"
