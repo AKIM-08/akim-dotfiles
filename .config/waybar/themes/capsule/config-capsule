@@ -63,7 +63,7 @@
     },
 
     "custom/pacman": {
-        "format": "󰮯",
+        "format": "",
         "tooltip": false,
         "on-click": "~/.config/hypr/scripts/rofi-toggle.sh"
     },
