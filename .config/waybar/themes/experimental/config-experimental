@@ -1,5 +1,6 @@
 // Experimental: colored workspace bars, now-playing chip, CPU/RAM level glyphs, icon-only status.
 {
+    "x-dot-workspaces": true,
     "modules-left": ["group/brand", "custom/media", "tray"],
     "modules-center": ["hyprland/workspaces"],
     "modules-right": ["group/load", "group/system"],

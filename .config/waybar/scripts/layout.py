@@ -5,7 +5,8 @@ Usage:
     layout.py                         rebuild from the saved choice
     layout.py --theme zen             switch theme, keep the position
     layout.py --position left         move the bar, keep the theme
-    layout.py --get                   print "<theme> <position>"
+    layout.py --size large            bar thickness: compact, normal, large
+    layout.py --get                   print "<theme> <position> <size>"
 
 Inputs (in ~/.config/waybar/themes/):
     modules.json            module definitions shared by every theme
@@ -15,6 +16,8 @@ Inputs (in ~/.config/waybar/themes/):
 Keys starting with "x-" are build hints, never written to the final config:
     "x-vertical": {...}     merged over the config when the bar is on the left/right edge
     "x-floating": false     the bar touches the screen edge (no outer margins)
+    "x-dot-workspaces": true  workspace buttons are drawn as dots/bars; their margins are
+                            scaled with the bar size so they keep their shape
 
 Outputs:
     ~/.config/waybar/config, ~/.config/waybar/style.css
@@ -35,7 +38,16 @@ GAPS_FILE = HOME / ".config" / "hypr" / "waybar-gaps.hl"
 
 POSITIONS = ("top", "bottom", "left", "right")
 OPPOSITE = {"top": "bottom", "bottom": "top", "left": "right", "right": "left"}
-DEFAULT = {"theme": "capsule", "position": "top"}
+DEFAULT = {"theme": "capsule", "position": "top", "size": "normal"}
+
+# Bar thickness. Text and icons scale; on a side bar this is its width, on top/bottom its height.
+#   font: base text size   icon: tray/taskbar icons   logo: Debian logo
+#   dot: vertical margin that keeps dot/bar workspaces 8px thick at this text size
+SIZES = {
+    "compact": {"font": 11, "icon": 13, "logo": 14, "dot": 4},
+    "normal":  {"font": 13, "icon": 15, "logo": 16, "dot": 5},
+    "large":   {"font": 15, "icon": 18, "logo": 19, "dot": 6},
+}
 
 BAR_MARGIN_EDGE = 6    # floating bar: space between bar and screen edge
 BAR_MARGIN_ALONG = 10  # floating bar: space at both ends of the bar
@@ -109,14 +121,35 @@ def write_if_changed(path: Path, content: str) -> bool:
     return True
 
 
-def build(theme: str, position: str) -> None:
+def size_css(size: dict, dots: bool) -> str:
+    css = ("\n/* ---- Bar size (added by scripts/layout.py) ---- */\n"
+           "* { font-size: %dpx; }\n"
+           "#custom-launcher { font-size: %dpx; }\n" % (size["font"], size["logo"]))
+    if dots:
+        m = size["dot"]
+        css += ("window#waybar.pos-top #workspaces button, window#waybar.pos-bottom #workspaces button "
+                "{ margin-top: %dpx; margin-bottom: %dpx; }\n"
+                "window#waybar.pos-left #workspaces button, window#waybar.pos-right #workspaces button "
+                "{ margin-left: %dpx; margin-right: %dpx; }\n" % (m, m, m, m))
+    return css
+
+
+def build(theme: str, position: str, size_name: str) -> None:
     vertical = position in ("left", "right")
+    size = SIZES[size_name]
     cfg = merge(load_jsonc(THEMES / "modules.json"), load_jsonc(THEMES / theme / f"config-{theme}"))
 
     if vertical:
         cfg = merge(cfg, cfg.get("x-vertical", {}))
     floating = cfg.get("x-floating", True)
+    dots = cfg.get("x-dot-workspaces", False)
     cfg = {k: v for k, v in cfg.items() if not k.startswith("x-")}
+
+    # Icons follow the bar size (one step smaller on side bars, where many apps stack up)
+    if isinstance(cfg.get("tray"), dict):
+        cfg["tray"]["icon-size"] = size["icon"]
+    if isinstance(cfg.get("wlr/taskbar"), dict):
+        cfg["wlr/taskbar"]["icon-size"] = size["icon"] - (1 if vertical else 0)
 
     cfg["layer"] = "top"
     cfg["position"] = position
@@ -134,7 +167,7 @@ def build(theme: str, position: str) -> None:
 
     write_if_changed(WAYBAR / "config", json.dumps(cfg, indent=4, ensure_ascii=False) + "\n")
     style = (THEMES / theme / f"style-{theme}.css").read_text(encoding="utf-8")
-    write_if_changed(WAYBAR / "style.css", style)
+    write_if_changed(WAYBAR / "style.css", style + size_css(size, dots))
 
     gaps = [WINDOW_GAP_BAR if side == position else WINDOW_GAP_EDGE
             for side in ("top", "right", "bottom", "left")]      # Hyprland order
@@ -148,12 +181,14 @@ def main(argv: list) -> int:
     args = iter(argv)
     for arg in args:
         if arg == "--get":
-            print(state["theme"], state["position"])
+            print(state["theme"], state["position"], state["size"])
             return 0
         if arg == "--theme":
             state["theme"] = next(args, "")
         elif arg == "--position":
             state["position"] = next(args, "")
+        elif arg == "--size":
+            state["size"] = next(args, "")
         else:
             print(__doc__, file=sys.stderr)
             return 2
@@ -166,7 +201,11 @@ def main(argv: list) -> int:
         print(f"Unknown position '{state['position']}'. Use: {', '.join(POSITIONS)}", file=sys.stderr)
         return 1
 
-    build(state["theme"], state["position"])
+    if state["size"] not in SIZES:
+        print(f"Unknown size '{state['size']}'. Use: {', '.join(SIZES)}", file=sys.stderr)
+        return 1
+
+    build(state["theme"], state["position"], state["size"])
     STATE.write_text(json.dumps(state) + "\n", encoding="utf-8")
     return 0
 

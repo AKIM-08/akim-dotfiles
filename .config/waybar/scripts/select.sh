@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# select.sh - Waybar theme and position selector
+# select.sh - Waybar theme, position and size selector
 #
-#   select.sh                     open the menu (themes + "Position" submenu)
-#   select.sh <theme>             apply a theme, keep the position
+#   select.sh                     open the menu (themes + Position + Size)
+#   select.sh <theme>             apply a theme, keep position and size
 #   select.sh --position <edge>   move the bar: top, bottom, left, right
+#   select.sh --size <size>       bar thickness: compact, normal, large
+#   select.sh --pick theme|position|size   open just that menu (used by Quick Settings)
 #
 # The live config is built by layout.py from themes/modules.json + the theme's files.
 
@@ -38,45 +40,70 @@ apply() {   # arguments are passed through to layout.py
     restart_waybar
 }
 
-case "${1:-}" in
-    --position)
-        apply --position "${2:-top}"; exit $? ;;
-    "") ;;
-    *)
-        apply --theme "$1"; exit $? ;;
-esac
+# rofi_pick <prompt> <active index> <labels...>  -> prints the chosen index
+rofi_pick() {
+    local prompt="$1" active="$2"; shift 2
+    printf '%s\n' "$@" | rofi -dmenu -i -format i ${active:+-a "$active"} -p "$prompt" \
+        -theme "$ROFI_THEME" -theme-str "listview { lines: $#; }"
+}
 
-read -r cur_theme cur_pos < <(python3 "$LAYOUT" --get 2>/dev/null)
+index_of() {   # index_of <value> <items...>
+    local v="$1" i=0; shift
+    for item in "$@"; do [ "$item" = "$v" ] && { echo "$i"; return; }; i=$((i + 1)); done
+}
+
+read -r cur_theme cur_pos cur_size < <(python3 "$LAYOUT" --get 2>/dev/null)
 
 THEMES=(default line zen experimental capsule)
-LABELS=(
+THEME_LABELS=(
     "󰕮  Default       —  Three floating islands"
     "󰤄  Line          —  Thin edge-to-edge strip"
     "󰾍  Zen           —  One island, drawer on hover"
     "󰘚  Experimental  —  Color bars, media, load"
     "󰍹  Capsule       —  Floating capsules"
-    "󰁌  Position      —  ${cur_pos^} (change)"
 )
+EDGES=(top bottom left right)
+EDGE_LABELS=("󰁝  Top" "󰁅  Bottom" "󰁍  Left" "󰁔  Right")
+SIZES=(compact normal large)
+SIZE_LABELS=("󰘕  Compact  —  Thinner bar, smaller text" "󰘖  Normal   —  Default" "󰁌  Large    —  Thicker bar, bigger text")
 
-active=""
-for i in "${!THEMES[@]}"; do [ "${THEMES[$i]}" = "$cur_theme" ] && active="$i"; done
+pick_theme() {
+    local i; i=$(rofi_pick "Theme" "$(index_of "$cur_theme" "${THEMES[@]}")" "${THEME_LABELS[@]}") || return
+    [ -n "$i" ] && apply --theme "${THEMES[$i]}"
+}
+pick_position() {
+    local i; i=$(rofi_pick "Position" "$(index_of "$cur_pos" "${EDGES[@]}")" "${EDGE_LABELS[@]}") || return
+    [ -n "$i" ] && apply --position "${EDGES[$i]}"
+}
+pick_size() {
+    local i; i=$(rofi_pick "Size" "$(index_of "$cur_size" "${SIZES[@]}")" "${SIZE_LABELS[@]}") || return
+    [ -n "$i" ] && apply --size "${SIZES[$i]}"
+}
 
-idx=$(printf '%s\n' "${LABELS[@]}" | rofi -dmenu -i -format i ${active:+-a "$active"} \
-        -p "Waybar" -theme "$ROFI_THEME" -theme-str "listview { lines: ${#LABELS[@]}; }") || exit 0
+case "${1:-}" in
+    --position) apply --position "${2:-top}"; exit $? ;;
+    --size)     apply --size "${2:-normal}"; exit $? ;;
+    --pick)
+        case "${2:-}" in
+            theme) pick_theme ;; position) pick_position ;; size) pick_size ;;
+            *) echo "Usage: $0 --pick theme|position|size" >&2; exit 2 ;;
+        esac
+        exit 0 ;;
+    "") ;;
+    *) apply --theme "$1"; exit $? ;;
+esac
+
+# Main menu: themes, then Position and Size
+labels=("${THEME_LABELS[@]}"
+        "󰁌  Position      —  ${cur_pos^} (change)"
+        "󰘖  Size          —  ${cur_size^} (change)")
+idx=$(rofi_pick "Waybar" "$(index_of "$cur_theme" "${THEMES[@]}")" "${labels[@]}") || exit 0
 [ -z "$idx" ] && exit 0
 
 if [ "$idx" -lt "${#THEMES[@]}" ]; then
     apply --theme "${THEMES[$idx]}"
-    exit $?
+elif [ "$idx" -eq "${#THEMES[@]}" ]; then
+    pick_position
+else
+    pick_size
 fi
-
-# Position submenu
-EDGES=(top bottom left right)
-EDGE_LABELS=("󰁝  Top" "󰁅  Bottom" "󰁍  Left" "󰁔  Right")
-pactive=""
-for i in "${!EDGES[@]}"; do [ "${EDGES[$i]}" = "$cur_pos" ] && pactive="$i"; done
-
-pidx=$(printf '%s\n' "${EDGE_LABELS[@]}" | rofi -dmenu -i -format i ${pactive:+-a "$pactive"} \
-        -p "Position" -theme "$ROFI_THEME" -theme-str "listview { lines: ${#EDGE_LABELS[@]}; }") || exit 0
-[ -z "$pidx" ] && exit 0
-apply --position "${EDGES[$pidx]}"

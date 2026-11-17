@@ -1,288 +1,254 @@
 #!/usr/bin/env bash
 # quick-settings.sh — Quick Settings Control Center for Hyprland (SUPER + H)
-# Change mouse speed, default applications, power profiles, and more interactively.
+# Appearance, connectivity, toggles, input and default applications in one Rofi menu.
 
 ROFI_THEME="$HOME/.config/rofi/settings.rasi"
-USER_SETTINGS="$HOME/.config/hypr/user-settings.hl"
+HYPR_DIR="$HOME/.config/hypr"
+SCRIPTS="$HYPR_DIR/scripts"
+USER_SETTINGS="$HYPR_DIR/user-settings.hl"   # sourced at the end of hyprland.hl (input, animations)
+USER_APPS="$HYPR_DIR/user-apps.hl"           # sourced before the keybinds ($terminal, $fileManager)
+WAYBAR_SELECT="$HOME/.config/waybar/scripts/select.sh"
 
-# Toggle support: If settings menu is already open, close it
+# Toggle support: if the settings menu is already open, close it
 if pgrep -f "rofi.*settings\.rasi" >/dev/null 2>&1; then
     pkill -f "rofi.*settings\.rasi" 2>/dev/null || true
     exit 0
 fi
 
-# Ensure user-settings file exists
-touch "$USER_SETTINGS"
+touch "$USER_SETTINGS" "$USER_APPS"
 
-# Read current mouse sensitivity
+notify() {
+    notify-send -h string:x-canonical-private-synchronous:sys-notify -u low "Settings" "$1" 2>/dev/null || true
+}
+
+# rofi_pick <prompt> <active index or ""> <labels...>  -> prints the chosen index
+rofi_pick() {
+    local prompt="$1" active="$2"; shift 2
+    local lines=$(( $# < 10 ? $# : 10 ))
+    printf '%s\n' "$@" | rofi -dmenu -i -format i ${active:+-a "$active"} -p "$prompt" \
+        -theme "$ROFI_THEME" -theme-str "listview { lines: $lines; }"
+}
+
+# Replace (or append) a block between markers in user-settings.hl
+set_block() {   # set_block <name> <content>
+    local name="$1" content="$2" begin="# >>> quick-settings: $1" end="# <<< quick-settings: $1"
+    local tmp; tmp=$(mktemp)
+    awk -v b="$begin" -v e="$end" '$0==b{skip=1} !skip{print} $0==e{skip=0}' "$USER_SETTINGS" > "$tmp"
+    printf '%s\n%s\n%s\n' "$begin" "$content" "$end" >> "$tmp"
+    cat "$tmp" > "$USER_SETTINGS"; rm -f "$tmp"
+}
+
+# Set a variable in user-apps.hl (and drop old, ineffective copies from user-settings.hl)
+set_app_var() {   # set_app_var <name> <command>
+    local name="$1" value="$2"
+    sed -i "/^[[:space:]]*\\\$$name[[:space:]]*=/d" "$USER_APPS" "$USER_SETTINGS" 2>/dev/null
+    echo "\$$name = $value" >> "$USER_APPS"
+}
+
+# ---------------------------------------------------------------- Mouse speed
 get_sensitivity() {
-    local val=""
-    if [ -f "$USER_SETTINGS" ]; then
-        val=$(grep -E '^[[:space:]]*sensitivity[[:space:]]*=' "$USER_SETTINGS" 2>/dev/null | tail -1 | awk -F'=' '{print $2}' | tr -d ' ')
-    fi
+    local val
+    val=$(grep -E '^[[:space:]]*sensitivity[[:space:]]*=' "$USER_SETTINGS" 2>/dev/null | tail -1 | awk -F'=' '{print $2}' | tr -d ' ')
     if [ -z "$val" ] && command -v hyprctl &>/dev/null; then
         val=$(hyprctl getoption input:sensitivity -j 2>/dev/null | grep -oP '"float":\s*\K[-0-9.]+' || true)
     fi
     echo "${val:-0.2}"
 }
 
-# Apply and persist mouse sensitivity
 set_sensitivity() {
-    local new_val="$1"
-    [ -z "$new_val" ] && return
-
-    # Validate numeric float between -1.0 and 1.0
-    if ! [[ "$new_val" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
-        notify-send -u critical "Settings" "Invalid sensitivity value: $new_val" 2>/dev/null || true
+    local v="$1"
+    if ! [[ "$v" =~ ^-?(0(\.[0-9]+)?|1(\.0+)?)$ ]]; then
+        notify-send -u critical "Settings" "Invalid sensitivity: $v (use a number from -1.0 to 1.0)" 2>/dev/null
         return
     fi
-
-    # 1. Apply immediately to running Hyprland session
-    if command -v hyprctl &>/dev/null; then
-        hyprctl keyword input:sensitivity "$new_val" 2>/dev/null || true
+    hyprctl keyword input:sensitivity "$v" >/dev/null 2>&1
+    # Drop the old unmarked block written by earlier versions, then write ours
+    if grep -q "^input {$" "$USER_SETTINGS" && ! grep -q "quick-settings: mouse" "$USER_SETTINGS"; then
+        sed -i '/^[[:space:]]*sensitivity[[:space:]]*=/d' "$USER_SETTINGS"
     fi
-
-    # 2. Persist in ~/.config/hypr/user-settings.hl
-    if grep -q "sensitivity" "$USER_SETTINGS" 2>/dev/null; then
-        sed -i -E "s/^[[:space:]]*sensitivity[[:space:]]*=.*/    sensitivity = $new_val/" "$USER_SETTINGS"
-    else
-        cat << EOF >> "$USER_SETTINGS"
-
-input {
-    sensitivity = $new_val
-}
-EOF
-    fi
-
-    notify-send -h string:x-canonical-private-synchronous:sys-notify -u low \
-        "Settings" "Mouse sensitivity set to: $new_val 🖱️" 2>/dev/null || true
+    set_block mouse "input {
+    sensitivity = $v
+}"
+    notify "Mouse sensitivity set to $v"
 }
 
-# Mouse speed submenu
 menu_mouse_speed() {
-    local cur
+    local cur values labels i
     cur=$(get_sensitivity)
-    local options="󰍽  +0.8  —  Very Fast\n󰍽  +0.5  —  Fast\n󰍽  +0.2  —  Default\n󰍽   0.0  —  Neutral\n󰍽  -0.3  —  Slow\n󰍽  -0.6  —  Very Slow\n󰍽  Custom —  Enter custom value (-1.0 to 1.0)"
+    values=(0.8 0.5 0.2 0.0 -0.3 -0.6 custom)
+    labels=("󰍽  +0.8  —  Very fast" "󰍽  +0.5  —  Fast" "󰍽  +0.2  —  Default" "󰍽   0.0  —  Neutral"
+            "󰍽  -0.3  —  Slow" "󰍽  -0.6  —  Very slow" "󰏫  Custom value (-1.0 to 1.0)")
+    i=$(rofi_pick "Mouse speed ($cur)" "" "${labels[@]}") || return
+    [ -z "$i" ] && return
+    if [ "${values[$i]}" = custom ]; then
+        local v
+        v=$(rofi -dmenu -p "Sensitivity" -theme "$ROFI_THEME" \
+              -theme-str 'entry { placeholder: "-1.0 to 1.0"; } listview { enabled: false; }' < /dev/null) || return
+        [ -n "$v" ] && set_sensitivity "$v"
+    else
+        set_sensitivity "${values[$i]}"
+    fi
+}
 
-    local choice
-    choice=$(echo -e "$options" | rofi -dmenu -i -p "Sensitivity (Current: $cur)" -theme "$ROFI_THEME") || true
-    [ -z "$choice" ] && return
+# ---------------------------------------------------------------- Default apps
+menu_default_browser() {
+    local dirs=(/usr/share/applications "$HOME/.local/share/applications"
+                /var/lib/flatpak/exports/share/applications "$HOME/.local/share/flatpak/exports/share/applications")
+    local ids=() labels=() cur active="" f id name
+    cur=$(xdg-settings get default-web-browser 2>/dev/null)
+    declare -A seen=()
 
-    case "$choice" in
-        *"+0.8"*) set_sensitivity 0.8 ;;
-        *"+0.5"*) set_sensitivity 0.5 ;;
-        *"+0.2"*) set_sensitivity 0.2 ;;
-        *"0.0"*)  set_sensitivity 0.0 ;;
-        *"-0.3"*) set_sensitivity -0.3 ;;
-        *"-0.6"*) set_sensitivity -0.6 ;;
-        *Custom*)
-            local custom_val
-            custom_val=$(rofi -dmenu -p "Enter sensitivity (-1.0 to 1.0)" -theme "$ROFI_THEME") || true
-            [ -n "$custom_val" ] && set_sensitivity "$custom_val"
-            ;;
+    # Every installed app that declares itself a web browser (incl. Firefox ESR and Flatpaks)
+    for d in "${dirs[@]}"; do
+        for f in "$d"/*.desktop; do
+            [ -f "$f" ] || continue
+            id=$(basename "$f")
+            [ -n "${seen[$id]:-}" ] && continue
+            grep -q '^Categories=.*WebBrowser' "$f" || continue
+            grep -qi '^NoDisplay=true' "$f" && continue
+            seen[$id]=1
+            name=$(grep -m1 '^Name=' "$f" | cut -d= -f2-)
+            [ "$id" = "$cur" ] && active="${#ids[@]}"
+            ids+=("$id"); labels+=("󰖟  $name")
+        done
+    done
+
+    if [ ${#ids[@]} -eq 0 ]; then notify "No web browsers found"; return; fi
+    local i; i=$(rofi_pick "Default browser" "$active" "${labels[@]}") || return
+    [ -z "$i" ] && return
+    id="${ids[$i]}"
+    xdg-settings set default-web-browser "$id" 2>/dev/null
+    xdg-mime default "$id" x-scheme-handler/http x-scheme-handler/https text/html 2>/dev/null
+    notify "Default browser: ${labels[$i]#*  }"
+}
+
+menu_default_terminal() {
+    local bins=(kitty alacritty foot wezterm gnome-terminal konsole) names=(Kitty Alacritty Foot WezTerm "GNOME Terminal" Konsole)
+    local found=() labels=() active="" cur i
+    cur=$(grep -oP '^\$terminal\s*=\s*\K\S+' "$USER_APPS" 2>/dev/null | tail -1); cur="${cur:-kitty}"
+    for i in "${!bins[@]}"; do
+        command -v "${bins[$i]}" &>/dev/null || continue
+        [ "${bins[$i]}" = "$cur" ] && active="${#found[@]}"
+        found+=("${bins[$i]}"); labels+=("󰞷  ${names[$i]}")
+    done
+    [ ${#found[@]} -eq 0 ] && { notify "No supported terminal found"; return; }
+    i=$(rofi_pick "Default terminal" "$active" "${labels[@]}") || return
+    [ -z "$i" ] && return
+    set_app_var terminal "${found[$i]}"
+    notify "Default terminal: ${labels[$i]#*  } (Super + Return)"
+}
+
+menu_default_file_manager() {
+    local bins=(nautilus thunar nemo dolphin pcmanfm) names=(Nautilus Thunar Nemo Dolphin PCManFM)
+    local cmds=("nautilus --new-window" thunar nemo dolphin pcmanfm)
+    local found=() labels=() active="" cur i
+    cur=$(grep -oP '^\$fileManager\s*=\s*\K\S+' "$USER_APPS" 2>/dev/null | tail -1); cur="${cur:-nautilus}"
+    for i in "${!bins[@]}"; do
+        command -v "${bins[$i]}" &>/dev/null || continue
+        [ "${bins[$i]}" = "$cur" ] && active="${#found[@]}"
+        found+=("$i"); labels+=("󰉋  ${names[$i]}")
+    done
+    [ ${#found[@]} -eq 0 ] && { notify "No supported file manager found"; return; }
+    local k; k=$(rofi_pick "Default file manager" "$active" "${labels[@]}") || return
+    [ -z "$k" ] && return
+    i="${found[$k]}"
+    set_app_var fileManager "${cmds[$i]}"
+    local desktop
+    desktop=$(grep -l "^Exec=${bins[$i]}" /usr/share/applications/*.desktop 2>/dev/null | head -1)
+    [ -n "$desktop" ] && xdg-mime default "$(basename "$desktop")" inode/directory 2>/dev/null
+    notify "Default file manager: ${names[$i]} (Super + F)"
+}
+
+# ---------------------------------------------------------------- Waybar
+menu_waybar() {
+    local theme pos size i
+    read -r theme pos size < <(python3 "$HOME/.config/waybar/scripts/layout.py" --get 2>/dev/null)
+    i=$(rofi_pick "Waybar" "" "󰕮  Theme     —  ${theme^}" "󰁌  Position  —  ${pos^}" "󰘖  Size      —  ${size^}") || return
+    case "$i" in
+        0) bash "$WAYBAR_SELECT" --pick theme ;;
+        1) bash "$WAYBAR_SELECT" --pick position ;;
+        2) bash "$WAYBAR_SELECT" --pick size ;;
     esac
 }
 
-# Default Web Browser Submenu
-menu_default_browser() {
-    local cur_desktop=""
-    if command -v xdg-settings &>/dev/null; then
-        cur_desktop=$(xdg-settings get default-web-browser 2>/dev/null || true)
-    fi
+# ---------------------------------------------------------------- Toggles
+dnd_state() { [ "$(swaync-client -D 2>/dev/null)" = "true" ] && echo ON || echo OFF; }
 
-    local available=()
-    # Search for installed web browsers
-    for b in firefox.desktop brave-browser.desktop google-chrome.desktop chromium.desktop \
-             zen-browser.desktop zen.desktop opera.desktop vivaldi-stable.desktop epiphany.desktop; do
-        if [ -f "/usr/share/applications/$b" ] || [ -f "$HOME/.local/share/applications/$b" ]; then
-            local name
-            name=$(grep -m1 '^Name=' "/usr/share/applications/$b" "$HOME/.local/share/applications/$b" 2>/dev/null | head -1 | cut -d'=' -f2)
-            available+=("$name ($b)")
-        fi
-    done
-
-    if [ ${#available[@]} -eq 0 ]; then
-        notify-send "Settings" "No browsers found in application shortcuts."
-        return
-    fi
-
-    local choice
-    choice=$(printf "%s\n" "${available[@]}" | rofi -dmenu -i -p "Default Browser" -theme "$ROFI_THEME") || true
-    [ -z "$choice" ] && return
-
-    local selected_desktop
-    selected_desktop=$(echo "$choice" | grep -oP '\(\K[^\)]+' || true)
-    if [ -n "$selected_desktop" ]; then
-        xdg-settings set default-web-browser "$selected_desktop" 2>/dev/null || true
-        xdg-mime default "$selected_desktop" x-scheme-handler/http 2>/dev/null || true
-        xdg-mime default "$selected_desktop" x-scheme-handler/https 2>/dev/null || true
-        xdg-mime default "$selected_desktop" text/html 2>/dev/null || true
-        notify-send -h string:x-canonical-private-synchronous:sys-notify -u low \
-            "Settings" "Default browser changed to: $(echo "$choice" | cut -d'(' -f1 | xargs) 🌐" 2>/dev/null || true
-    fi
+animations_state() {
+    hyprctl getoption animations:enabled -j 2>/dev/null | grep -q '"int": *0' && echo OFF || echo ON
 }
-
-# Default Terminal Submenu
-menu_default_terminal() {
-    local terminals=("Kitty (kitty)" "Alacritty (alacritty)" "Foot (foot)" "GNOME Terminal (gnome-terminal)" "Konsole (konsole)")
-    local installed=()
-
-    for t in "${terminals[@]}"; do
-        local bin
-        bin=$(echo "$t" | grep -oP '\(\K[^\)]+')
-        if command -v "$bin" &>/dev/null; then
-            installed+=("$t")
-        fi
-    done
-
-    [ ${#installed[@]} -eq 0 ] && return
-
-    local choice
-    choice=$(printf "%s\n" "${installed[@]}" | rofi -dmenu -i -p "Default Terminal" -theme "$ROFI_THEME") || true
-    [ -z "$choice" ] && return
-
-    local bin
-    bin=$(echo "$choice" | grep -oP '\(\K[^\)]+')
-
-    # Update in user-settings.hl
-    if grep -q "\$terminal" "$USER_SETTINGS" 2>/dev/null; then
-        sed -i -E "s/^[[:space:]]*\\\$terminal[[:space:]]*=.*/\$terminal = $bin/" "$USER_SETTINGS"
+toggle_animations() {
+    if [ "$(animations_state)" = ON ]; then
+        hyprctl keyword animations:enabled 0 >/dev/null
+        set_block animations "animations {
+    enabled = false
+}"
+        notify "Animations off (snappier, saves battery)"
     else
-        echo "\$terminal = $bin" >> "$USER_SETTINGS"
+        hyprctl keyword animations:enabled 1 >/dev/null
+        set_block animations "animations {
+    enabled = true
+}"
+        notify "Animations on"
     fi
-
-    # Update alternatives if root or possible
-    if command -v update-alternatives &>/dev/null && command -v sudo &>/dev/null; then
-        sudo update-alternatives --set x-terminal-emulator "$(command -v "$bin")" 2>/dev/null || true
-    fi
-
-    notify-send -h string:x-canonical-private-synchronous:sys-notify -u low \
-        "Settings" "Default terminal set to: $bin 💻" 2>/dev/null || true
 }
 
-# Default File Manager Submenu
-menu_default_file_manager() {
-    local managers=("Nautilus (nautilus)" "Dolphin (dolphin)" "Thunar (thunar)" "Nemo (nemo)" "PCManFM (pcmanfm)")
-    local installed=()
-
-    for m in "${managers[@]}"; do
-        local bin
-        bin=$(echo "$m" | grep -oP '\(\K[^\)]+')
-        if command -v "$bin" &>/dev/null; then
-            installed+=("$m")
-        fi
-    done
-
-    [ ${#installed[@]} -eq 0 ] && return
-
-    local choice
-    choice=$(printf "%s\n" "${installed[@]}" | rofi -dmenu -i -p "Default File Manager" -theme "$ROFI_THEME") || true
-    [ -z "$choice" ] && return
-
-    local bin
-    bin=$(echo "$choice" | grep -oP '\(\K[^\)]+')
-
-    if grep -q "\$fileManager" "$USER_SETTINGS" 2>/dev/null; then
-        sed -i -E "s/^[[:space:]]*\\\$fileManager[[:space:]]*=.*/\$fileManager = $bin/" "$USER_SETTINGS"
-    else
-        echo "\$fileManager = $bin" >> "$USER_SETTINGS"
-    fi
-
-    xdg-mime default "${bin}.desktop" inode/directory 2>/dev/null || true
-    notify-send -h string:x-canonical-private-synchronous:sys-notify -u low \
-        "Settings" "Default file manager set to: $bin 📁" 2>/dev/null || true
-}
-
-# Power Profile Submenu
 menu_power_profile() {
-    if command -v powerprofilesctl &>/dev/null; then
-        local cur
-        cur=$(powerprofilesctl get 2>/dev/null || echo "balanced")
-        local options="⚡  Performance   —  Maximum performance\n⚖️  Balanced      —  Standard usage\n🍃  Power Saver   —  Extend battery life"
-
-        local choice
-        choice=$(echo -e "$options" | rofi -dmenu -i -p "Power Profile (Current: $cur)" -theme "$ROFI_THEME") || true
-        [ -z "$choice" ] && return
-
-        case "$choice" in
-            *Performance*) powerprofilesctl set performance 2>/dev/null ;;
-            *Balanced*)    powerprofilesctl set balanced 2>/dev/null ;;
-            *Power*)       powerprofilesctl set power-saver 2>/dev/null ;;
-        esac
-        notify-send -h string:x-canonical-private-synchronous:sys-notify -u low \
-            "Settings" "Power profile set to: $(powerprofilesctl get) 🔋" 2>/dev/null || true
-    else
-        notify-send "Settings" "powerprofilesctl not available."
-    fi
+    if ! command -v powerprofilesctl &>/dev/null; then notify "powerprofilesctl is not installed"; return; fi
+    local cur profiles labels active="" i
+    cur=$(powerprofilesctl get 2>/dev/null)
+    profiles=(performance balanced power-saver)
+    labels=("󰓅  Performance  —  Maximum speed" "󰾅  Balanced     —  Everyday use" "󰾆  Power saver  —  Longer battery life")
+    for i in "${!profiles[@]}"; do [ "${profiles[$i]}" = "$cur" ] && active="$i"; done
+    i=$(rofi_pick "Power profile" "$active" "${labels[@]}") || return
+    [ -z "$i" ] && return
+    powerprofilesctl set "${profiles[$i]}" 2>/dev/null && notify "Power profile: ${profiles[$i]}"
 }
 
-# Main Settings Menu
-cur_sens=$(get_sensitivity)
-caffeine_status="OFF"
-[ -f "$HOME/.cache/caffeine_active" ] && caffeine_status="ON"
+# ---------------------------------------------------------------- Main menu
+caffeine="OFF"; [ -f "$HOME/.cache/caffeine_active" ] && caffeine="ON"
+power=$(powerprofilesctl get 2>/dev/null || echo "n/a")
+read -r wb_theme wb_pos wb_size < <(python3 "$HOME/.config/waybar/scripts/layout.py" --get 2>/dev/null)
 
-MAIN_OPTIONS="󰍽  Mouse Speed / Sensitivity      —  Current: [${cur_sens}]\n󰖟  Default Web Browser           —  Configure default browser\n󰞷  Default Terminal Emulator     —  Configure default terminal\n󰉋  Default File Manager          —  Configure default file manager\n󰒓  Power Profile                 —  Performance / Balanced / Saver\n󰅶  Caffeine Mode (Anti-Sleep)     —  Status: [${caffeine_status}]\n󰌾  Lock Screen Now               —  Instant Lock (Super + L)\n󱄄  Waybar Theme Selector          —  Change status bar style\n󰸉  Wallpaper Selector             —  Pick Wallpaper (Super + W)\n󰕾  Sound / Volume Control        —  Open Audio Mixer\n󰂯  Bluetooth Manager             —  Open Bluetooth GUI\n󰤨  Network / Wi-Fi Connections   —  Open Network Settings\n󰌌  Shortcuts Cheatsheet           —  View All Keybinds (Super + G)\n󰋽  System Information            —  View Quick System Specs"
+ENTRIES=(
+    "wallpaper|󰸉  Wallpaper                  —  Pick a wallpaper (Super + W)"
+    "waybar|󱄄  Waybar                     —  ${wb_theme^}, ${wb_pos}, ${wb_size}"
+    "wifi|󰤨  Wi-Fi                      —  Networks"
+    "bluetooth|󰂯  Bluetooth                  —  Devices"
+    "sound|󰕾  Sound                      —  Audio mixer"
+    "dnd|󰂛  Do Not Disturb             —  $(dnd_state)"
+    "caffeine|󰅶  Caffeine (stay awake)      —  ${caffeine}"
+    "animations|󰘕  Animations                 —  $(animations_state)"
+    "power|󰒓  Power profile              —  ${power}"
+    "mouse|󰍽  Mouse speed                —  $(get_sensitivity)"
+    "browser|󰖟  Default web browser"
+    "terminal|󰞷  Default terminal"
+    "files|󰉋  Default file manager"
+    "keys|󰌌  Keyboard shortcuts         —  Super + G"
+    "info|󰋽  System information"
+    "lock|󰌾  Lock screen                —  Super + L"
+)
+keys=(); labels=()
+for e in "${ENTRIES[@]}"; do keys+=("${e%%|*}"); labels+=("${e#*|}"); done
 
-choice=$(echo -e "$MAIN_OPTIONS" | rofi -dmenu -i -p "󰒓 Settings" -theme "$ROFI_THEME") || true
-[ -z "$choice" ] && exit 0
+i=$(printf '%s\n' "${labels[@]}" | rofi -dmenu -i -format i -p "󰒓 Settings" -theme "$ROFI_THEME") || exit 0
+[ -z "$i" ] && exit 0
 
-case "$choice" in
-    *Mouse*)
-        menu_mouse_speed
-        ;;
-    *Browser*)
-        menu_default_browser
-        ;;
-    *Terminal*)
-        menu_default_terminal
-        ;;
-    *File\ Manager*)
-        menu_default_file_manager
-        ;;
-    *Power\ Profile*)
-        menu_power_profile
-        ;;
-    *Caffeine*)
-        bash "$HOME/.config/hypr/scripts/caffeine-toggle.sh"
-        ;;
-    *Lock*)
-        pidof hyprlock >/dev/null 2>&1 || hyprlock
-        ;;
-    *Waybar*)
-        bash "$HOME/.config/waybar/scripts/select.sh"
-        ;;
-    *Wallpaper*)
-        bash "$HOME/.config/hypr/scripts/rofi-wallpaper.sh"
-        ;;
-    *Sound*)
-        if command -v pavucontrol &>/dev/null; then
-            pavucontrol &
-        else
-            notify-send "Audio" "pavucontrol is not installed."
-        fi
-        ;;
-    *Bluetooth*)
-        if command -v blueman-manager &>/dev/null; then
-            blueman-manager &
-        else
-            notify-send "Bluetooth" "blueman-manager is not installed."
-        fi
-        ;;
-    *Network*)
-        if command -v nm-connection-editor &>/dev/null; then
-            nm-connection-editor &
-        else
-            notify-send "Network" "nm-connection-editor is not installed."
-        fi
-        ;;
-    *Shortcuts*)
-        bash "$HOME/.config/hypr/scripts/keybinds.sh"
-        ;;
-    *System\ Information*)
-        if command -v fastfetch &>/dev/null; then
-            kitty --hold fastfetch &
-        else
-            notify-send "System" "$(uname -a)"
-        fi
-        ;;
+case "${keys[$i]}" in
+    wallpaper)  bash "$SCRIPTS/rofi-wallpaper.sh" ;;
+    waybar)     menu_waybar ;;
+    wifi)       bash "$SCRIPTS/wifi-menu.sh" ;;
+    bluetooth)  bash "$SCRIPTS/bluetooth-menu.sh" ;;
+    sound)      command -v pavucontrol &>/dev/null && { pavucontrol >/dev/null 2>&1 & } || notify "pavucontrol is not installed" ;;
+    dnd)        swaync-client -d -sw >/dev/null 2>&1; notify "Do Not Disturb: $(dnd_state)" ;;
+    caffeine)   bash "$SCRIPTS/caffeine-toggle.sh" ;;
+    animations) toggle_animations ;;
+    power)      menu_power_profile ;;
+    mouse)      menu_mouse_speed ;;
+    browser)    menu_default_browser ;;
+    terminal)   menu_default_terminal ;;
+    files)      menu_default_file_manager ;;
+    keys)       bash "$SCRIPTS/keybinds.sh" ;;
+    info)       if command -v fastfetch &>/dev/null; then kitty --hold fastfetch >/dev/null 2>&1 & else notify "$(uname -sr)"; fi ;;
+    lock)       pidof hyprlock >/dev/null 2>&1 || hyprlock ;;
 esac
