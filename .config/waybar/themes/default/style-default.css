@@ -35,8 +35,9 @@ window#waybar.pos-right #bluetooth, window#waybar.pos-right #network, window#way
     background: transparent;
     border-radius: 7px;
 }
+/* Side bars: compact, so many workspaces + apps still leave room between the islands */
 window#waybar.pos-left #workspaces button,
-window#waybar.pos-right #workspaces button { margin: 1px 0; padding: 3px 4px; }
+window#waybar.pos-right #workspaces button { margin: 0; padding: 1px 4px; }
 #workspaces button.empty  { color: alpha(@foreground, 0.35); }
 #workspaces button:hover  { background: alpha(@foreground, 0.12); }
 #workspaces button.active { background: @color9; color: @background; }
@@ -44,7 +45,7 @@ window#waybar.pos-right #workspaces button { margin: 1px 0; padding: 3px 4px; }
 /* App icons: space them along the bar's direction, and set them apart from the workspaces */
 #taskbar { margin-left: 6px; }
 window#waybar.pos-left #taskbar,
-window#waybar.pos-right #taskbar { margin-left: 0; margin-top: 6px; }
+window#waybar.pos-right #taskbar { margin-left: 0; margin-top: 4px; }
 
 #taskbar button {
     padding: 2px 4px;
@@ -53,8 +54,8 @@ window#waybar.pos-right #taskbar { margin-left: 0; margin-top: 6px; }
 }
 window#waybar.pos-left #taskbar button,
 window#waybar.pos-right #taskbar button {
-    padding: 4px 2px;
-    margin: 2px 0;
+    padding: 2px;
+    margin: 1px 0;
 }
 #taskbar button.active { background: alpha(@foreground, 0.14); }
 #taskbar button:hover  { background: alpha(@foreground, 0.1); }

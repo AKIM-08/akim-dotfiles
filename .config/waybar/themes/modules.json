@@ -225,11 +225,11 @@
             "format": "{icon}"
         },
         "battery": {
-            "format": "{icon}\n{capacity}",
-            "format-charging": "󰂄\n{capacity}",
-            "format-plugged": "󰚥\n{capacity}",
-            "format-discharging": "{icon}\n{capacity}",
-            "format-full": "󰁹\n{capacity}"
+            "format": "{icon}",
+            "format-charging": "󰂄",
+            "format-plugged": "󰚥",
+            "format-discharging": "{icon}",
+            "format-full": "󰁹"
         },
         "bluetooth": {
             "format-connected-battery": "󰂱"

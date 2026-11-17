@@ -6,5 +6,10 @@
     "modules-center": ["hyprland/workspaces", "wlr/taskbar"],
     "modules-right": ["custom/media", "custom/notification", "group/system"],
 
-    "tray": { "icon-size": 15, "spacing": 8 }
+    "tray": { "icon-size": 15, "spacing": 8 },
+
+    "x-vertical": {
+        // Side bars: slightly smaller app icons so 14 workspaces + apps still fit
+        "wlr/taskbar": { "icon-size": 14 }
+    }
 }
