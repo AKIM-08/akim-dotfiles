@@ -44,7 +44,7 @@ EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 # A "character" covers a sensible share of the picture (close-up portraits can fill most of
 # it); below MIN_CONFIDENCE the model isn't sure anything is there. Otherwise: colonies.
 SUBJECT_MIN, SUBJECT_MAX = 0.01, 0.95
-MIN_CONFIDENCE = 0.3
+MIN_CONFIDENCE = 0.2     # real characters scored down to ~0.29; empty scenes ~0.01-0.17
 
 
 # --------------------------------------------------------------------------- helpers
@@ -216,12 +216,22 @@ def paths_for(image: Path) -> dict:
             "none": CACHE / f"{k}-nosubject"}
 
 
+def decided_no_subject(marker: Path) -> bool:
+    """A "no character" verdict still holds (an "unsure" one is retried if the confidence
+    it recorded now passes MIN_CONFIDENCE, e.g. after the threshold was lowered)."""
+    if not marker.exists():
+        return False
+    import re
+    found = re.search(r"model unsure \(confidence ([0-9.]+)", marker.read_text())
+    return not (found and float(found.group(1)) >= MIN_CONFIDENCE)
+
+
 def build(image: Path, force: bool = False) -> Path:
     p = paths_for(image)
     seed = int(key_for(image)[:8], 16)
     if p["subject"].is_file():
         return p["subject"]
-    if have_model() and (force or not p["none"].exists()):
+    if have_model() and (force or not decided_no_subject(p["none"])):
         mask, why = segment(image, force)
         if mask is not None:
             reveal, outline = subject_map(mask, seed)
@@ -240,7 +250,7 @@ def get(image: Path) -> Path:
     p = paths_for(image)
     if p["subject"].is_file():
         return p["subject"]
-    if have_model() and not p["none"].exists():
+    if have_model() and not decided_no_subject(p["none"]):
         # Too slow to wait for: use colonies now, have the character map ready next time
         subprocess.Popen(["nice", "-n", "19", sys.executable, __file__, "build", str(image)],
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
@@ -275,7 +285,7 @@ def status() -> None:
         p = paths_for(f)
         if p["subject"].is_file():
             state = "outline"
-        elif p["none"].exists():
+        elif decided_no_subject(p["none"]):
             state = "colonies  - no character: " + p["none"].read_text().strip()
         elif model:
             state = "pending   - not analysed yet (precache runs at login)"
