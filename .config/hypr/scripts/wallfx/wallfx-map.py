@@ -17,6 +17,8 @@ Commands:
                                     installed, starts the subject map in the background)
     wallfx-map.py build <image>     build the best map now (slow with the model)
     wallfx-map.py precache          build maps for every wallpaper in ~/Pictures/wallpapers
+    wallfx-map.py status            show which transition each wallpaper gets, and why
+    wallfx-map.py force <image>     use the character outline even if detection was unsure
 
 Maps are cached in ~/.cache/wallfx/ by image path, size and modification time.
 """
@@ -30,7 +32,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-MAP_VERSION = 1
+MAP_VERSION = 2          # bump to rebuild every cached map
 MAP_W, MAP_H = 960, 540
 HOME = Path.home()
 CACHE = HOME / ".cache" / "wallfx"
@@ -39,8 +41,10 @@ MODEL = DATA / "isnet-anime.onnx"
 WALL_DIR = HOME / "Pictures" / "wallpapers"
 EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
-# A "character" covers a sensible share of the picture; otherwise use colonies
-SUBJECT_MIN, SUBJECT_MAX = 0.03, 0.80
+# A "character" covers a sensible share of the picture (close-up portraits can fill most of
+# it); below MIN_CONFIDENCE the model isn't sure anything is there. Otherwise: colonies.
+SUBJECT_MIN, SUBJECT_MAX = 0.01, 0.95
+MIN_CONFIDENCE = 0.3
 
 
 # --------------------------------------------------------------------------- helpers
@@ -167,8 +171,8 @@ def subject_map(mask: np.ndarray, seed: int) -> tuple:
 
 
 # --------------------------------------------------------------------------- model
-def segment(path: Path):
-    """Character mask (MAP_H x MAP_W, 0..1) with isnet-anime, or None if no character."""
+def segment(path: Path, force: bool = False):
+    """(character mask MAP_H x MAP_W in 0..1, or None; a short explanation)."""
     import onnxruntime as ort    # only in the wallfx venv
 
     opts = ort.SessionOptions()
@@ -184,15 +188,19 @@ def segment(path: Path):
     x = np.expand_dims(x.transpose(2, 0, 1), 0).astype(np.float32)
 
     pred = sess.run(None, {sess.get_inputs()[0].name: x})[0][0, 0]
-    if float(pred.max()) < 0.5:                       # the model found nothing confident
-        return None
+    confidence = float(pred.max())
+    if confidence < MIN_CONFIDENCE and not force:
+        return None, f"model unsure (confidence {confidence:.2f} < {MIN_CONFIDENCE})"
     pred = (pred - pred.min()) / max(float(pred.max() - pred.min()), 1e-6)
     mask = np.asarray(Image.fromarray((pred * 255).astype(np.uint8)).resize((MAP_W, MAP_H), Image.Resampling.BILINEAR),
                       dtype=np.float32) / 255.0
     share = float((mask > 0.5).mean())
-    if not (SUBJECT_MIN <= share <= SUBJECT_MAX):
-        return None
-    return mask
+    info = f"covers {share:.0%}, confidence {confidence:.2f}"
+    if share < 0.002:
+        return None, f"nothing found ({info})"
+    if not force and not (SUBJECT_MIN <= share <= SUBJECT_MAX):
+        return None, f"outside {SUBJECT_MIN:.0%}-{SUBJECT_MAX:.0%} ({info})"
+    return mask, info
 
 
 def have_model() -> bool:
@@ -208,19 +216,20 @@ def paths_for(image: Path) -> dict:
             "none": CACHE / f"{k}-nosubject"}
 
 
-def build(image: Path) -> Path:
+def build(image: Path, force: bool = False) -> Path:
     p = paths_for(image)
     seed = int(key_for(image)[:8], 16)
     if p["subject"].is_file():
         return p["subject"]
-    if have_model() and not p["none"].exists():
-        mask = segment(image)
+    if have_model() and (force or not p["none"].exists()):
+        mask, why = segment(image, force)
         if mask is not None:
             reveal, outline = subject_map(mask, seed)
             save_map(p["subject"], reveal, outline)
+            p["none"].unlink(missing_ok=True)
             return p["subject"]
         p["none"].parent.mkdir(parents=True, exist_ok=True)
-        p["none"].touch()
+        p["none"].write_text(why + "\n")
     if not p["colonies"].is_file():
         reveal, outline = colonies_map(seed)
         save_map(p["colonies"], reveal, outline)
@@ -257,9 +266,38 @@ def precache() -> None:
                 print(f"wallfx: {f.name}: {e}", file=sys.stderr)
 
 
+def status() -> None:
+    model = have_model()
+    print(f"character model: {'installed' if model else 'not installed (run wallfx-setup.sh)'}\n")
+    for f in sorted(WALL_DIR.iterdir()):
+        if not (f.is_file() and f.suffix.lower() in EXTS and f.name != "current.jpg"):
+            continue
+        p = paths_for(f)
+        if p["subject"].is_file():
+            state = "outline"
+        elif p["none"].exists():
+            state = "colonies  - no character: " + p["none"].read_text().strip()
+        elif model:
+            state = "pending   - not analysed yet (precache runs at login)"
+        else:
+            state = "colonies"
+        print(f"  {f.name:40.40}  {state}")
+
+
 def main(argv: list) -> int:
     if len(argv) >= 1 and argv[0] == "precache":
         precache()
+        return 0
+    if len(argv) >= 1 and argv[0] == "status":
+        status()
+        return 0
+    if len(argv) == 2 and argv[0] == "force":
+        image = Path(argv[1]).resolve()
+        if not have_model():
+            print("The character model isn't installed: run wallfx-setup.sh first", file=sys.stderr)
+            return 1
+        out = build(image, force=True)
+        print(out if out.name.endswith("-subject.png") else f"No character found at all in {image.name}")
         return 0
     if len(argv) == 2 and argv[0] in ("get", "build"):
         image = Path(argv[1]).resolve()
