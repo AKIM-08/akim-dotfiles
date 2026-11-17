@@ -1,8 +1,8 @@
-// Experimental: colored workspace bars, now-playing chip, icon-only status.
+// Experimental: colored workspace bars, now-playing chip, CPU/RAM level glyphs, icon-only status.
 {
     "modules-left": ["custom/launcher", "clock"],
     "modules-center": ["hyprland/workspaces"],
-    "modules-right": ["mpris", "tray", "group/system"],
+    "modules-right": ["mpris", "group/load", "tray", "group/system"],
 
     "clock": { "format": "{:%H:%M}" },
 
