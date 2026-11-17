@@ -116,10 +116,11 @@
         "format-disconnected": "󰤭",
         "format-disabled": "󰤮",
         "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
-        "tooltip-format-wifi": "{essid}  {signalStrength}%\n{ipaddr}",
+        "tooltip-format-wifi": "{essid}  {signalStrength}%\n{ipaddr}\n\nClick: networks  Right-click: advanced",
         "tooltip-format-ethernet": "{ifname}\n{ipaddr}",
-        "tooltip-format-disconnected": "Disconnected",
-        "on-click": "kitty nmtui"
+        "tooltip-format-disconnected": "Disconnected\n\nClick: networks",
+        "on-click": "~/.config/hypr/scripts/wifi-menu.sh",
+        "on-click-right": "kitty --class nmtui -e nmtui"
     },
 
     "bluetooth": {
@@ -128,12 +129,13 @@
         "format-disabled": "󰂲",
         "format-connected": "󰂱",
         "format-connected-battery": "󰂱 {device_battery_percentage}%",
-        "tooltip-format": "Bluetooth on\nNo device connected",
-        "tooltip-format-off": "Bluetooth off",
-        "tooltip-format-connected": "{device_enumerate}",
+        "tooltip-format": "Bluetooth on\nNo device connected\n\nClick: devices  Right-click: Blueman",
+        "tooltip-format-off": "Bluetooth off\n\nClick: devices",
+        "tooltip-format-connected": "{device_enumerate}\n\nClick: devices  Right-click: Blueman",
         "tooltip-format-enumerate-connected": "{device_alias}",
         "tooltip-format-enumerate-connected-battery": "{device_alias}  {device_battery_percentage}%",
-        "on-click": "blueman-manager"
+        "on-click": "~/.config/hypr/scripts/bluetooth-menu.sh",
+        "on-click-right": "blueman-manager"
     },
 
     "battery": {
