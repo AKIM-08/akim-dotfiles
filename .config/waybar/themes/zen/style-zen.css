@@ -39,6 +39,16 @@ window#waybar.pos-left #workspaces, window#waybar.pos-right #workspaces { paddin
     border-radius: 999px;
     background: alpha(@foreground, 0.28);
 }
+/* The button itself is the dot: shrink and hide the label (otherwise its 13px line height
+   stretches the dot into an oval and the glyph shows through) */
+#workspaces button label {
+    font-size: 1px;
+    color: transparent;
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+}
 window#waybar.pos-left #workspaces button,
 window#waybar.pos-right #workspaces button { margin: 4px 0; }
 #workspaces button:not(.empty) { background: alpha(@foreground, 0.75); }

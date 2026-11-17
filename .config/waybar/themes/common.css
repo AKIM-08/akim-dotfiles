@@ -60,6 +60,18 @@ tooltip label {
 #tray > .passive        { -gtk-icon-effect: dim; }
 #tray > .needs-attention { -gtk-icon-effect: highlight; }
 
-#workspaces button {
+/* Waybar is a GTK app, so the GTK theme's button rules (padding, borders, `button label`
+   colors) would leak into the bar. Reset them here; each theme then styles its own. */
+#workspaces button,
+#taskbar button {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    text-shadow: none;
+    min-height: 0;
     transition: all 0.2s ease;
+}
+#workspaces button label,
+#taskbar button label {
+    color: inherit;
 }
