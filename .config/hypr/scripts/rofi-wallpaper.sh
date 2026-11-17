@@ -2,9 +2,8 @@
 # rofi-wallpaper.sh - Interactive Rofi/Wofi Wallpaper Picker with preview icons & toggle support
 
 # Toggle: Si le sélecteur Rofi/Wofi/QML est déjà ouvert, appuyer à nouveau sur SUPER+W le ferme immédiatement
-if pgrep -x qmlscene >/dev/null || pgrep -x qml6 >/dev/null || pgrep -x rofi >/dev/null || pgrep -x wofi >/dev/null; then
-    pkill -x qmlscene 2>/dev/null || true
-    pkill -x qml6 2>/dev/null || true
+if pgrep -f "wallpaper-picker\.py" >/dev/null || pgrep -x rofi >/dev/null || pgrep -x wofi >/dev/null; then
+    pkill -f "wallpaper-picker\.py" 2>/dev/null || true
     pkill -x rofi 2>/dev/null || pkill -x wofi 2>/dev/null || true
     exit 0
 fi
@@ -29,23 +28,12 @@ for img in "${images[@]}"; do
     options+="${filename}\x00icon\x1f${img}\n"
 done
 
-QML_SCRIPT="$HOME/.config/hypr/scripts/hex-wallpaper-picker.qml"
+PICKER="$HOME/.config/hypr/scripts/wallpaper-picker.py"
 selected_file=""
 
-sed -i "s|folder: \"file://.*\"|folder: \"file://$WALLPAPER_DIR\"|" "$QML_SCRIPT"
-
-if command -v qmlscene &>/dev/null; then
-    OUTPUT=$(qmlscene "$QML_SCRIPT" 2>&1)
-    if [ $? -ne 0 ]; then
-        notify-send "QML Error" "$OUTPUT"
-    fi
-    selected_file=$(echo "$OUTPUT" | grep -oP 'SELECTED:\K.*')
-elif command -v qml6 &>/dev/null; then
-    OUTPUT=$(qml6 "$QML_SCRIPT" 2>&1)
-    if [ $? -ne 0 ]; then
-        notify-send "QML Error" "$OUTPUT"
-    fi
-    selected_file=$(echo "$OUTPUT" | grep -oP 'SELECTED:\K.*')
+# Carousel picker (PyQt6); falls back to a Rofi/Wofi list when PyQt6 is missing
+if python3 -c 'import PyQt6.QtWidgets' 2>/dev/null; then
+    selected_file=$(python3 "$PICKER" 2>/dev/null | tail -1)
 elif command -v rofi &>/dev/null; then
     selected_name=$(echo -e -n "$options" | rofi -dmenu -i -theme "$HOME/.config/rofi/wallpaper.rasi")
     [ -n "$selected_name" ] && selected_file="$WALLPAPER_DIR/$selected_name"

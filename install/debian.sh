@@ -102,6 +102,7 @@ APT_CORE_PKGS=(
     grim
     slurp
     brightnessctl
+    gammastep
     playerctl
     pipewire
     pipewire-pulse

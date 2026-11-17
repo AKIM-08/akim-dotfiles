@@ -205,6 +205,29 @@ menu_power_profile() {
     powerprofilesctl set "${profiles[$i]}" 2>/dev/null && notify "Power profile: ${profiles[$i]}"
 }
 
+# ---------------------------------------------------------------- Night light
+nightlight_label() {
+    case "$(bash "$SCRIPTS/nightlight.sh" status)" in
+        off|"") echo "Off" ;;
+        4500) echo "Soft (4500K)" ;;
+        3500) echo "Warm (3500K)" ;;
+        2700) echo "Very warm (2700K)" ;;
+        *) echo "$(bash "$SCRIPTS/nightlight.sh" status)K" ;;
+    esac
+}
+
+menu_nightlight() {
+    local cur values labels active="" i
+    cur=$(bash "$SCRIPTS/nightlight.sh" status)
+    values=(off 4500 3500 2700)
+    labels=("󰖨  Off         —  Normal colors" "󰖔  Soft        —  4500K, slightly warm"
+            "󰖔  Warm        —  3500K, evening" "󰖔  Very warm   —  2700K, late night")
+    for i in "${!values[@]}"; do [ "${values[$i]}" = "$cur" ] && active="$i"; done
+    i=$(rofi_pick "Night light" "$active" "${labels[@]}") || return
+    [ -z "$i" ] && return
+    bash "$SCRIPTS/nightlight.sh" "${values[$i]}" && notify "Night light: $(nightlight_label)"
+}
+
 # ---------------------------------------------------------------- Main menu
 caffeine="OFF"; [ -f "$HOME/.cache/caffeine_active" ] && caffeine="ON"
 power=$(powerprofilesctl get 2>/dev/null || echo "n/a")
@@ -216,6 +239,7 @@ ENTRIES=(
     "wifi|󰤨  Wi-Fi                      —  Networks"
     "bluetooth|󰂯  Bluetooth                  —  Devices"
     "sound|󰕾  Sound                      —  Audio mixer"
+    "nightlight|󰖔  Night light                —  $(nightlight_label)"
     "dnd|󰂛  Do Not Disturb             —  $(dnd_state)"
     "caffeine|󰅶  Caffeine (stay awake)      —  ${caffeine}"
     "animations|󰘕  Animations                 —  $(animations_state)"
@@ -240,6 +264,7 @@ case "${keys[$i]}" in
     wifi)       bash "$SCRIPTS/wifi-menu.sh" ;;
     bluetooth)  bash "$SCRIPTS/bluetooth-menu.sh" ;;
     sound)      command -v pavucontrol &>/dev/null && { pavucontrol >/dev/null 2>&1 & } || notify "pavucontrol is not installed" ;;
+    nightlight) menu_nightlight ;;
     dnd)        swaync-client -d -sw >/dev/null 2>&1; notify "Do Not Disturb: $(dnd_state)" ;;
     caffeine)   bash "$SCRIPTS/caffeine-toggle.sh" ;;
     animations) toggle_animations ;;
