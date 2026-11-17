@@ -26,8 +26,12 @@ apply_theme() {
     # Ensure position is top
     sed -i -E 's/"position"[[:space:]]*:[[:space:]]*"[^"]*"/"position": "top"/' "$CONFIG" 2>/dev/null || true
 
-    # Ensure pywal colors link is in place
-    ln -sf "$WAL_CACHE/colors-waybar.css" "$WAYBAR_DIR/colors-waybar.css" 2>/dev/null || true
+    # Ensure pywal colors are in place (a regular file, not a symlink: apply-pywal-theme.sh
+    # updates it in place so Waybar's reload_style_on_change can see the change)
+    if [ -f "$WAL_CACHE/colors-waybar.css" ]; then
+        rm -f "$WAYBAR_DIR/colors-waybar.css"
+        cat "$WAL_CACHE/colors-waybar.css" > "$WAYBAR_DIR/colors-waybar.css"
+    fi
     
     pkill -x waybar 2>/dev/null || true
     sleep 0.15

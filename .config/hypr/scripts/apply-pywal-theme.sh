@@ -71,6 +71,17 @@ write_in_place() {
     cat "$1" > "$2"
 }
 
+# Waybar's reload_style_on_change reacts to the imported colors file unreliably (it ends up
+# showing the previous palette). Rewriting style.css itself, after the new colors are fully
+# on disk, makes Waybar re-read both files at the right moment. CSS-only, no restart/blink.
+poke_waybar_style() {
+    local style="$HOME/.config/waybar/style.css" tmp
+    [ -f "$style" ] || return 0
+    tmp=$(mktemp) || return 0
+    cat "$style" > "$tmp" && cat "$tmp" > "$style"
+    rm -f "$tmp"
+}
+
 apply_palette() {
     local pal="$1" f dir
     mkdir -p "$WAL_CACHE"
@@ -85,6 +96,7 @@ apply_palette() {
         write_in_place "$pal/colors-waybar.css" "$HOME/.config/$dir/colors-waybar.css" 2>/dev/null || true
     done
     ln -sf "$WAL_CACHE/cpmenu-layout" "$HOME/.config/cpmenu/layout" 2>/dev/null || true
+    poke_waybar_style
 
     mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"
     [ -f "$pal/gtk3.css" ] && cat "$pal/gtk3.css" > "$HOME/.config/gtk-3.0/gtk.css"
