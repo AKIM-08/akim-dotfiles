@@ -7,10 +7,7 @@
     "margin-bottom": 0,
     "reload_style_on_change": true,
     "modules-left": [
-        "clock",
-        "bluetooth",
-        "network",
-        "battery"
+        "clock"
     ],
     "modules-center": [
         "custom/pacman",
@@ -18,53 +15,129 @@
     ],
     "modules-right": [
         "custom/notification",
-        "tray"
+        "tray",
+        "group/system"
     ],
+
+    "group/system": {
+        "orientation": "horizontal",
+        "modules": [
+            "pulseaudio",
+            "backlight",
+            "bluetooth",
+            "network",
+            "battery"
+        ]
+    },
+
     "hyprland/workspaces": {
         "format": "{name}",
-        "format-icons": {
-            "active": "",
-            "default": "",
-            "empty": ""
-        },
+        "on-click": "activate",
+        "sort-by-number": true,
+        "show-special": false,
+        "tooltip": false,
         "persistent-workspaces": {
             "*": [1, 2, 3, 4, 5]
         }
     },
+
     "custom/notification": {
-        "tooltip": false,
-        "format": "",
+        "format": "{icon}",
+        "format-icons": {
+            "notification": "󰂚",
+            "none": "󰂜",
+            "dnd-notification": "󰂛",
+            "dnd-none": "󰂛",
+            "inhibited-notification": "󰂚",
+            "inhibited-none": "󰂜",
+            "dnd-inhibited-notification": "󰂛",
+            "dnd-inhibited-none": "󰂛"
+        },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
         "on-click": "swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "tooltip": true,
         "escape": true
     },
+
     "custom/pacman": {
         "format": "󰮯",
         "tooltip": false,
         "on-click": "~/.config/hypr/scripts/rofi-toggle.sh"
     },
+
     "clock": {
-        "format": "󰃭 {:%a %d %b  %I:%M:%S %p}",
-        "interval": 1,
-        "tooltip": false
+        "format": "󰥔 {:%H:%M  %a %d %b}",
+        "interval": 60,
+        "tooltip-format": "<tt>{calendar}</tt>",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "",
+            "on-scroll": 1,
+            "format": {
+                "today": "<b><u>{}</u></b>"
+            }
+        },
+        "actions": {
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        }
     },
+
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟 {volume}%",
+        "format-bluetooth": "󰂰 {volume}%",
+        "format-icons": {
+            "headphone": "󰋋",
+            "default": ["󰕿", "󰖀", "󰕾"]
+        },
+        "scroll-step": 5,
+        "on-click": "~/.config/hypr/scripts/volume-control.sh mute",
+        "on-click-right": "pavucontrol",
+        "on-scroll-up": "~/.config/hypr/scripts/volume-control.sh up",
+        "on-scroll-down": "~/.config/hypr/scripts/volume-control.sh down",
+        "tooltip-format": "{desc}\nScroll: volume  Click: mute  Right-click: mixer"
+    },
+
+    "backlight": {
+        "format": "{icon} {percent}%",
+        "format-icons": ["󰃞", "󰃟", "󰃠"],
+        "on-scroll-up": "~/.config/hypr/scripts/brightness-control.sh up",
+        "on-scroll-down": "~/.config/hypr/scripts/brightness-control.sh down",
+        "tooltip-format": "Brightness {percent}%\nScroll to adjust"
+    },
+
     "network": {
-        "format-wifi": "󰤨",
+        "format-wifi": "{icon}",
         "format-ethernet": "󰈀",
         "format-disconnected": "󰤭",
         "format-disabled": "󰤮",
-        "tooltip": false,
+        "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+        "tooltip-format-wifi": "{essid}  {signalStrength}%\n{ipaddr}",
+        "tooltip-format-ethernet": "{ifname}\n{ipaddr}",
+        "tooltip-format-disconnected": "Disconnected",
         "on-click": "kitty nmtui"
     },
+
     "bluetooth": {
         "format-on": "󰂯",
         "format-off": "󰂲",
         "format-disabled": "󰂲",
         "format-connected": "󰂱",
-        "tooltip": false,
+        "format-connected-battery": "󰂱 {device_battery_percentage}%",
+        "tooltip-format": "Bluetooth on\nNo device connected",
+        "tooltip-format-off": "Bluetooth off",
+        "tooltip-format-connected": "{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}",
+        "tooltip-format-enumerate-connected-battery": "{device_alias}  {device_battery_percentage}%",
         "on-click": "blueman-manager"
     },
+
     "battery": {
-        "interval": 1,
+        "interval": 30,
         "states": {
             "good": 95,
             "warning": 30,
@@ -77,9 +150,10 @@
         "format-full": "{capacity}% 󰁹",
         "format-icons": ["󰂃", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
         "tooltip": true,
-        "tooltip-format": "{capacity}%\nClick: Power Mode Menu",
+        "tooltip-format": "{capacity}%  {timeTo}\nClick: Power Mode Menu",
         "on-click": "~/.config/hypr/scripts/power-mode.sh menu"
     },
+
     "tray": {
         "icon-size": 16,
         "spacing": 8

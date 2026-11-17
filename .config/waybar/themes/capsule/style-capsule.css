@@ -16,13 +16,12 @@ window#waybar {
 
 /* Floating Modular Capsules */
 #clock,
-#bluetooth,
-#network,
-#battery,
 #custom-pacman,
 #workspaces,
 #custom-notification,
-#tray {
+#tray,
+#group-system,
+#system {
     background-color: alpha(@background, 0.78);
     color: @foreground;
     border: 1px solid alpha(@foreground, 0.12);
@@ -37,11 +36,36 @@ window#waybar {
 #custom-pacman:hover,
 #workspaces:hover,
 #custom-notification:hover,
-#bluetooth:hover,
-#network:hover,
-#battery:hover {
+#group-system:hover,
+#system:hover {
     background-color: alpha(@background, 0.92);
     border-color: @color1;
+}
+
+/* System capsule: volume, brightness, bluetooth, network, battery share one pill */
+#group-system,
+#system {
+    padding: 4px 6px;
+}
+
+#pulseaudio,
+#backlight,
+#bluetooth,
+#network,
+#battery {
+    background: transparent;
+    padding: 0 7px;
+    margin: 0;
+}
+
+#pulseaudio.muted {
+    color: alpha(@foreground, 0.45);
+}
+
+#backlight {
+    border-right: 1px solid alpha(@foreground, 0.14);
+    padding-right: 10px;
+    margin-right: 3px;
 }
 
 #custom-pacman {
@@ -52,29 +76,56 @@ window#waybar {
 
 #custom-notification {
     font-size: 15px;
-    color: @color2;
+    color: @foreground;
     padding: 4px 14px;
 }
 
-#workspaces {
-    padding: 2px 6px;
+/* Unread notifications: bell takes the accent color */
+#custom-notification.notification,
+#custom-notification.dnd-notification,
+#custom-notification.inhibited-notification {
+    color: @color1;
 }
 
+#custom-notification.dnd-none,
+#custom-notification.dnd-notification {
+    color: alpha(@foreground, 0.5);
+}
+
+#workspaces {
+    padding: 3px 5px;
+}
+
+/* Occupied workspaces are bright, empty ones dimmed, active one is a filled accent pill */
 #workspaces button {
-    padding: 2px 6px;
-    color: alpha(@foreground, 0.45);
+    padding: 1px 7px;
+    margin: 0 1px;
+    min-width: 14px;
+    color: @foreground;
+    background: transparent;
     border-radius: 8px;
     transition: all 0.2s ease;
 }
 
+#workspaces button.empty {
+    color: alpha(@foreground, 0.35);
+}
+
 #workspaces button.active {
-    color: @color1;
+    background-color: @color1;
+    color: @background;
     font-weight: 900;
+    padding: 1px 12px;
 }
 
 #workspaces button:hover {
     color: @foreground;
-    background-color: alpha(@foreground, 0.1);
+    background-color: alpha(@foreground, 0.12);
+}
+
+#workspaces button.active:hover {
+    background-color: @color1;
+    color: @background;
 }
 
 #battery {
