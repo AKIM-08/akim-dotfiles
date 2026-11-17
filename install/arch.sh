@@ -51,6 +51,11 @@ ARCH_PKGS=(
     tar
     xz
     fontconfig
+    udiskie
+    udisks2
+    gvfs-mtp
+    bolt
+    usbutils
 )
 
 if command -v pacman &>/dev/null; then

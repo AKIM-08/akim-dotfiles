@@ -14,6 +14,8 @@ exec-once = wl-paste --type text --watch cliphist store
 exec-once = wl-paste --type image --watch cliphist store
 exec-once = ~/.config/hypr/scripts/battery-hibernate-watch.sh
 exec-once = ~/.config/hypr/scripts/sync-app-icons.sh
+exec-once = udiskie --tray --notify
+exec-once = nice -n 19 ~/.config/hypr/scripts/apply-pywal-theme.sh --precache
 source = ~/.cache/wal/colors-hyprland.hl*
 source = ~/.cache/wal/colors-hyprland.conf*
 

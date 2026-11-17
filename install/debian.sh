@@ -130,6 +130,13 @@ APT_CORE_PKGS=(
     pulseaudio-utils
     ffmpeg
     x11-xserver-utils
+    udiskie
+    udisks2
+    gvfs-backends
+    gvfs-fuse
+    libmtp-runtime
+    bolt
+    usbutils
 )
 
 # 2b. Enable backports repository if applicable
