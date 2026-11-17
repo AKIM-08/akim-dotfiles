@@ -41,9 +41,20 @@ window#waybar.pos-right #workspaces button { margin: 1px 0; padding: 3px 4px; }
 #workspaces button:hover  { background: alpha(@foreground, 0.12); }
 #workspaces button.active { background: @color9; color: @background; }
 
+/* App icons: space them along the bar's direction, and set them apart from the workspaces */
+#taskbar { margin-left: 6px; }
+window#waybar.pos-left #taskbar,
+window#waybar.pos-right #taskbar { margin-left: 0; margin-top: 6px; }
+
 #taskbar button {
-    padding: 0 4px;
+    padding: 2px 4px;
+    margin: 0 1px;
     border-radius: 6px;
+}
+window#waybar.pos-left #taskbar button,
+window#waybar.pos-right #taskbar button {
+    padding: 4px 2px;
+    margin: 2px 0;
 }
 #taskbar button.active { background: alpha(@foreground, 0.14); }
 #taskbar button:hover  { background: alpha(@foreground, 0.1); }
