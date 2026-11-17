@@ -54,7 +54,7 @@ window#waybar.pos-right #network, window#waybar.pos-right #battery {
     font-size: 1px;
     color: transparent;
     padding: 0;
-    margin: 0 3px;
+    margin: 5px 3px;          /* absorbs the bar height so the bar stays 8px thick */
     min-width: 14px;
     min-height: 8px;
     border-radius: 999px;
@@ -70,7 +70,7 @@ window#waybar.pos-right #network, window#waybar.pos-right #battery {
     margin: 0;
 }
 window#waybar.pos-left #workspaces button,
-window#waybar.pos-right #workspaces button { margin: 3px 0; min-width: 8px; min-height: 14px; }
+window#waybar.pos-right #workspaces button { margin: 3px 5px; min-width: 8px; min-height: 14px; }
 #workspaces button.empty  { background: alpha(@foreground, 0.2); }
 #workspaces button:hover  { background: @color2; }
 #workspaces button.active { background: @color1; min-width: 34px; }

@@ -29,11 +29,13 @@ window#waybar.pos-right #network, window#waybar.pos-right #custom-notification {
 /* Workspaces: dots; the active one stretches. The glyph is hidden, the button is the dot. */
 #workspaces { padding: 0 6px; }
 window#waybar.pos-left #workspaces, window#waybar.pos-right #workspaces { padding: 6px 0; }
+/* Waybar stretches buttons to the bar's height; the 5px vertical margins absorb that so the
+   button stays an 8px dot (22x8 pill when active) */
 #workspaces button {
     font-size: 1px;
     color: transparent;
     padding: 0;
-    margin: 0 4px;
+    margin: 5px 3px;
     min-width: 8px;
     min-height: 8px;
     border-radius: 999px;
@@ -50,7 +52,7 @@ window#waybar.pos-left #workspaces, window#waybar.pos-right #workspaces { paddin
     margin: 0;
 }
 window#waybar.pos-left #workspaces button,
-window#waybar.pos-right #workspaces button { margin: 4px 0; }
+window#waybar.pos-right #workspaces button { margin: 3px 5px; }
 #workspaces button:not(.empty) { background: alpha(@foreground, 0.75); }
 #workspaces button:hover       { background: @foreground; }
 #workspaces button.active      { background: @color9; min-width: 22px; }
