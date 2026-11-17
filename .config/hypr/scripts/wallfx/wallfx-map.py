@@ -38,6 +38,10 @@ HOME = Path.home()
 CACHE = HOME / ".cache" / "wallfx"
 DATA = HOME / ".local" / "share" / "wallfx"
 MODEL = DATA / "isnet-anime.onnx"
+# Optional second opinion for characters the anime model can't see (painterly, realistic,
+# 3D art). Same family/input as the anime model, different normalization mean.
+GENERAL_MODEL = DATA / "isnet-general-use.onnx"
+MODEL_MEANS = {"anime": (0.485, 0.456, 0.406), "general": (0.5, 0.5, 0.5)}
 WALL_DIR = HOME / "Pictures" / "wallpapers"
 EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
@@ -171,42 +175,85 @@ def subject_map(mask: np.ndarray, seed: int) -> tuple:
 
 
 # --------------------------------------------------------------------------- model
-def segment(path: Path, force: bool = False):
-    """(character mask MAP_H x MAP_W in 0..1, or None; a short explanation)."""
-    import onnxruntime as ort    # only in the wallfx venv
+def installed_models() -> list:
+    """Model names in the order they are tried (the anime model first)."""
+    return [n for n, f in (("anime", MODEL), ("general", GENERAL_MODEL)) if f.is_file()]
 
+
+def run_model(name: str, framed: Image.Image) -> np.ndarray:
+    """Raw 1024x1024 prediction (0..1) of one model for the framed wallpaper."""
+    import onnxruntime as ort    # only in the wallfx venv
     opts = ort.SessionOptions()
     opts.intra_op_num_threads = max(1, (os.cpu_count() or 2) // 2)    # leave CPU for the user
-    sess = ort.InferenceSession(str(MODEL), sess_options=opts, providers=["CPUExecutionProvider"])
+    path = MODEL if name == "anime" else GENERAL_MODEL
+    sess = ort.InferenceSession(str(path), sess_options=opts, providers=["CPUExecutionProvider"])
+    x = np.asarray(framed.resize((1024, 1024), Image.Resampling.LANCZOS), dtype=np.float32)
+    x = x / max(float(x.max()), 1e-6)
+    x = x - np.array(MODEL_MEANS[name], dtype=np.float32)          # std is 1.0 for both
+    x = np.expand_dims(x.transpose(2, 0, 1), 0).astype(np.float32)
+    return sess.run(None, {sess.get_inputs()[0].name: x})[0][0, 0]
 
+
+def otsu(values: np.ndarray) -> float:
+    """Threshold that best splits values (0..1) into two groups."""
+    hist, edges = np.histogram(values, bins=64, range=(0.0, 1.0))
+    hist = hist.astype(np.float64)
+    centers = (edges[:-1] + edges[1:]) / 2
+    w0 = np.cumsum(hist)
+    w1 = w0[-1] - w0
+    m0 = np.cumsum(hist * centers) / np.maximum(w0, 1)
+    m1 = (np.sum(hist * centers) - np.cumsum(hist * centers)) / np.maximum(w1, 1)
+    return float(centers[int(np.argmax(w0 * w1 * (m0 - m1) ** 2))])
+
+
+def segment(path: Path, force: bool = False):
+    """(character mask MAP_H x MAP_W in 0..1, or None; a short explanation).
+
+    The explanation ends with "(models: ...)" so a later run knows whether a newly
+    installed model deserves a second look."""
     img = Image.open(path)
     img.draft("RGB", (2048, 2048))
     framed = cover(img, MAP_W * 2, MAP_H * 2)        # same framing as the wallpaper
-    x = np.asarray(framed.resize((1024, 1024), Image.Resampling.LANCZOS), dtype=np.float32)
-    x = x / max(float(x.max()), 1e-6)
-    x = (x - np.array([0.485, 0.456, 0.406], dtype=np.float32)) / np.array([1.0, 1.0, 1.0], dtype=np.float32)
-    x = np.expand_dims(x.transpose(2, 0, 1), 0).astype(np.float32)
+    names = installed_models()
+    tag = f"(models: {'+'.join(names)})"
+    tried, best = [], None
+    for name in names:
+        pred = run_model(name, framed)
+        confidence = float(pred.max())
+        tried.append(f"{name} {confidence:.2f}")
+        if best is None or confidence > best[1]:
+            best = (pred, confidence, name)
+        if confidence < MIN_CONFIDENCE:
+            continue
+        norm = (pred - pred.min()) / max(float(pred.max() - pred.min()), 1e-6)
+        mask = np.array(Image.fromarray((norm * 255).astype(np.uint8)).resize((MAP_W, MAP_H), Image.Resampling.BILINEAR),
+                        dtype=np.float32) / 255.0
+        share = float((mask > 0.5).mean())
+        if SUBJECT_MIN <= share <= SUBJECT_MAX:
+            return mask, f"{name} model: covers {share:.0%}, confidence {confidence:.2f}"
+        tried[-1] += f" but covers {share:.0%}"
 
-    pred = sess.run(None, {sess.get_inputs()[0].name: x})[0][0, 0]
-    confidence = float(pred.max())
-    if confidence < MIN_CONFIDENCE and not force:
-        return None, f"model unsure (confidence {confidence:.2f} < {MIN_CONFIDENCE})"
-    pred = (pred - pred.min()) / max(float(pred.max() - pred.min()), 1e-6)
-    mask = np.asarray(Image.fromarray((pred * 255).astype(np.uint8)).resize((MAP_W, MAP_H), Image.Resampling.BILINEAR),
-                      dtype=np.float32) / 255.0
-    share = float((mask > 0.5).mean())
-    info = f"covers {share:.0%}, confidence {confidence:.2f}"
-    if share < 0.002:
-        return None, f"nothing found ({info})"
-    if not force and not (SUBJECT_MIN <= share <= SUBJECT_MAX):
-        return None, f"outside {SUBJECT_MIN:.0%}-{SUBJECT_MAX:.0%} ({info})"
-    return mask, info
+    if force and best is not None:
+        # The user says there is a character: take the clearest split of the best guess
+        pred, confidence, name = best
+        norm = (pred - pred.min()) / max(float(pred.max() - pred.min()), 1e-6)
+        mask = np.array(Image.fromarray((norm * 255).astype(np.uint8)).resize((MAP_W, MAP_H), Image.Resampling.BILINEAR),
+                        dtype=np.float32) / 255.0
+        cut = otsu(mask)
+        mask = (mask > cut).astype(np.float32)
+        share = float(mask.mean())
+        if 0.002 <= share <= 0.98:
+            return mask, f"forced, {name} model: covers {share:.0%}"
+        return None, f"nothing usable even when forced ({', '.join(tried)}) {tag}"
+
+    best_conf = best[1] if best else 0.0
+    return None, f"model unsure (confidence {best_conf:.2f} < {MIN_CONFIDENCE}; tried {', '.join(tried)}) {tag}"
 
 
 def have_model() -> bool:
     # find_spec doesn't import onnxruntime (slow); this runs on every wallpaper switch
     import importlib.util
-    return MODEL.is_file() and importlib.util.find_spec("onnxruntime") is not None
+    return bool(installed_models()) and importlib.util.find_spec("onnxruntime") is not None
 
 
 # --------------------------------------------------------------------------- commands
@@ -217,12 +264,18 @@ def paths_for(image: Path) -> dict:
 
 
 def decided_no_subject(marker: Path) -> bool:
-    """A "no character" verdict still holds (an "unsure" one is retried if the confidence
-    it recorded now passes MIN_CONFIDENCE, e.g. after the threshold was lowered)."""
+    """A "no character" verdict still holds. It is retried when a model installed since then
+    hasn't seen the image yet, or when its recorded confidence now passes MIN_CONFIDENCE
+    (e.g. after the threshold was lowered)."""
     if not marker.exists():
         return False
     import re
-    found = re.search(r"model unsure \(confidence ([0-9.]+)", marker.read_text())
+    text = marker.read_text()
+    seen = re.search(r"\(models: ([a-z+]*)\)", text)
+    seen_models = set(seen.group(1).split("+")) if seen else {"anime"}
+    if set(installed_models()) - seen_models:
+        return False
+    found = re.search(r"model unsure \(confidence ([0-9.]+)", text)
     return not (found and float(found.group(1)) >= MIN_CONFIDENCE)
 
 
@@ -294,6 +347,21 @@ def status() -> None:
         print(f"  {f.name:40.40}  {state}")
 
 
+def find_image(arg: str):
+    """The image path, also when the name's capitals differ (kuri.jpeg -> Kuri.jpeg)."""
+    path = Path(arg).expanduser()
+    if path.is_file():
+        return path.resolve()
+    folder = path.parent if str(path.parent) not in ("", ".") or path.parent.is_dir() else WALL_DIR
+    for candidate in (folder, WALL_DIR):
+        if candidate.is_dir():
+            for f in candidate.iterdir():
+                if f.name.lower() == path.name.lower() and f.is_file():
+                    return f.resolve()
+    print(f"No such image: {path} (check the name with: ls {WALL_DIR})", file=sys.stderr)
+    return None
+
+
 def main(argv: list) -> int:
     if len(argv) >= 1 and argv[0] == "precache":
         precache()
@@ -302,7 +370,9 @@ def main(argv: list) -> int:
         status()
         return 0
     if len(argv) == 2 and argv[0] == "force":
-        image = Path(argv[1]).resolve()
+        image = find_image(argv[1])
+        if image is None:
+            return 1
         if not have_model():
             print("The character model isn't installed: run wallfx-setup.sh first", file=sys.stderr)
             return 1
@@ -310,9 +380,8 @@ def main(argv: list) -> int:
         print(out if out.name.endswith("-subject.png") else f"No character found at all in {image.name}")
         return 0
     if len(argv) == 2 and argv[0] in ("get", "build"):
-        image = Path(argv[1]).resolve()
-        if not image.is_file():
-            print(f"No such image: {image}", file=sys.stderr)
+        image = find_image(argv[1])
+        if image is None:
             return 1
         print(get(image) if argv[0] == "get" else build(image))
         return 0

@@ -245,10 +245,10 @@ menu_transition() {
             "󰸉  Classic             —  awww wipes and waves")
     actions=(outline classic)
     if [ -s "$WALLFX_DATA/isnet-anime.onnx" ]; then
-        labels+=("󰆴  Remove character detection  —  Frees ~230 MB")
+        labels+=("󰆴  Remove character detection  —  Frees ~400 MB")
         actions+=(remove)
     else
-        labels+=("󰇚  Set up character detection  —  One-time ~230 MB download")
+        labels+=("󰇚  Set up character detection  —  One-time ~400 MB download")
         actions+=(setup)
     fi
     active=0; [ "$mode" = classic ] && active=1
