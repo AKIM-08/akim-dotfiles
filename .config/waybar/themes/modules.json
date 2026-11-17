@@ -171,7 +171,8 @@
         "format": " {title}",
         "format-paused": " {title}",
         "title-len": 24,
-        "tooltip-format": "{artist} - {title}\nClick: play/pause  Right-click: next  Middle-click: previous"
+        "tooltip-format": "{artist} - {title}\nClick: play/pause  Right-click: next  Middle-click: previous",
+        "format-stopped": ""
     },
     "cpu": {
         "interval": 3,
