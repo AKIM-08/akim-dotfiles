@@ -266,6 +266,9 @@ echo "--> Generating initial color scheme from wallpaper..."
 if [ -x "$HOME/.config/hypr/scripts/apply-pywal-theme.sh" ]; then
     "$HOME/.config/hypr/scripts/apply-pywal-theme.sh" "$TARGET_WALLPAPER" \
         || warn "Initial pywal theme generation failed — run: ~/.config/hypr/scripts/apply-pywal-theme.sh"
+    # Pre-generate palettes for the other wallpapers so switching is instant
+    echo "--> Caching color palettes for all wallpapers (background)..."
+    nohup nice -n 19 "$HOME/.config/hypr/scripts/apply-pywal-theme.sh" --precache >/dev/null 2>&1 &
 fi
 
 # 11. Configure Nautilus 'Open in Kitty' extension with keyboard shortcut

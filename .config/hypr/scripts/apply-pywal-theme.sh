@@ -1,31 +1,111 @@
 #!/bin/bash
-# apply-pywal-theme.sh - Regenerate UI colors from the active wallpaper via pywal16
-# Usage: apply-pywal-theme.sh [path/to/wallpaper.jpg]
+# apply-pywal-theme.sh - Apply UI colors generated from a wallpaper via pywal16
+# Usage:
+#   apply-pywal-theme.sh [path/to/wallpaper.jpg]   apply the theme for one wallpaper
+#   apply-pywal-theme.sh --precache                build missing palettes for every wallpaper
+#
+# Palettes are generated once per wallpaper and cached in ~/.cache/wal/palettes/<key>/.
+# Switching to an already-cached wallpaper only copies files and recolors live apps
+# in place (no Hyprland reload, no Waybar restart).
 
 set -uo pipefail
 
-WALLPAPER="${1:-$HOME/Pictures/wallpapers/current.jpg}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_PATH="$SCRIPT_DIR/$(basename "${BASH_SOURCE[0]}")"
 WAL_CACHE="$HOME/.cache/wal"
+PALETTE_ROOT="$WAL_CACHE/palettes"
+WALLPAPER_DIR="$HOME/Pictures/wallpapers"
+# Bump to invalidate every cached palette after changing how palettes are built.
+CACHE_VERSION=1
 
-link_pywal_css() {
-    local dir
-    for dir in waybar swaync cpmenu; do
-        mkdir -p "$HOME/.config/$dir"
-        cp "$WAL_CACHE/colors-waybar.css" "$HOME/.config/$dir/colors-waybar.css" 2>/dev/null || true
-        ln -sf "$WAL_CACHE/colors-waybar.css" "$HOME/.config/$dir/colors-waybar.css" 2>/dev/null || true
-    done
-    ln -sf "$WAL_CACHE/cpmenu-layout" "$HOME/.config/cpmenu/layout" 2>/dev/null || true
+# Cache key: wallpaper identity + anything that changes the generated files
+# (pywal templates, the fallback extractor and this script's GTK CSS).
+palette_key() {
+    local real stamp
+    real=$(readlink -f "$1") || return 1
+    stamp=$(find "$HOME/.config/wal/templates" "$SCRIPT_DIR/pywal-fallback.py" "$SCRIPT_PATH" \
+        -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1)
+    printf '%s|%s|%s|%s' "$CACHE_VERSION" "$real" "$(stat -Lc '%s %Y' "$real")" "$stamp" \
+        | md5sum | cut -c1-16
 }
 
-apply_gtk_colors() {
-    local gtk_css="$WAL_CACHE/colors-gtk.css"
-    [ -f "$gtk_css" ] || return 0
+# Generate a palette into $2 without touching the live ~/.cache/wal.
+build_palette() {
+    local wallpaper="$1" out="$2" tmp src
+    tmp=$(mktemp -d) || return 1
+    src="$tmp/wal"
+
+    # -s/-t: no terminal escape sequences, -e: no gtk/xrdb reloads. We recolor apps ourselves.
+    if ! XDG_CACHE_HOME="$tmp" PYWAL_CACHE_DIR="$src" wal -i "$wallpaper" -n -s -t -e -q --cols16 >/dev/null 2>&1 \
+        || [ ! -f "$src/colors.json" ]; then
+        echo "WARNING: pywal16 failed, extracting palette via fallback..." >&2
+        rm -rf "$src"
+        if ! PYWAL_CACHE_DIR="$src" python3 "$SCRIPT_DIR/pywal-fallback.py" "$wallpaper"; then
+            rm -rf "$tmp"
+            return 1
+        fi
+    fi
+
+    # Hyprland 0.57+ reads colors-hyprland.hl
+    [ -f "$src/colors-hyprland.conf" ] && cp "$src/colors-hyprland.conf" "$src/colors-hyprland.hl"
+    build_gtk_css "$src"
+    rm -rf "$src/schemes"
+
+    # Publish atomically so a concurrent reader never sees a half-built palette.
+    mkdir -p "$PALETTE_ROOT"
+    if ! mv -T "$src" "$out" 2>/dev/null; then
+        [ -f "$out/colors.json" ] || { rm -rf "$tmp"; return 1; }   # lost a race, other copy is fine
+    fi
+    rm -rf "$tmp"
+}
+
+# Replace a file atomically (readers never see it half-written).
+install_file() {
+    cp -f "$1" "$2.tmp.$$" && mv -f "$2.tmp.$$" "$2"
+}
+
+# Rewrite a file in place. Used for files watched by apps (Waybar's reload_style_on_change),
+# so the watcher sees a normal modification of the file it already watches.
+write_in_place() {
+    [ -L "$2" ] && rm -f "$2"   # migrate old symlinks into ~/.cache/wal
+    cat "$1" > "$2"
+}
+
+apply_palette() {
+    local pal="$1" f dir
+    mkdir -p "$WAL_CACHE"
+    for f in "$pal"/*; do
+        [ -f "$f" ] || continue
+        case "$(basename "$f")" in gtk3.css|gtk4.css) continue ;; esac
+        install_file "$f" "$WAL_CACHE/$(basename "$f")"
+    done
+
+    for dir in waybar swaync cpmenu; do
+        mkdir -p "$HOME/.config/$dir"
+        write_in_place "$pal/colors-waybar.css" "$HOME/.config/$dir/colors-waybar.css" 2>/dev/null || true
+    done
+    ln -sf "$WAL_CACHE/cpmenu-layout" "$HOME/.config/cpmenu/layout" 2>/dev/null || true
+
     mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"
-    
+    [ -f "$pal/gtk3.css" ] && cat "$pal/gtk3.css" > "$HOME/.config/gtk-3.0/gtk.css"
+    [ -f "$pal/gtk4.css" ] && cat "$pal/gtk4.css" > "$HOME/.config/gtk-4.0/gtk.css"
+
+    if [ -f "$pal/qt-pywal.conf" ]; then
+        mkdir -p "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
+        cp "$pal/qt-pywal.conf" "$HOME/.config/qt5ct/colors/pywal.conf" 2>/dev/null || true
+        cp "$pal/qt-pywal.conf" "$HOME/.config/qt6ct/colors/pywal.conf" 2>/dev/null || true
+    fi
+}
+
+# Build the full GTK3/GTK4 stylesheets for a palette into $1/gtk3.css and $1/gtk4.css.
+build_gtk_css() {
+    local out="$1"
+    local gtk_css="$out/colors-gtk.css"
+    [ -f "$gtk_css" ] || return 0
+
     # GTK3 Styling (Blueman, Pavucontrol, File Choosers, etc.)
-    cat "$gtk_css" > "$HOME/.config/gtk-3.0/gtk.css"
-    cat << 'EOF' >> "$HOME/.config/gtk-3.0/gtk.css"
+    cat "$gtk_css" > "$out/gtk3.css"
+    cat << 'EOF' >> "$out/gtk3.css"
 
 /* Global Window and Background */
 window, .background, dialog, window.dialog, messagedialog, window.messagedialog {
@@ -490,8 +570,8 @@ window.swappy button:checked {
 EOF
 
     # GTK4 et Libadwaita (Nautilus, etc.)
-    cat "$gtk_css" > "$HOME/.config/gtk-4.0/gtk.css"
-    cat << 'EOF' >> "$HOME/.config/gtk-4.0/gtk.css"
+    cat "$gtk_css" > "$out/gtk4.css"
+    cat << 'EOF' >> "$out/gtk4.css"
 @define-color window_bg_color @theme_bg_color;
 @define-color window_fg_color @theme_fg_color;
 @define-color view_bg_color @theme_base_color;
@@ -556,72 +636,116 @@ entry {
 }
 EOF
 
-    local gtk_theme
-    gtk_theme=$(grep '^gtk-theme-name=' "$HOME/.config/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)
-    if [ -z "$gtk_theme" ] || { [ ! -d "/usr/share/themes/$gtk_theme" ] && [ ! -d "$HOME/.themes/$gtk_theme" ] && [ ! -d "$HOME/.local/share/themes/$gtk_theme" ]; }; then
-        gtk_theme="Adwaita-dark"
-    fi
-    if command -v gsettings &>/dev/null; then
-        gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11' 2>/dev/null || true
-    fi
 }
 
-apply_qt_colors() {
-    local qt_conf="$WAL_CACHE/qt-pywal.conf"
-    [ -f "$qt_conf" ] || return 0
-    mkdir -p "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
-    cp "$qt_conf" "$HOME/.config/qt5ct/colors/pywal.conf" 2>/dev/null || true
-    cp "$qt_conf" "$HOME/.config/qt6ct/colors/pywal.conf" 2>/dev/null || true
-}
-
+# Recolor running apps in place. Nothing here restarts or re-parses a whole config.
 reload_ui() {
+    # Hyprland: only the active border uses pywal colors, so set it directly instead of
+    # `hyprctl reload` (which re-applies monitors, animations and rules and visibly flickers).
+    # The sourced colors file is already updated, so the next real reload stays consistent.
     if pgrep -x Hyprland >/dev/null 2>&1; then
-        hyprctl reload 2>/dev/null || true
+        local conf="$WAL_CACHE/colors-hyprland.conf" border out
+        border=$(awk '
+            $2 == "=" { v[$1] = $3 }
+            END { printf "%s %s %s %s %s %s 45deg", v["$color1"], v["$color3"], v["$color5"], v["$color7"], v["$color9"], v["$color11"] }
+        ' "$conf" 2>/dev/null)
+        out=$(hyprctl keyword general:col.active_border "$border" 2>&1)
+        if [ "$out" != "ok" ]; then
+            hyprctl reload >/dev/null 2>&1 || true
+        fi
     fi
-    if pgrep -x waybar >/dev/null 2>&1; then
-        pkill -SIGUSR2 waybar 2>/dev/null || true
-    fi
+
+    # Waybar: every theme sets "reload_style_on_change": true, so it restyles itself when
+    # colors-waybar.css changes. No SIGUSR2 (that restarts the bar and makes it blink).
+
     if pgrep -x swaync >/dev/null 2>&1 && command -v swaync-client &>/dev/null; then
-        timeout 2 swaync-client --reload-css 2>/dev/null || true
+        timeout 2 swaync-client --reload-css >/dev/null 2>&1 || true
     fi
+
+    # Kitty re-reads its config (which includes colors-kitty.conf). `kitty @` can't be used
+    # from a keybind: there's no listen_on socket, only the in-window tty channel.
     if pgrep -x kitty >/dev/null 2>&1; then
-        pkill -SIGUSR1 kitty 2>/dev/null || true
-        command -v kitty &>/dev/null && kitty @ set-colors --all --configured "$WAL_CACHE/colors-kitty.conf" 2>/dev/null || true
+        pkill -SIGUSR1 -x kitty 2>/dev/null || true
     fi
 }
+
+# Slow or cosmetic steps that nobody should wait on. Runs after the UI is recolored.
+background_tasks() {
+    (
+        exec 8>&- 9>&-   # release the apply/precache locks; nothing should wait on this
+        command -v pywal-discord &>/dev/null && pywal-discord -t default
+        timeout 3 python3 "$SCRIPT_DIR/apply-papirus-color.py"
+
+        local gtk_theme
+        gtk_theme=$(grep '^gtk-theme-name=' "$HOME/.config/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)
+        if [ -z "$gtk_theme" ] || { [ ! -d "/usr/share/themes/$gtk_theme" ] && [ ! -d "$HOME/.themes/$gtk_theme" ] && [ ! -d "$HOME/.local/share/themes/$gtk_theme" ]; }; then
+            gtk_theme="Adwaita-dark"
+        fi
+        if command -v gsettings &>/dev/null; then
+            gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme"
+            gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
+            gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+            gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11'
+        fi
+    ) >/dev/null 2>&1 &
+    disown
+}
+
+list_wallpapers() {
+    find -L "$WALLPAPER_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+        ! -name 'current.jpg' 2>/dev/null | sort
+}
+
+# Build palettes for every wallpaper that doesn't have one yet, then drop stale ones.
+precache() {
+    mkdir -p "$PALETTE_ROOT"
+    exec 9>"$PALETTE_ROOT/.precache.lock"
+    flock -n 9 || exit 0   # another precache is already running
+
+    local img key keep=" "
+    while IFS= read -r img; do
+        key=$(palette_key "$img") || continue
+        keep+="$key "
+        [ -f "$PALETTE_ROOT/$key/colors.json" ] && continue
+        echo "--> Caching palette for $(basename "$img")"
+        build_palette "$img" "$PALETTE_ROOT/$key" || echo "WARNING: failed to build palette for $img" >&2
+    done < <(list_wallpapers)
+
+    # Remove palettes that no longer match a wallpaper here and haven't been used in 30 days
+    # (palettes for images picked from elsewhere via Waypaper survive while in use).
+    local d
+    while IFS= read -r d; do
+        [[ "$keep" == *" $(basename "$d") "* ]] || rm -rf "$d"
+    done < <(find "$PALETTE_ROOT" -mindepth 1 -maxdepth 1 -type d -mtime +30)
+}
+
+if [ "${1:-}" = "--precache" ]; then
+    precache
+    exit 0
+fi
+
+WALLPAPER="${1:-$WALLPAPER_DIR/current.jpg}"
 
 if [ ! -f "$WALLPAPER" ]; then
     notify-send "Theme" "Wallpaper not found: $WALLPAPER" -u critical 2>/dev/null || true
     exit 1
 fi
 
-mkdir -p "$WAL_CACHE"
+mkdir -p "$WAL_CACHE" "$PALETTE_ROOT"
 
-# Extraction des couleurs directement depuis l'image de fond d'écran active
-if wal -i "$WALLPAPER" -n -q --cols16 2>/dev/null; then
-    :
-elif wal -i "$WALLPAPER" -n --cols16 2>/dev/null; then
-    :
-else
-    echo "WARNING: pywal16 failed, extracting palette via fallback..." >&2
-    python3 "$SCRIPT_DIR/pywal-fallback.py" "$WALLPAPER" || exit 1
+# Serialize applies so rapid wallpaper switches can't interleave their writes.
+exec 8>"$WAL_CACHE/.apply.lock"
+flock 8
+
+KEY=$(palette_key "$WALLPAPER") || exit 1
+PALETTE="$PALETTE_ROOT/$KEY"
+
+if [ ! -f "$PALETTE/colors.json" ]; then
+    build_palette "$WALLPAPER" "$PALETTE" || exit 1
 fi
+touch "$PALETTE"   # mark as recently used for pruning
 
-# Dupliquer colors-hyprland.conf vers colors-hyprland.hl pour Hyprland 0.57+
-if [ -f "$WAL_CACHE/colors-hyprland.conf" ]; then
-    cp "$WAL_CACHE/colors-hyprland.conf" "$WAL_CACHE/colors-hyprland.hl"
-fi
-
-link_pywal_css
-apply_gtk_colors
-apply_qt_colors
-command -v pywal-discord &>/dev/null && pywal-discord -t default
-
-# Recolorer les dossiers Papirus silencieusement sans bloquer
-timeout 3 python3 "$SCRIPT_DIR/apply-papirus-color.py" 2>/dev/null || true
-
+apply_palette "$PALETTE"
 reload_ui
+background_tasks
 echo "--> Theme applied successfully."

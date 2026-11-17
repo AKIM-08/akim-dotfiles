@@ -2,12 +2,14 @@
 """Extract a 16-color palette from a wallpaper and write pywal cache files."""
 
 import json
+import os
 import sys
 from pathlib import Path
 
 from PIL import Image
 
-WAL_DIR = Path.home() / ".cache" / "wal"
+# apply-pywal-theme.sh builds palettes in a temp dir and passes it here.
+WAL_DIR = Path(os.environ.get("PYWAL_CACHE_DIR") or Path.home() / ".cache" / "wal")
 
 
 def hex_rgb(r: int, g: int, b: int) -> str:
