@@ -3,7 +3,7 @@
     "x-floating": false,
     "modules-left": ["custom/launcher", "hyprland/workspaces"],
     "modules-center": ["hyprland/window"],
-    "modules-right": ["tray", "group/system", "custom/notification", "clock"],
+    "modules-right": ["custom/media", "tray", "group/system", "custom/notification", "clock"],
 
     "clock": { "format": "{:%H:%M}" },
 

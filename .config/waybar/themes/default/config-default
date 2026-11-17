@@ -4,7 +4,7 @@
 {
     "modules-left": ["custom/launcher", "clock", "tray"],
     "modules-center": ["hyprland/workspaces", "wlr/taskbar"],
-    "modules-right": ["custom/notification", "group/system"],
+    "modules-right": ["custom/media", "custom/notification", "group/system"],
 
     "tray": { "icon-size": 15, "spacing": 8 }
 }

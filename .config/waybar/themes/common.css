@@ -59,6 +59,10 @@ tooltip label {
 #custom-notification.dnd-none,
 #custom-notification.dnd-notification { color: alpha(@foreground, 0.5); }
 
+/* Now playing (scripts/media.sh): hidden when nothing plays */
+#custom-media        { color: alpha(@foreground, 0.85); font-weight: normal; }
+#custom-media.paused { color: alpha(@foreground, 0.5); }
+
 #tray > .passive        { -gtk-icon-effect: dim; }
 #tray > .needs-attention { -gtk-icon-effect: highlight; }
 

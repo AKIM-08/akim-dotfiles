@@ -1,7 +1,7 @@
 // Zen: one centered island (time, workspace dots, battery); the rest slides out of a drawer on hover.
 {
     "modules-left": [],
-    "modules-center": ["clock", "hyprland/workspaces", "battery", "group/zen"],
+    "modules-center": ["clock", "hyprland/workspaces", "custom/media", "battery", "group/zen"],
     "modules-right": [],
 
     "clock": { "format": "{:%H:%M}" },

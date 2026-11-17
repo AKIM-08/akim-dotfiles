@@ -10,14 +10,14 @@
 window#waybar.pos-left .modules-center,
 window#waybar.pos-right .modules-center { padding: 14px 4px; }
 
-#clock, #battery, #custom-zen-handle,
+#clock, #battery, #custom-zen-handle, #custom-media,
 #pulseaudio, #backlight, #bluetooth, #network, #custom-notification {
     padding: 0 6px;
 }
-window#waybar.pos-left #clock, window#waybar.pos-left #battery, window#waybar.pos-left #custom-zen-handle,
+window#waybar.pos-left #clock, window#waybar.pos-left #battery, window#waybar.pos-left #custom-zen-handle, window#waybar.pos-left #custom-media,
 window#waybar.pos-left #pulseaudio, window#waybar.pos-left #backlight, window#waybar.pos-left #bluetooth,
 window#waybar.pos-left #network, window#waybar.pos-left #custom-notification,
-window#waybar.pos-right #clock, window#waybar.pos-right #battery, window#waybar.pos-right #custom-zen-handle,
+window#waybar.pos-right #clock, window#waybar.pos-right #battery, window#waybar.pos-right #custom-zen-handle, window#waybar.pos-right #custom-media,
 window#waybar.pos-right #pulseaudio, window#waybar.pos-right #backlight, window#waybar.pos-right #bluetooth,
 window#waybar.pos-right #network, window#waybar.pos-right #custom-notification {
     padding: 5px 0;

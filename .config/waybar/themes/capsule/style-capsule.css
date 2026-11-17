@@ -5,6 +5,7 @@
 #clock,
 #custom-launcher,
 #workspaces,
+#custom-media,
 #custom-notification,
 #tray,
 #group-system,
@@ -19,10 +20,10 @@
     transition: all 0.3s ease;
 }
 window#waybar.pos-left #clock, window#waybar.pos-left #custom-launcher, window#waybar.pos-left #workspaces,
-window#waybar.pos-left #custom-notification, window#waybar.pos-left #tray,
+window#waybar.pos-left #custom-notification, window#waybar.pos-left #custom-media, window#waybar.pos-left #tray,
 window#waybar.pos-left #group-system, window#waybar.pos-left #system,
 window#waybar.pos-right #clock, window#waybar.pos-right #custom-launcher, window#waybar.pos-right #workspaces,
-window#waybar.pos-right #custom-notification, window#waybar.pos-right #tray,
+window#waybar.pos-right #custom-notification, window#waybar.pos-right #custom-media, window#waybar.pos-right #tray,
 window#waybar.pos-right #group-system, window#waybar.pos-right #system {
     padding: 10px 4px;
 }
@@ -30,6 +31,7 @@ window#waybar.pos-right #group-system, window#waybar.pos-right #system {
 #clock:hover,
 #custom-launcher:hover,
 #workspaces:hover,
+#custom-media:hover,
 #custom-notification:hover,
 #group-system:hover,
 #system:hover {

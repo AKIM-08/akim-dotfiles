@@ -2,5 +2,5 @@
 {
     "modules-left": ["clock"],
     "modules-center": ["custom/launcher", "hyprland/workspaces"],
-    "modules-right": ["custom/notification", "tray", "group/system"]
+    "modules-right": ["custom/media", "custom/notification", "tray", "group/system"]
 }

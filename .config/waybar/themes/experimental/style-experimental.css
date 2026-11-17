@@ -43,8 +43,6 @@ window#waybar.pos-right #network, window#waybar.pos-right #battery {
     padding: 5px 0;
 }
 
-#custom-media          { color: alpha(@foreground, 0.85); font-weight: normal; }
-#custom-media.paused   { color: alpha(@foreground, 0.5); }
 #cpu, #memory   { color: @color9; font-size: 12px; padding: 0 1px; }
 #tray           { opacity: 0.7; }
 #battery        { color: @color9; }

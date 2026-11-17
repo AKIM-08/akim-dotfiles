@@ -14,15 +14,15 @@ window#waybar.pos-right .modules-left, window#waybar.pos-right .modules-center, 
     padding: 8px 4px;
 }
 
-#custom-launcher, #clock, #tray, #custom-notification,
+#custom-launcher, #clock, #tray, #custom-notification, #custom-media,
 #pulseaudio, #backlight, #bluetooth, #network, #battery, #taskbar {
     padding: 0 7px;
 }
 window#waybar.pos-left #custom-launcher,  window#waybar.pos-left #clock,  window#waybar.pos-left #tray,
-window#waybar.pos-left #custom-notification, window#waybar.pos-left #pulseaudio, window#waybar.pos-left #backlight,
+window#waybar.pos-left #custom-notification, window#waybar.pos-left #custom-media, window#waybar.pos-left #pulseaudio, window#waybar.pos-left #backlight,
 window#waybar.pos-left #bluetooth, window#waybar.pos-left #network, window#waybar.pos-left #battery, window#waybar.pos-left #taskbar,
 window#waybar.pos-right #custom-launcher, window#waybar.pos-right #clock, window#waybar.pos-right #tray,
-window#waybar.pos-right #custom-notification, window#waybar.pos-right #pulseaudio, window#waybar.pos-right #backlight,
+window#waybar.pos-right #custom-notification, window#waybar.pos-right #custom-media, window#waybar.pos-right #pulseaudio, window#waybar.pos-right #backlight,
 window#waybar.pos-right #bluetooth, window#waybar.pos-right #network, window#waybar.pos-right #battery, window#waybar.pos-right #taskbar {
     padding: 5px 0;
 }
