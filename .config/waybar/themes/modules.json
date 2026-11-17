@@ -173,43 +173,6 @@
         "title-len": 24,
         "tooltip-format": "{artist} - {title}\nClick: play/pause  Right-click: next  Middle-click: previous"
     },
-    "cpu": {
-        "interval": 3,
-        "format": "{icon}",
-        "format-icons": [
-            "▁",
-            "▂",
-            "▃",
-            "▄",
-            "▅",
-            "▆",
-            "▇",
-            "█"
-        ],
-        "tooltip": true
-    },
-    "memory": {
-        "interval": 5,
-        "format": "{icon}",
-        "format-icons": [
-            "▁",
-            "▂",
-            "▃",
-            "▄",
-            "▅",
-            "▆",
-            "▇",
-            "█"
-        ],
-        "tooltip-format": "RAM {used:0.1f} / {total:0.1f} GiB ({percentage}%)"
-    },
-    "group/load": {
-        "orientation": "inherit",
-        "modules": [
-            "cpu",
-            "memory"
-        ]
-    },
     "wlr/taskbar": {
         "format": "{icon}",
         "icon-size": 15,
