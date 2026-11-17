@@ -42,30 +42,10 @@ esac
 echo "$index" > "$STATE_FILE"
 
 selected="${images[$index]}"
-filename=$(basename "$selected")
 
-# Symlink avoids re-encoding JPEG and keeps 100% original full image quality
-ln -sf "$selected" "$CURRENT"
-real_current=$(readlink -f "$CURRENT")
-
-# Initialise le démon awww s'il n'est pas lancé
-if ! pgrep -x awww-daemon >/dev/null; then
-    awww-daemon & disown
-    sleep 0.5
-fi
-
-# Transitions élégantes alternées (wipe, outer, wave, grow)
+# Classic-mode transitions alternate (wipe, outer, wave, grow); wallfx mode ignores them
 TRANSITIONS=("wipe" "outer" "wave" "grow")
 TRANS_TYPE="${TRANSITIONS[$((index % ${#TRANSITIONS[@]}))]}"
 
-# Applique l'image originale avec rendu GPU matériel HD (Filtre Lanczos3 pour netteté maximale)
-awww img "$real_current" \
-    --transition-type "$TRANS_TYPE" \
-    --transition-angle 30 \
-    --transition-step 90 \
-    --transition-fps 60 \
-    --filter Lanczos3 \
-    --resize crop
-
-
-"$APPLY_THEME" "$real_current"
+# Symlinks current.jpg, plays the transition and rethemes
+exec "$HOME/.config/hypr/scripts/set-wallpaper.sh" "$selected" "$TRANS_TYPE"

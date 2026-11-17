@@ -250,6 +250,7 @@ fi
 echo "--> Making custom scripts executable..."
 chmod +x "$HOME/.config/hypr/scripts/"*.sh 2>/dev/null || true
 chmod +x "$HOME/.config/hypr/scripts/"*.py 2>/dev/null || true
+chmod +x "$HOME/.config/hypr/scripts/wallfx/"* 2>/dev/null || true
 chmod +x "$HOME/.config/waybar/scripts/"*.sh 2>/dev/null || true
 chmod +x "$HOME/.config/waybar/scripts/"*.py 2>/dev/null || true
 

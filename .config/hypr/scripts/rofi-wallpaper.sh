@@ -53,22 +53,6 @@ for i in "${!images[@]}"; do
     fi
 done
 
-ln -sf "$selected_file" "$CURRENT"
-real_current=$(readlink -f "$CURRENT")
-
-if ! pgrep -x awww-daemon >/dev/null; then
-    awww-daemon & disown
-    sleep 0.5
-fi
-
-# Rendu haute précision avec filtre Lanczos3 (netteté maximale sans flou GPU)
-awww img "$real_current" \
-    --transition-type outer \
-    --transition-angle 30 \
-    --transition-step 90 \
-    --transition-fps 60 \
-    --filter Lanczos3 \
-    --resize crop
-
-"$APPLY_THEME" "$real_current"
+# Symlinks current.jpg, plays the transition (wallfx or awww "outer") and rethemes
+exec "$HOME/.config/hypr/scripts/set-wallpaper.sh" "$selected_file" outer
 

@@ -77,6 +77,9 @@ sudo apt-get install -y \
     pipx \
     python3-pip \
     python3-pil \
+    python3-numpy \
+    python3-opengl \
+    python3-venv \
     python3-pyqt5 \
     python3-pyqt6 \
     libnotify-bin \

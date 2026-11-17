@@ -228,6 +228,39 @@ menu_nightlight() {
     bash "$SCRIPTS/nightlight.sh" "${values[$i]}" && notify "Night light: $(nightlight_label)"
 }
 
+# ---------------------------------------------------------------- Wallpaper transition
+TRANSITION_FILE="$HYPR_DIR/wallpaper-transition"
+WALLFX_DATA="$HOME/.local/share/wallfx"
+
+transition_label() {
+    if [ "$(cat "$TRANSITION_FILE" 2>/dev/null)" = classic ]; then echo "Classic"
+    elif [ -s "$WALLFX_DATA/isnet-anime.onnx" ]; then echo "Outline (characters first)"
+    else echo "Pixel colonies"; fi
+}
+
+menu_transition() {
+    local mode labels actions active i
+    mode=$(cat "$TRANSITION_FILE" 2>/dev/null || echo outline)
+    labels=("󰸉  Outline / colonies  —  Characters drawn first, others spread in"
+            "󰸉  Classic             —  awww wipes and waves")
+    actions=(outline classic)
+    if [ -s "$WALLFX_DATA/isnet-anime.onnx" ]; then
+        labels+=("󰆴  Remove character detection  —  Frees ~230 MB")
+        actions+=(remove)
+    else
+        labels+=("󰇚  Set up character detection  —  One-time ~230 MB download")
+        actions+=(setup)
+    fi
+    active=0; [ "$mode" = classic ] && active=1
+    i=$(rofi_pick "Wallpaper transition" "$active" "${labels[@]}") || return
+    [ -z "$i" ] && return
+    case "${actions[$i]}" in
+        outline|classic) echo "${actions[$i]}" > "$TRANSITION_FILE"; notify "Wallpaper transition: $(transition_label)" ;;
+        setup)  kitty --class wallfx-setup --hold -e bash "$SCRIPTS/wallfx/wallfx-setup.sh" >/dev/null 2>&1 & ;;
+        remove) bash "$SCRIPTS/wallfx/wallfx-setup.sh" --remove ;;
+    esac
+}
+
 # ---------------------------------------------------------------- Main menu
 caffeine="OFF"; [ -f "$HOME/.cache/caffeine_active" ] && caffeine="ON"
 power=$(powerprofilesctl get 2>/dev/null || echo "n/a")
@@ -235,6 +268,7 @@ read -r wb_theme wb_pos wb_size < <(python3 "$HOME/.config/waybar/scripts/layout
 
 ENTRIES=(
     "wallpaper|󰸉  Wallpaper                  —  Pick a wallpaper (Super + W)"
+    "transition|󰸉  Wallpaper transition       —  $(transition_label)"
     "waybar|󱄄  Waybar                     —  ${wb_theme^}, ${wb_pos}, ${wb_size}"
     "wifi|󰤨  Wi-Fi                      —  Networks"
     "bluetooth|󰂯  Bluetooth                  —  Devices"
@@ -260,6 +294,7 @@ i=$(printf '%s\n' "${labels[@]}" | rofi -dmenu -i -format i -p "󰒓 Settings" -
 
 case "${keys[$i]}" in
     wallpaper)  bash "$SCRIPTS/rofi-wallpaper.sh" ;;
+    transition) menu_transition ;;
     waybar)     menu_waybar ;;
     wifi)       bash "$SCRIPTS/wifi-menu.sh" ;;
     bluetooth)  bash "$SCRIPTS/bluetooth-menu.sh" ;;

@@ -17,6 +17,8 @@ exec-once = ~/.config/hypr/scripts/sync-app-icons.sh
 exec-once = udiskie --tray --notify
 exec-once = nice -n 19 ~/.config/hypr/scripts/apply-pywal-theme.sh --precache
 exec-once = ~/.config/hypr/scripts/nightlight.sh restore
+# Wallpaper transition maps for new wallpapers (uses the character model if wallfx-setup.sh was run)
+exec-once = sh -c 'py=$HOME/.local/share/wallfx/venv/bin/python; [ -x "$py" ] || py=python3; nice -n 19 "$py" ~/.config/hypr/scripts/wallfx/wallfx-map.py precache'
 # pywal colors are NOT sourced here: Hyprland auto-reloads whenever a sourced file
 # changes, so every wallpaper switch would trigger a full reload. The border color is
 # applied with `hyprctl keyword` instead, at startup and after every reload:
