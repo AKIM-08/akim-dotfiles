@@ -16,8 +16,10 @@ exec-once = ~/.config/hypr/scripts/battery-hibernate-watch.sh
 exec-once = ~/.config/hypr/scripts/sync-app-icons.sh
 exec-once = udiskie --tray --notify
 exec-once = nice -n 19 ~/.config/hypr/scripts/apply-pywal-theme.sh --precache
-source = ~/.cache/wal/colors-hyprland.hl*
-source = ~/.cache/wal/colors-hyprland.conf*
+# pywal colors are NOT sourced here: Hyprland auto-reloads whenever a sourced file
+# changes, so every wallpaper switch would trigger a full reload. The border color is
+# applied with `hyprctl keyword` instead, at startup and after every reload:
+exec = ~/.config/hypr/scripts/apply-pywal-theme.sh --border
 
 
 # Configuration personnalisée — akim-dotfiles
@@ -81,7 +83,8 @@ general {
     border_size = 2
 
     # https://wiki.hyprland.org/Configuring/Variables/#variable-types for info about color
-    col.active_border = $color1 $color3 $color5 $color7 $color9 $color11 45deg
+    # Placeholder; replaced by the pywal palette (see the `exec = ... --border` line above)
+    col.active_border = rgb(88c0d0) rgb(b48ead) 45deg
     col.inactive_border = rgba(595959aa) 180deg
     # no_border_on_floating = true
 	   

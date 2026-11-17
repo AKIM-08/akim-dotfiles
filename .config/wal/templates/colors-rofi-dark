@@ -1,0 +1,13 @@
+/* pywal16 -> Rofi. Imported by every ~/.config/rofi/*.rasi as "~/.cache/wal/colors-rofi-dark".
+   Accent is color1, the same accent as the Waybar active workspace. */
+* {
+    background-color: {background};
+    text-color:       {foreground};
+    border-color:     {color1};
+    selected-normal-background: {color1};
+    selected-normal-foreground: {background};
+    active-background: {color2};
+    active-foreground: {background};
+    urgent-background: {color9};
+    urgent-foreground: {background};
+}

@@ -135,13 +135,13 @@ def write_rofi_dark(colors: list[str]) -> None:
     content = f"""* {{
     background-color: #{colors[0]};
     text-color:       #{colors[7]};
-    border-color:     #{colors[4]};
-    selected-normal-background: #{colors[4]};
+    border-color:     #{colors[1]};
+    selected-normal-background: #{colors[1]};
     selected-normal-foreground: #{colors[0]};
     active-background: #{colors[2]};
     active-foreground: #{colors[0]};
-    urgent-background: #{colors[1]};
-    urgent-foreground: #{colors[7]};
+    urgent-background: #{colors[9]};
+    urgent-foreground: #{colors[0]};
 }}
 """
     (WAL_DIR / "colors-rofi-dark").write_text(content)

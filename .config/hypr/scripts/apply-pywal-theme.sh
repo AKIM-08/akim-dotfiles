@@ -650,21 +650,30 @@ EOF
 
 }
 
+# Set Hyprland's active border from the current palette. hyprland.hl deliberately does not
+# source the colors file (Hyprland auto-reloads when a sourced file changes); instead it runs
+# this via `exec = ... --border` at startup and after each reload.
+apply_hypr_border() {
+    local conf="$WAL_CACHE/colors-hyprland.conf" border out
+    [ -f "$conf" ] || return 0
+    border=$(awk '
+        $2 == "=" { v[$1] = $3 }
+        END { printf "%s %s %s %s %s %s 45deg", v["$color1"], v["$color3"], v["$color5"], v["$color7"], v["$color9"], v["$color11"] }
+    ' "$conf" 2>/dev/null)
+    out=$(hyprctl keyword general:col.active_border "$border" 2>&1)
+    if [ "$out" != "ok" ]; then
+        echo "WARNING: hyprctl keyword failed: $out" >&2
+        return 1
+    fi
+}
+
 # Recolor running apps in place. Nothing here restarts or re-parses a whole config.
 reload_ui() {
     # Hyprland: only the active border uses pywal colors, so set it directly instead of
     # `hyprctl reload` (which re-applies monitors, animations and rules and visibly flickers).
     # The sourced colors file is already updated, so the next real reload stays consistent.
     if pgrep -x Hyprland >/dev/null 2>&1; then
-        local conf="$WAL_CACHE/colors-hyprland.conf" border out
-        border=$(awk '
-            $2 == "=" { v[$1] = $3 }
-            END { printf "%s %s %s %s %s %s 45deg", v["$color1"], v["$color3"], v["$color5"], v["$color7"], v["$color9"], v["$color11"] }
-        ' "$conf" 2>/dev/null)
-        out=$(hyprctl keyword general:col.active_border "$border" 2>&1)
-        if [ "$out" != "ok" ]; then
-            hyprctl reload >/dev/null 2>&1 || true
-        fi
+        apply_hypr_border
     fi
 
     # Waybar: every theme sets "reload_style_on_change": true, so it restyles itself when
@@ -731,10 +740,10 @@ precache() {
     done < <(find "$PALETTE_ROOT" -mindepth 1 -maxdepth 1 -type d -mtime +30)
 }
 
-if [ "${1:-}" = "--precache" ]; then
-    precache
-    exit 0
-fi
+case "${1:-}" in
+    --precache) precache; exit 0 ;;
+    --border)   apply_hypr_border; exit $? ;;
+esac
 
 WALLPAPER="${1:-$WALLPAPER_DIR/current.jpg}"
 
