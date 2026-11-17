@@ -38,7 +38,7 @@ window#waybar.pos-right #group-system, window#waybar.pos-right #system {
 }
 
 #custom-launcher {
-    color: @color1;
+    color: mix(@color9, @foreground, 0.35);
     font-size: 16px;
     padding: 4px 14px;
 }
