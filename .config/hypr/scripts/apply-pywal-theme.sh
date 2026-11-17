@@ -16,7 +16,7 @@ WAL_CACHE="$HOME/.cache/wal"
 PALETTE_ROOT="$WAL_CACHE/palettes"
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 # Bump to invalidate every cached palette after changing how palettes are built.
-CACHE_VERSION=1
+CACHE_VERSION=2
 
 # Cache key: wallpaper identity + anything that changes the generated files
 # (pywal templates, the fallback extractor and this script's GTK CSS).
@@ -48,6 +48,7 @@ build_palette() {
 
     # Hyprland 0.57+ reads colors-hyprland.hl
     [ -f "$src/colors-hyprland.conf" ] && cp "$src/colors-hyprland.conf" "$src/colors-hyprland.hl"
+    write_rofi_colors "$src" || echo "WARNING: could not write Rofi colors" >&2
     build_gtk_css "$src"
     rm -rf "$src/schemes"
 
@@ -57,6 +58,31 @@ build_palette() {
         [ -f "$out/colors.json" ] || { rm -rf "$tmp"; return 1; }   # lost a race, other copy is fine
     fi
     rm -rf "$tmp"
+}
+
+# Rofi colors, imported by every ~/.config/rofi/*.rasi as "~/.cache/wal/colors-rofi-dark".
+# Generated from colors.json rather than a pywal template: pywal formats templates with
+# Python str.format, which breaks on the literal braces of a rasi block.
+# Accent is color1, the same as the Waybar active workspace.
+write_rofi_colors() {
+    python3 -I - "$1" <<'PY'
+import json, pathlib, sys
+d = pathlib.Path(sys.argv[1])
+data = json.loads((d / "colors.json").read_text())
+s, c = data["special"], data["colors"]
+(d / "colors-rofi-dark").write_text(f"""* {{
+    background-color: {s['background']};
+    text-color:       {s['foreground']};
+    border-color:     {c['color1']};
+    selected-normal-background: {c['color1']};
+    selected-normal-foreground: {s['background']};
+    active-background: {c['color2']};
+    active-foreground: {s['background']};
+    urgent-background: {c['color9']};
+    urgent-foreground: {s['background']};
+}}
+""")
+PY
 }
 
 # Replace a file atomically (readers never see it half-written).
