@@ -28,14 +28,22 @@ fi
 
 mode=$(cat "$MODE_FILE" 2>/dev/null || echo outline)
 played=""
+# Each switch logs what wallfx did, so a silent failure can be diagnosed
+LOG="$HOME/.cache/wallfx/last.log"
+mkdir -p "$(dirname "$LOG")"
+{ echo "== $(date '+%F %T')  mode=$mode"; echo "old: $old"; echo "new: $new"; } > "$LOG"
+
 if [ "$mode" != classic ] && [ -f "$old" ] && [ "$old" != "$new" ]; then
     py=python3; [ -x "$WALLFX_VENV" ] && py="$WALLFX_VENV"
-    map=$("$py" "$WALLFX/wallfx-map.py" get "$new" 2>/dev/null)
+    map=$("$py" "$WALLFX/wallfx-map.py" get "$new" 2>>"$LOG")
+    echo "map ($py): ${map:-<none>}" >> "$LOG"
     if [ -n "$map" ] && [ -f "$map" ]; then
         # Falls back to the awww transition by itself if GTK layer shell / OpenGL are missing
-        python3 "$WALLFX/wallfx-play.py" "$old" "$new" "$map" --fallback "$fallback" &
+        python3 "$WALLFX/wallfx-play.py" "$old" "$new" "$map" --fallback "$fallback" >>"$LOG" 2>&1 &
         played=1
     fi
+elif [ "$old" = "$new" ]; then
+    echo "same wallpaper as before: nothing to animate" >> "$LOG"
 fi
 
 if [ -z "$played" ]; then

@@ -22,6 +22,12 @@ import time
 os.environ.setdefault("PYOPENGL_PLATFORM", "egl")
 
 DURATION = 1.8
+T0 = time.monotonic()
+
+
+def log(msg: str) -> None:
+    """Progress lines for ~/.cache/wallfx/last.log (set-wallpaper.sh redirects stderr there)."""
+    print(f"[{time.monotonic() - T0:5.2f}s] {msg}", file=sys.stderr, flush=True)
 AWWW_DEFAULT = ["--transition-fps", "60", "--filter", "Lanczos3", "--resize", "crop"]
 
 
@@ -29,10 +35,16 @@ def awww(image: str, transition: str, wait: bool = False):
     cmd = ["awww", "img", image, "--transition-type", transition] + AWWW_DEFAULT
     if transition != "none":
         cmd += ["--transition-step", "90", "--transition-angle", "30"]
-    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    log(f"awww: {' '.join(cmd[2:5])}")
+    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
     if wait:
-        proc.wait()
+        report_awww(proc)
     return proc
+
+
+def report_awww(proc) -> None:
+    err = proc.communicate()[1].strip()
+    log(f"awww exited {proc.returncode}" + (f": {err}" if err else ""))
 
 
 def parse(argv):
@@ -119,6 +131,7 @@ class Player:
         monitor = display.get_primary_monitor() or display.get_monitor(0)
         geo, scale = monitor.get_geometry(), monitor.get_scale_factor()
         self.w, self.h = geo.width * scale, geo.height * scale
+        log(f"monitor {self.w}x{self.h}, loading images")
         self.images = [cover_bytes(old, self.w, self.h), cover_bytes(new, self.w, self.h),
                        cover_bytes(reveal, self.w, self.h)]
 
@@ -145,6 +158,7 @@ class Player:
         win.add(area)
         self.area, self.win = area, win
         win.show_all()
+        log("layer surface shown")
         GLib.timeout_add_seconds(8, self.give_up)          # never hang around
 
     # ---------------------------------------------------------------- GL setup
@@ -185,6 +199,7 @@ class Player:
             for unit, name in enumerate(("old_img", "new_img", "reveal_map")):
                 GL.glUniform1i(GL.glGetUniformLocation(prog, name), unit)
             self.t_loc = GL.glGetUniformLocation(prog, "t")
+            log(f"OpenGL ready: {GL.glGetString(GL.GL_VERSION).decode(errors='replace')}")
         except Exception as e:                              # bad driver, shader error, ...
             self.fail(f"OpenGL setup failed: {e}")
 
@@ -209,6 +224,7 @@ class Player:
         if self.switch is None:
             # The old wallpaper is now covered by this layer: switch awww underneath
             self.switch = False
+            log("first frame drawn")
             GLib.timeout_add(60, self.begin)
         return True
 
@@ -225,6 +241,8 @@ class Player:
             if self.switch and self.switch.poll() is not None:
                 if self.done_at is None:
                     self.done_at = time.monotonic()
+                    report_awww(self.switch)
+                    log("animation finished")
                 elif time.monotonic() - self.done_at > 0.12:
                     Gtk.main_quit()
                     return False
@@ -241,6 +259,7 @@ class Player:
 
     def give_up(self):
         if not self.failed:
+            log("gave up after 8 s (no frame drawn or awww stuck)")
             if not self.switch:
                 awww(self.new, "none", wait=True)
             Gtk.main_quit()

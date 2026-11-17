@@ -218,12 +218,6 @@ class Picker(QWidget):
         p.setFont(font)
         name = self.files[self.index].stem.replace("-", " ").replace("_", " ")
         p.drawText(QRectF(0, y + h / 2 + 22, self.width(), 30), Qt.AlignmentFlag.AlignHCenter, name)
-        font.setBold(False)
-        font.setPointSize(10)
-        p.setFont(font)
-        p.setPen(QColor(255, 255, 255, 140))
-        p.drawText(QRectF(0, self.height() - 60, self.width(), 30), Qt.AlignmentFlag.AlignHCenter,
-                   f"{self.index + 1} / {len(self.files)}    ←  →  browse     Enter  apply     Esc  close")
         p.end()
 
 
