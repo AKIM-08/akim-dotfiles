@@ -1,33 +1,30 @@
 @import url("colors-waybar.css");
 @import url("themes/common.css");
 
-/* Experimental: light islands and chips, icons only */
-.modules-left,
+/* Experimental: light chips, icons only.
+   Left: [logo + clock] [song] [tray]   Center: [workspaces]   Right: [CPU/RAM] [system] */
+#group-brand, #brand,
 .modules-center,
 #custom-media,
-#group-load, #load,
 #tray,
+#group-load, #load,
 #group-system, #system {
     background: alpha(@background, 0.62);
     border-radius: 12px;
     padding: 4px 10px;
+    margin: 0 3px;
 }
-#custom-media, #group-load, #load, #tray, #group-system, #system { margin-left: 6px; }
 
-window#waybar.pos-left .modules-left,  window#waybar.pos-left .modules-center,
-window#waybar.pos-left #custom-media, window#waybar.pos-left #group-load, window#waybar.pos-left #load,
-window#waybar.pos-left #tray, window#waybar.pos-left #group-system, window#waybar.pos-left #system,
-window#waybar.pos-right .modules-left, window#waybar.pos-right .modules-center,
-window#waybar.pos-right #custom-media, window#waybar.pos-right #group-load, window#waybar.pos-right #load,
-window#waybar.pos-right #tray, window#waybar.pos-right #group-system, window#waybar.pos-right #system {
+window#waybar.pos-left #group-brand,  window#waybar.pos-left #brand,  window#waybar.pos-left .modules-center,
+window#waybar.pos-left #custom-media, window#waybar.pos-left #tray,
+window#waybar.pos-left #group-load,   window#waybar.pos-left #load,
+window#waybar.pos-left #group-system, window#waybar.pos-left #system,
+window#waybar.pos-right #group-brand, window#waybar.pos-right #brand, window#waybar.pos-right .modules-center,
+window#waybar.pos-right #custom-media, window#waybar.pos-right #tray,
+window#waybar.pos-right #group-load,  window#waybar.pos-right #load,
+window#waybar.pos-right #group-system, window#waybar.pos-right #system {
     padding: 10px 4px;
-    margin-left: 0;
-}
-window#waybar.pos-left #custom-media, window#waybar.pos-left #group-load, window#waybar.pos-left #load,
-window#waybar.pos-left #tray, window#waybar.pos-left #group-system, window#waybar.pos-left #system,
-window#waybar.pos-right #custom-media, window#waybar.pos-right #group-load, window#waybar.pos-right #load,
-window#waybar.pos-right #tray, window#waybar.pos-right #group-system, window#waybar.pos-right #system {
-    margin-top: 6px;
+    margin: 3px 0;
 }
 
 #custom-launcher, #clock, #custom-notification,

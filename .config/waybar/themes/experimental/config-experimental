@@ -1,8 +1,10 @@
 // Experimental: colored workspace bars, now-playing chip, CPU/RAM level glyphs, icon-only status.
 {
-    "modules-left": ["custom/launcher", "clock"],
+    "modules-left": ["group/brand", "custom/media", "tray"],
     "modules-center": ["hyprland/workspaces"],
-    "modules-right": ["custom/media", "group/load", "tray", "group/system"],
+    "modules-right": ["group/load", "group/system"],
+
+    "group/brand": { "orientation": "inherit", "modules": ["custom/launcher", "clock"] },
 
     "clock": { "format": "{:%H:%M}" },
 

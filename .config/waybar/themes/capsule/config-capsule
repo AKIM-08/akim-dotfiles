@@ -1,6 +1,6 @@
 // Capsule: every module group in its own floating capsule.
 {
-    "modules-left": ["clock"],
+    "modules-left": ["clock", "custom/media", "tray"],
     "modules-center": ["custom/launcher", "hyprland/workspaces"],
-    "modules-right": ["custom/media", "custom/notification", "tray", "group/system"]
+    "modules-right": ["custom/notification", "group/system"]
 }
