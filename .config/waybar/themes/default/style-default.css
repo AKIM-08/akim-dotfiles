@@ -1,185 +1,49 @@
 @import url("colors-waybar.css");
+@import url("themes/common.css");
 
-* {
-    font-size:15px;
-    font-family: "JetBrainsMono Nerd Font";
-}
-window#waybar{
-    all:unset;
-}
-.modules-left {
-    padding:7px;
-    margin:10 0 5 10;
-    border-radius:10px;
-    background: alpha(@background,.6);
-    box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
-}
-.modules-center {
-    padding:7px;
-    margin:10 0 5 0;
-    border-radius:10px;
-    background: alpha(@background,.6);
-    box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
-}
+/* Default: three floating islands */
+.modules-left,
+.modules-center,
 .modules-right {
-    padding:7px;
-    margin: 10 10 5 0;
-    border-radius:10px;
-    background: alpha(@background,.6);
-    box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
+    background: alpha(@background, 0.62);
+    border-radius: 12px;
+    padding: 4px 8px;
 }
-tooltip {
-    background:@background;
-    color: @color7;
+window#waybar.pos-left .modules-left,  window#waybar.pos-left .modules-center,  window#waybar.pos-left .modules-right,
+window#waybar.pos-right .modules-left, window#waybar.pos-right .modules-center, window#waybar.pos-right .modules-right {
+    padding: 8px 4px;
 }
-#clock:hover, #custom-pacman:hover, #custom-notification:hover,#bluetooth:hover,#network:hover,#battery:hover, #cpu:hover,#memory:hover,#temperature:hover{
-    transition: all .3s ease;
-    color:@color9;
-}
-#custom-notification {
-    padding: 0px 5px;
-    transition: all .3s ease;
-    color:@color7;
-}
-#clock{
-    padding: 0px 5px;
-    color:@color7;
-    transition: all .3s ease;
-}
-#custom-pacman{
-    padding: 0px 5px;
-    transition: all .3s ease;
-    color:@color7;
 
+#custom-launcher, #clock, #tray, #custom-notification,
+#pulseaudio, #backlight, #bluetooth, #network, #battery, #taskbar {
+    padding: 0 7px;
 }
-#workspaces {
-    padding: 0px 5px;
+window#waybar.pos-left #custom-launcher,  window#waybar.pos-left #clock,  window#waybar.pos-left #tray,
+window#waybar.pos-left #custom-notification, window#waybar.pos-left #pulseaudio, window#waybar.pos-left #backlight,
+window#waybar.pos-left #bluetooth, window#waybar.pos-left #network, window#waybar.pos-left #battery, window#waybar.pos-left #taskbar,
+window#waybar.pos-right #custom-launcher, window#waybar.pos-right #clock, window#waybar.pos-right #tray,
+window#waybar.pos-right #custom-notification, window#waybar.pos-right #pulseaudio, window#waybar.pos-right #backlight,
+window#waybar.pos-right #bluetooth, window#waybar.pos-right #network, window#waybar.pos-right #battery, window#waybar.pos-right #taskbar {
+    padding: 5px 0;
 }
+
+/* Workspaces: numbers, filled accent pill for the active one, empty ones dimmed */
 #workspaces button {
-    all:unset;
-    padding: 0px 5px;
-    color: alpha(@color9,.4);
-    transition: all .2s ease;
+    padding: 1px 7px;
+    margin: 0 1px;
+    color: @foreground;
+    background: transparent;
+    border-radius: 7px;
 }
-#workspaces button:hover {
-    color:rgba(0,0,0,0);
-    border: none;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .5);
-    transition: all 1s ease;
-}
-#workspaces button.active,
-#workspaces button.focused {
-    color: @background;
-    background-color: @color9;
-    border-radius: 5px;
-    border: none;
-    text-shadow: none;
-    transition: all .3s ease;
-}
-#workspaces button.empty {
-    color: rgba(0,0,0,0);
-    border: none;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .2);
-}
-#workspaces button.empty:hover {
-    color: rgba(0,0,0,0);
-    border: none;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .5);
-    transition: all 1s ease;
-}
-#workspaces button.empty.active,
-#workspaces button.empty.focused {
-    color: @background;
-    background-color: @color9;
-    border-radius: 5px;
-    border: none;
-    text-shadow: none;
-    transition: all .3s ease;
-}
+window#waybar.pos-left #workspaces button,
+window#waybar.pos-right #workspaces button { margin: 1px 0; padding: 3px 4px; }
+#workspaces button.empty  { color: alpha(@foreground, 0.35); }
+#workspaces button:hover  { background: alpha(@foreground, 0.12); }
+#workspaces button.active { background: @color9; color: @background; }
 
 #taskbar button {
-    background: transparent;
-    border: none;
-    box-shadow: none;
+    padding: 0 4px;
+    border-radius: 6px;
 }
-#bluetooth{
-    padding: 0px 5px;
-    transition: all .3s ease;
-    color:@color7;
-
-}
-#network{
-    padding: 0px 5px;
-    transition: all .3s ease;
-    color:@color7;
-
-}
-#battery{
-    padding: 0px 5px;
-    transition: all .3s ease;
-    color:@color7;
-
-
-}
-#battery.charging {
-    color: #26A65B;
-}
-
-#battery.plugged {
-    color: #8be9fd;
-}
-
-#battery.warning:not(.charging) {
-    color: #ffbe61;
-}
-
-#battery.critical:not(.charging) {
-    color: #f53c3c;
-    animation-name: blink;
-    animation-duration: 0.5s;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
-}
-#group-expand{
-    padding: 0px 5px;
-    transition: all .3s ease; 
-}
-#custom-expand{
-    padding: 0px 5px;
-    color:alpha(@foreground,.2);
-    text-shadow: 0px 0px 2px rgba(0, 0, 0, .7);
-    transition: all .3s ease; 
-}
-#custom-expand:hover{
-    color:rgba(255,255,255,.2);
-    text-shadow: 0px 0px 2px rgba(255, 255, 255, .5);
-}
-#custom-colorpicker{
-    padding: 0px 5px;
-}
-#cpu,#memory,#temperature{
-    padding: 0px 5px;
-    transition: all .3s ease; 
-    color:@color7;
-
-}
-#custom-endpoint{
-    color:transparent;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, 1);
-
-}
-#tray{
-    padding: 0px 5px;
-    transition: all .3s ease; 
-
-}
-#tray menu * {
-    padding: 0px 5px;
-    transition: all .3s ease; 
-}
-
-#tray menu separator {
-    padding: 0px 5px;
-    transition: all .3s ease; 
-}
+#taskbar button.active { background: alpha(@foreground, 0.14); }
+#taskbar button:hover  { background: alpha(@foreground, 0.1); }

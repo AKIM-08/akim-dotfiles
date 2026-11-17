@@ -1,22 +1,9 @@
 @import url("colors-waybar.css");
+@import url("themes/common.css");
 
-* {
-    border: none;
-    border-radius: 0;
-    font-family: "JetBrainsMono Nerd Font", monospace;
-    font-weight: bold;
-    font-size: 13px;
-    min-height: 0;
-}
-
-window#waybar {
-    background: transparent;
-    color: @foreground;
-}
-
-/* Floating Modular Capsules */
+/* Capsule: every group in its own floating capsule */
 #clock,
-#custom-pacman,
+#custom-launcher,
 #workspaces,
 #custom-notification,
 #tray,
@@ -27,19 +14,38 @@ window#waybar {
     border: 1px solid alpha(@foreground, 0.12);
     border-radius: 12px;
     padding: 4px 12px;
-    margin: 3px 3px;
+    margin: 3px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     transition: all 0.3s ease;
 }
+window#waybar.pos-left #clock, window#waybar.pos-left #custom-launcher, window#waybar.pos-left #workspaces,
+window#waybar.pos-left #custom-notification, window#waybar.pos-left #tray,
+window#waybar.pos-left #group-system, window#waybar.pos-left #system,
+window#waybar.pos-right #clock, window#waybar.pos-right #custom-launcher, window#waybar.pos-right #workspaces,
+window#waybar.pos-right #custom-notification, window#waybar.pos-right #tray,
+window#waybar.pos-right #group-system, window#waybar.pos-right #system {
+    padding: 10px 4px;
+}
 
 #clock:hover,
-#custom-pacman:hover,
+#custom-launcher:hover,
 #workspaces:hover,
 #custom-notification:hover,
 #group-system:hover,
 #system:hover {
     background-color: alpha(@background, 0.92);
     border-color: @color1;
+}
+
+#custom-launcher {
+    color: @color1;
+    font-size: 16px;
+    padding: 4px 14px;
+}
+
+#custom-notification {
+    font-size: 15px;
+    padding: 4px 14px;
 }
 
 /* System capsule: volume, brightness, bluetooth, network, battery share one pill */
@@ -57,9 +63,11 @@ window#waybar {
     padding: 0 7px;
     margin: 0;
 }
-
-#pulseaudio.muted {
-    color: alpha(@foreground, 0.45);
+window#waybar.pos-left #pulseaudio, window#waybar.pos-left #backlight, window#waybar.pos-left #bluetooth,
+window#waybar.pos-left #network, window#waybar.pos-left #battery,
+window#waybar.pos-right #pulseaudio, window#waybar.pos-right #backlight, window#waybar.pos-right #bluetooth,
+window#waybar.pos-right #network, window#waybar.pos-right #battery {
+    padding: 5px 0;
 }
 
 #backlight {
@@ -67,36 +75,19 @@ window#waybar {
     padding-right: 10px;
     margin-right: 3px;
 }
-
-#custom-pacman {
-    font-size: 16px;
-    color: @color1;
-    padding: 4px 14px;
+window#waybar.pos-left #backlight,
+window#waybar.pos-right #backlight {
+    border-right: none;
+    border-bottom: 1px solid alpha(@foreground, 0.14);
+    padding: 5px 0 10px;
+    margin: 0 0 3px;
 }
 
-#custom-notification {
-    font-size: 15px;
-    color: @foreground;
-    padding: 4px 14px;
-}
-
-/* Unread notifications: bell takes the accent color */
-#custom-notification.notification,
-#custom-notification.dnd-notification,
-#custom-notification.inhibited-notification {
-    color: @color1;
-}
-
-#custom-notification.dnd-none,
-#custom-notification.dnd-notification {
-    color: alpha(@foreground, 0.5);
-}
-
+/* Workspaces: occupied bright, empty dimmed, active one is a filled accent pill */
 #workspaces {
     padding: 3px 5px;
 }
 
-/* Occupied workspaces are bright, empty ones dimmed, active one is a filled accent pill */
 #workspaces button {
     padding: 1px 7px;
     margin: 0 1px;
@@ -104,7 +95,11 @@ window#waybar {
     color: @foreground;
     background: transparent;
     border-radius: 8px;
-    transition: all 0.2s ease;
+}
+window#waybar.pos-left #workspaces button,
+window#waybar.pos-right #workspaces button {
+    padding: 3px 4px;
+    margin: 1px 0;
 }
 
 #workspaces button.empty {
@@ -117,6 +112,10 @@ window#waybar {
     font-weight: 900;
     padding: 1px 12px;
 }
+window#waybar.pos-left #workspaces button.active,
+window#waybar.pos-right #workspaces button.active {
+    padding: 6px 4px;
+}
 
 #workspaces button:hover {
     color: @foreground;
@@ -126,45 +125,4 @@ window#waybar {
 #workspaces button.active:hover {
     background-color: @color1;
     color: @background;
-}
-
-#battery {
-    color: @foreground;
-    transition: all 0.3s ease;
-}
-
-#battery.charging {
-    color: #50fa7b;
-}
-
-#battery.plugged {
-    color: #8be9fd;
-}
-
-#battery.warning:not(.charging) {
-    color: #ffb86c;
-}
-
-#battery.critical:not(.charging) {
-    color: #ff5555;
-    animation-name: blink-critical;
-    animation-duration: 1s;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
-}
-
-@keyframes blink-critical {
-    to {
-        color: #ffffff;
-        background-color: alpha(#ff5555, 0.4);
-    }
-}
-
-#network.disconnected {
-    color: #ff5555;
-}
-
-#bluetooth.disabled {
-    color: alpha(@foreground, 0.4);
 }

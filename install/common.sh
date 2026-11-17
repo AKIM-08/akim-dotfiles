@@ -251,6 +251,11 @@ echo "--> Making custom scripts executable..."
 chmod +x "$HOME/.config/hypr/scripts/"*.sh 2>/dev/null || true
 chmod +x "$HOME/.config/hypr/scripts/"*.py 2>/dev/null || true
 chmod +x "$HOME/.config/waybar/scripts/"*.sh 2>/dev/null || true
+chmod +x "$HOME/.config/waybar/scripts/"*.py 2>/dev/null || true
+
+# Build the live Waybar config from the chosen theme + position (kept across reinstalls)
+python3 "$HOME/.config/waybar/scripts/layout.py" \
+    || warn "Waybar layout generation failed — run: ~/.config/waybar/scripts/layout.py"
 chmod +x "$HOME/.config/swaync/"*.sh 2>/dev/null || true
 chmod +x "$HOME/.config/swaync/"*.py 2>/dev/null || true
 chmod +x "$HOME/.config/waypaper/wallpaper_script.sh" 2>/dev/null || true

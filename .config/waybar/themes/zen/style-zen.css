@@ -1,66 +1,48 @@
 @import url("colors-waybar.css");
+@import url("themes/common.css");
 
-* {
-    font-size:15px;
-    font-family: "JetBrainsMono Nerd Font";
-}
-window#waybar{
-    all:unset;
-}
+/* Zen: one centered island */
 .modules-center {
-    padding:7px;
-    margin:10 0 5 0;
-    border-radius:10px;
-    background: alpha(@background,.6);
-    box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
+    background: alpha(@background, 0.7);
+    border-radius: 999px;
+    padding: 4px 14px;
 }
-#workspaces {
-    padding: 0px 5px;
+window#waybar.pos-left .modules-center,
+window#waybar.pos-right .modules-center { padding: 14px 4px; }
+
+#clock, #battery, #custom-zen-handle,
+#pulseaudio, #backlight, #bluetooth, #network, #custom-notification {
+    padding: 0 6px;
 }
-#workspaces button {
-    all:unset;
-    padding: 0px 5px;
-    color: alpha(@color9,.4);
-    transition: all .2s ease;
-}
-#workspaces button:hover {
-    color:rgba(0,0,0,0);
-    border: none;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .5);
-    transition: all 1s ease;
-}
-#workspaces button.active,
-#workspaces button.focused {
-    color: @background;
-    background-color: @color9;
-    border-radius: 5px;
-    border: none;
-    text-shadow: none;
-    transition: all .3s ease;
-}
-#workspaces button.empty {
-    color: rgba(0,0,0,0);
-    border: none;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .2);
-}
-#workspaces button.empty:hover {
-    color: rgba(0,0,0,0);
-    border: none;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .5);
-    transition: all 1s ease;
-}
-#workspaces button.empty.active,
-#workspaces button.empty.focused {
-    color: @background;
-    background-color: @color9;
-    border-radius: 5px;
-    border: none;
-    text-shadow: none;
-    transition: all .3s ease;
+window#waybar.pos-left #clock, window#waybar.pos-left #battery, window#waybar.pos-left #custom-zen-handle,
+window#waybar.pos-left #pulseaudio, window#waybar.pos-left #backlight, window#waybar.pos-left #bluetooth,
+window#waybar.pos-left #network, window#waybar.pos-left #custom-notification,
+window#waybar.pos-right #clock, window#waybar.pos-right #battery, window#waybar.pos-right #custom-zen-handle,
+window#waybar.pos-right #pulseaudio, window#waybar.pos-right #backlight, window#waybar.pos-right #bluetooth,
+window#waybar.pos-right #network, window#waybar.pos-right #custom-notification {
+    padding: 5px 0;
 }
 
-#taskbar button {
-    background: transparent;
-    border: none;
-    box-shadow: none;
+#battery           { color: @color9; }
+#custom-zen-handle { color: alpha(@foreground, 0.5); }
+
+/* Workspaces: dots; the active one stretches. The glyph is hidden, the button is the dot. */
+#workspaces { padding: 0 6px; }
+window#waybar.pos-left #workspaces, window#waybar.pos-right #workspaces { padding: 6px 0; }
+#workspaces button {
+    font-size: 1px;
+    color: transparent;
+    padding: 0;
+    margin: 0 4px;
+    min-width: 8px;
+    min-height: 8px;
+    border-radius: 999px;
+    background: alpha(@foreground, 0.28);
 }
+window#waybar.pos-left #workspaces button,
+window#waybar.pos-right #workspaces button { margin: 4px 0; }
+#workspaces button:not(.empty) { background: alpha(@foreground, 0.75); }
+#workspaces button:hover       { background: @foreground; }
+#workspaces button.active      { background: @color9; min-width: 22px; }
+window#waybar.pos-left #workspaces button.active,
+window#waybar.pos-right #workspaces button.active { min-width: 8px; min-height: 22px; }

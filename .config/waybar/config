@@ -1,33 +1,10 @@
 {
-    "layer": "top",
-    "position": "top",
-    "reload_style_on_change": true,
-    "modules-left": [
-        "custom/notification",
-        "clock",
-        "custom/pacman",
-        "tray"
-    ],
-    "modules-center": [
-        "hyprland/workspaces"
-    ],
-    "modules-right": [
-        "group/expand",
-        "bluetooth",
-        "network",
-        "battery"
-    ],
     "hyprland/workspaces": {
-        "format": "{icon}",
-        "format-icons": {
-            "active": "󰮯",
-            "occupied": "",
-            "default": ""
-        },
-        "sort-by-number": true,
+        "format": "{name}",
         "on-click": "activate",
-        "tooltip": true,
-        "tooltip-format": "Workspace {name}",
+        "sort-by-number": true,
+        "show-special": false,
+        "tooltip": false,
         "persistent-workspaces": {
             "*": [
                 1,
@@ -39,42 +16,106 @@
         }
     },
     "custom/notification": {
-        "tooltip": false,
-        "format": "",
+        "format": "{icon}",
+        "format-icons": {
+            "notification": "󰂚",
+            "none": "󰂜",
+            "dnd-notification": "󰂛",
+            "dnd-none": "󰂛",
+            "inhibited-notification": "󰂚",
+            "inhibited-none": "󰂜",
+            "dnd-inhibited-notification": "󰂛",
+            "dnd-inhibited-none": "󰂛"
+        },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
         "on-click": "swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "tooltip": true,
         "escape": true
     },
     "clock": {
-        "format": "{:%a %d %b  %I:%M:%S %p}",
-        "interval": 1,
-        "tooltip": false
+        "format": "󰥔 {:%H:%M  %a %d %b}",
+        "interval": 60,
+        "tooltip-format": "<tt>{calendar}</tt>",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "",
+            "on-scroll": 1,
+            "format": {
+                "today": "<b><u>{}</u></b>"
+            }
+        },
+        "actions": {
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        }
     },
-
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟 {volume}%",
+        "format-bluetooth": "󰂰 {volume}%",
+        "format-icons": {
+            "headphone": "󰋋",
+            "default": [
+                "󰕿",
+                "󰖀",
+                "󰕾"
+            ]
+        },
+        "scroll-step": 5,
+        "on-click": "~/.config/hypr/scripts/volume-control.sh mute",
+        "on-click-right": "pavucontrol",
+        "on-scroll-up": "~/.config/hypr/scripts/volume-control.sh up",
+        "on-scroll-down": "~/.config/hypr/scripts/volume-control.sh down",
+        "tooltip-format": "{desc}\nScroll: volume  Click: mute  Right-click: mixer"
+    },
+    "backlight": {
+        "format": "{icon} {percent}%",
+        "format-icons": [
+            "󰃞",
+            "󰃟",
+            "󰃠"
+        ],
+        "on-scroll-up": "~/.config/hypr/scripts/brightness-control.sh up",
+        "on-scroll-down": "~/.config/hypr/scripts/brightness-control.sh down",
+        "tooltip-format": "Brightness {percent}%\nScroll to adjust"
+    },
     "network": {
-        "format-wifi": "󰖩",
+        "format-wifi": "{icon}",
         "format-ethernet": "󰈀",
         "format-disconnected": "󰤭",
         "format-disabled": "󰤮",
-        "rfkill": false,
-        "tooltip-format-disconnected": "Disconnected",
-        "tooltip-format-wifi": "{essid} ({signalStrength}%)",
-        "tooltip-format-ethernet": "{ifname}",
-        "on-click": "kitty nmtui"
+        "format-icons": [
+            "󰤯",
+            "󰤟",
+            "󰤢",
+            "󰤥",
+            "󰤨"
+        ],
+        "tooltip-format-wifi": "{essid}  {signalStrength}%\n{ipaddr}\n\nClick: networks  Right-click: advanced",
+        "tooltip-format-ethernet": "{ifname}\n{ipaddr}",
+        "tooltip-format-disconnected": "Disconnected\n\nClick: networks",
+        "on-click": "~/.config/hypr/scripts/wifi-menu.sh",
+        "on-click-right": "kitty --class nmtui -e nmtui"
     },
     "bluetooth": {
         "format-on": "󰂯",
-        "format-off": "BT-off",
+        "format-off": "󰂲",
         "format-disabled": "󰂲",
-        "format-connected-battery": "{device_battery_percentage}% 󰂯",
-        "format-alt": "{device_alias} 󰂯",
-        "tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
-        "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
-        "tooltip-format-enumerate-connected": "{device_alias}\n{device_address}",
-        "tooltip-format-enumerate-connected-battery": "{device_alias}\n{device_address}\n{device_battery_percentage}%",
-        "on-click-right": "blueman-manager",
+        "format-connected": "󰂱",
+        "format-connected-battery": "󰂱 {device_battery_percentage}%",
+        "tooltip-format": "Bluetooth on\nNo device connected\n\nClick: devices  Right-click: Blueman",
+        "tooltip-format-off": "Bluetooth off\n\nClick: devices",
+        "tooltip-format-connected": "{device_enumerate}\n\nClick: devices  Right-click: Blueman",
+        "tooltip-format-enumerate-connected": "{device_alias}",
+        "tooltip-format-enumerate-connected-battery": "{device_alias}  {device_battery_percentage}%",
+        "on-click": "~/.config/hypr/scripts/bluetooth-menu.sh",
+        "on-click-right": "blueman-manager"
     },
     "battery": {
-        "interval": 1,
+        "interval": 30,
         "states": {
             "good": 95,
             "warning": 30,
@@ -99,62 +140,102 @@
             "󰁹"
         ],
         "tooltip": true,
-        "tooltip-format": "{capacity}%\nClick: Power Mode Menu",
+        "tooltip-format": "{capacity}%  {timeTo}\nClick: Power Mode Menu",
         "on-click": "~/.config/hypr/scripts/power-mode.sh menu"
     },
-    "custom/pacman": {
-        "format": "󰅢 {}",
-        "interval": 3600,
-        "exec": "~/.config/waybar/scripts/check-updates.sh",
-        "on-click": "kitty --class update-terminal -e ~/.config/waybar/scripts/system-update.sh",
-        "signal": 8,
-        "tooltip": false
+    "tray": {
+        "icon-size": 16,
+        "spacing": 8
     },
-    "custom/expand": {
-        "format": "",
-        "tooltip": false
-    },
-    "custom/endpoint": {
-        "format": "|",
-        "tooltip": false
-    },
-    "group/expand": {
-        "orientation": "horizontal",
-        "drawer": {
-            "transition-duration": 600,
-            "transition-to-left": true,
-            "click-to-reveal": true
-        },
+    "group/system": {
+        "orientation": "inherit",
         "modules": [
-            "custom/expand",
-            "custom/colorpicker",
-            "cpu",
-            "memory",
-            "temperature",
-            "custom/endpoint"
-        ],
+            "pulseaudio",
+            "backlight",
+            "bluetooth",
+            "network",
+            "battery"
+        ]
     },
-    "custom/colorpicker": {
-        "format": "{}",
-        "return-type": "json",
-        "interval": "once",
-        "exec": "~/.config/waybar/scripts/colorpicker.sh -j",
-        "on-click": "~/.config/waybar/scripts/colorpicker.sh",
-        "signal": 1
+    "custom/launcher": {
+        "format": "",
+        "tooltip": false,
+        "on-click": "~/.config/hypr/scripts/rofi-toggle.sh"
+    },
+    "hyprland/window": {
+        "format": "{title}",
+        "max-length": 60,
+        "separate-outputs": true
+    },
+    "mpris": {
+        "format": " {title}",
+        "format-paused": " {title}",
+        "title-len": 24,
+        "tooltip-format": "{artist} - {title}\nClick: play/pause  Right-click: next  Middle-click: previous"
     },
     "cpu": {
-        "format": "󰻠",
+        "interval": 3,
+        "format": "{icon}",
+        "format-icons": [
+            "▁",
+            "▂",
+            "▃",
+            "▄",
+            "▅",
+            "▆",
+            "▇",
+            "█"
+        ],
         "tooltip": true
     },
     "memory": {
-        "format": ""
+        "interval": 5,
+        "format": "{icon}",
+        "format-icons": [
+            "▁",
+            "▂",
+            "▃",
+            "▄",
+            "▅",
+            "▆",
+            "▇",
+            "█"
+        ],
+        "tooltip-format": "RAM {used:0.1f} / {total:0.1f} GiB ({percentage}%)"
     },
-    "temperature": {
-        "critical-threshold": 80,
-        "format": "",
+    "group/load": {
+        "orientation": "inherit",
+        "modules": [
+            "cpu",
+            "memory"
+        ]
     },
-    "tray": {
-        "icon-size": 14,
-        "spacing": 10
+    "wlr/taskbar": {
+        "format": "{icon}",
+        "icon-size": 15,
+        "all-outputs": false,
+        "on-click": "activate",
+        "on-click-middle": "close",
+        "tooltip-format": "{title}"
     },
+    "modules-left": [
+        "clock"
+    ],
+    "modules-center": [
+        "custom/launcher",
+        "hyprland/workspaces"
+    ],
+    "modules-right": [
+        "custom/notification",
+        "tray",
+        "group/system"
+    ],
+    "layer": "top",
+    "position": "top",
+    "name": "pos-top",
+    "reload_style_on_change": true,
+    "margin-top": 6,
+    "margin-bottom": 0,
+    "margin-left": 10,
+    "margin-right": 10
 }

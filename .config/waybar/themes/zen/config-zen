@@ -1,27 +1,32 @@
+// Zen: one centered island (time, workspace dots, battery); the rest slides out of a drawer on hover.
 {
-    "layer": "top",
-    "position": "top",
-    "reload_style_on_change": true,
-    "modules-center": ["hyprland/workspaces", "wlr/taskbar"],
+    "modules-left": [],
+    "modules-center": ["clock", "hyprland/workspaces", "battery", "group/zen"],
+    "modules-right": [],
 
+    "clock": { "format": "{:%H:%M}" },
 
     "hyprland/workspaces": {
-        "format": "{name}",
-        "format-icons": {
-            "active": "",
-            "default": "",
-            "empty": ""
-        },
-        "persistent-workspaces": {
-            "*": [ 1,2,3,4,5 ]
-        }
-    },
-    "wlr/taskbar": {
         "format": "{icon}",
-        "icon-size": 18,
-        "tooltip-format": "{title}",
-        "on-click": "activate",
-        "on-click-middle": "close"
-    }
-} 
+        "format-icons": { "default": "" }
+    },
 
+    "group/zen": {
+        "orientation": "inherit",
+        "drawer": {
+            "transition-duration": 400,
+            "transition-left-to-right": true,
+            "children-class": "zen-child"
+        },
+        "modules": ["custom/zen-handle", "pulseaudio", "backlight", "bluetooth", "network", "custom/notification"]
+    },
+
+    "custom/zen-handle": {
+        "format": "",
+        "tooltip-format": "Hover for volume, brightness, Bluetooth, Wi-Fi and notifications"
+    },
+
+    "x-vertical": {
+        "custom/zen-handle": { "format": "" }
+    }
+}
