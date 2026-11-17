@@ -39,7 +39,7 @@ DEFAULT = {"theme": "capsule", "position": "top"}
 
 BAR_MARGIN_EDGE = 6    # floating bar: space between bar and screen edge
 BAR_MARGIN_ALONG = 10  # floating bar: space at both ends of the bar
-WINDOW_GAP_BAR = 6     # Hyprland gap between windows and the bar
+WINDOW_GAP_BAR = 12    # Hyprland gap between windows and the bar
 WINDOW_GAP_EDGE = 20   # Hyprland gap on the other three sides
 
 
