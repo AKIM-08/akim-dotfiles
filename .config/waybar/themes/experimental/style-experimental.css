@@ -4,7 +4,7 @@
 /* Experimental: light islands and chips, icons only */
 .modules-left,
 .modules-center,
-#mpris,
+#custom-media,
 #group-load, #load,
 #tray,
 #group-system, #system {
@@ -12,20 +12,20 @@
     border-radius: 12px;
     padding: 4px 10px;
 }
-#mpris, #group-load, #load, #tray, #group-system, #system { margin-left: 6px; }
+#custom-media, #group-load, #load, #tray, #group-system, #system { margin-left: 6px; }
 
 window#waybar.pos-left .modules-left,  window#waybar.pos-left .modules-center,
-window#waybar.pos-left #mpris, window#waybar.pos-left #group-load, window#waybar.pos-left #load,
+window#waybar.pos-left #custom-media, window#waybar.pos-left #group-load, window#waybar.pos-left #load,
 window#waybar.pos-left #tray, window#waybar.pos-left #group-system, window#waybar.pos-left #system,
 window#waybar.pos-right .modules-left, window#waybar.pos-right .modules-center,
-window#waybar.pos-right #mpris, window#waybar.pos-right #group-load, window#waybar.pos-right #load,
+window#waybar.pos-right #custom-media, window#waybar.pos-right #group-load, window#waybar.pos-right #load,
 window#waybar.pos-right #tray, window#waybar.pos-right #group-system, window#waybar.pos-right #system {
     padding: 10px 4px;
     margin-left: 0;
 }
-window#waybar.pos-left #mpris, window#waybar.pos-left #group-load, window#waybar.pos-left #load,
+window#waybar.pos-left #custom-media, window#waybar.pos-left #group-load, window#waybar.pos-left #load,
 window#waybar.pos-left #tray, window#waybar.pos-left #group-system, window#waybar.pos-left #system,
-window#waybar.pos-right #mpris, window#waybar.pos-right #group-load, window#waybar.pos-right #load,
+window#waybar.pos-right #custom-media, window#waybar.pos-right #group-load, window#waybar.pos-right #load,
 window#waybar.pos-right #tray, window#waybar.pos-right #group-system, window#waybar.pos-right #system {
     margin-top: 6px;
 }
@@ -43,8 +43,8 @@ window#waybar.pos-right #network, window#waybar.pos-right #battery {
     padding: 5px 0;
 }
 
-#mpris          { color: alpha(@foreground, 0.85); font-weight: normal; }
-#mpris.paused   { color: alpha(@foreground, 0.5); }
+#custom-media          { color: alpha(@foreground, 0.85); font-weight: normal; }
+#custom-media.paused   { color: alpha(@foreground, 0.5); }
 #cpu, #memory   { color: @color9; font-size: 12px; padding: 0 1px; }
 #tray           { opacity: 0.7; }
 #battery        { color: @color9; }

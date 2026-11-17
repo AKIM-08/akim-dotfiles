@@ -167,13 +167,6 @@
         "max-length": 60,
         "separate-outputs": true
     },
-    "mpris": {
-        "format": " {title}",
-        "format-paused": " {title}",
-        "title-len": 24,
-        "tooltip-format": "{artist} - {title}\nClick: play/pause  Right-click: next  Middle-click: previous",
-        "format-stopped": ""
-    },
     "cpu": {
         "interval": 3,
         "format": "{icon}",
@@ -241,9 +234,22 @@
         "bluetooth": {
             "format-connected-battery": "󰂱"
         },
-        "mpris": {
-            "format": "",
-            "format-paused": ""
+        "custom/media": {
+            "format": "{icon}"
         }
+    },
+    "custom/media": {
+        "format": "{icon} {}",
+        "format-icons": {
+            "playing": "",
+            "paused": ""
+        },
+        "return-type": "json",
+        "exec": "~/.config/waybar/scripts/media.sh",
+        "restart-interval": 5,
+        "escape": true,
+        "on-click": "playerctl play-pause",
+        "on-click-right": "playerctl next",
+        "on-click-middle": "playerctl previous"
     }
 }
