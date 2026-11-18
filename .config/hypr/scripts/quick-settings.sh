@@ -261,41 +261,68 @@ menu_transition() {
     esac
 }
 
+# ---------------------------------------------------------------- Power menu style
+menu_power_style() {
+    local cur i active=0
+    cur=$(cat "$HYPR_DIR/power-menu-style" 2>/dev/null || echo radial)
+    [ "$cur" = cards ] && active=1
+    i=$(rofi_pick "Power menu style (Super + Esc)" "$active" \
+        "󰐥  Radial   —  Ring around the center" \
+        "󰐥  Cards    —  Row of glass cards") || return
+    case "$i" in
+        0) echo radial > "$HYPR_DIR/power-menu-style"; notify "Power menu: Radial" ;;
+        1) echo cards  > "$HYPR_DIR/power-menu-style"; notify "Power menu: Cards" ;;
+    esac
+}
+
 # ---------------------------------------------------------------- Main menu
 caffeine="OFF"; [ -f "$HOME/.cache/caffeine_active" ] && caffeine="ON"
 power=$(powerprofilesctl get 2>/dev/null || echo "n/a")
 read -r wb_theme wb_pos wb_size < <(python3 "$HOME/.config/waybar/scripts/layout.py" --get 2>/dev/null)
 
-ENTRIES=(
-    "wallpaper|󰸉  Wallpaper                  —  Pick a wallpaper (Super + W)"
-    "transition|󰸉  Wallpaper transition       —  $(transition_label)"
-    "waybar|󱄄  Waybar                     —  ${wb_theme^}, ${wb_pos}, ${wb_size}"
-    "wifi|󰤨  Wi-Fi                      —  Networks"
-    "bluetooth|󰂯  Bluetooth                  —  Devices"
-    "sound|󰕾  Sound                      —  Audio mixer"
-    "nightlight|󰖔  Night light                —  $(nightlight_label)"
-    "dnd|󰂛  Do Not Disturb             —  $(dnd_state)"
-    "caffeine|󰅶  Caffeine (stay awake)      —  ${caffeine}"
-    "animations|󰘕  Animations                 —  $(animations_state)"
-    "power|󰒓  Power profile              —  ${power}"
-    "mouse|󰍽  Mouse speed                —  $(get_sensitivity)"
-    "browser|󰖟  Default web browser"
-    "terminal|󰞷  Default terminal"
-    "files|󰉋  Default file manager"
-    "keys|󰌌  Keyboard shortcuts         —  Super + G"
-    "info|󰋽  System information"
-    "lock|󰌾  Lock screen                —  Super + L"
-)
-keys=(); labels=()
-for e in "${ENTRIES[@]}"; do keys+=("${e%%|*}"); labels+=("${e#*|}"); done
+power_style=$(cat "$HYPR_DIR/power-menu-style" 2>/dev/null || echo radial)
 
-i=$(printf '%s\n' "${labels[@]}" | rofi -dmenu -i -format i -p "󰒓 Settings" -theme "$ROFI_THEME") || exit 0
+# key | icon | name | current value (shown dimmed on the right)
+ENTRIES=(
+    "wallpaper|󰸉|Wallpaper|Super + W"
+    "transition|󰸉|Wallpaper transition|$(transition_label)"
+    "waybar|󱄄|Waybar|${wb_theme^}, ${wb_pos}, ${wb_size}"
+    "powerstyle|󰐥|Power menu style|${power_style^}"
+    "wifi|󰤨|Wi-Fi|Networks"
+    "bluetooth|󰂯|Bluetooth|Devices"
+    "sound|󰕾|Sound|Audio mixer"
+    "nightlight|󰖔|Night light|$(nightlight_label)"
+    "dnd|󰂛|Do Not Disturb|$(dnd_state)"
+    "caffeine|󰅶|Caffeine (stay awake)|${caffeine}"
+    "animations|󰘕|Animations|$(animations_state)"
+    "power|󰒓|Power profile|${power}"
+    "mouse|󰍽|Mouse speed|$(get_sensitivity)"
+    "browser|󰖟|Default web browser|"
+    "terminal|󰞷|Default terminal|"
+    "files|󰉋|Default file manager|"
+    "keys|󰌌|Keyboard shortcuts|Super + G"
+    "info|󰋽|System information|"
+    "lock|󰌾|Lock screen|Super + L"
+)
+# Escape text for Rofi markup. Bash 5.2+ treats "&" in a ${var//x/y} replacement as the matched
+# text; turn that off so "&lt;" stays literal (older bash doesn't have the option).
+shopt -u patsub_replacement 2>/dev/null || true
+esc() { local s="${1//&/&amp;}"; s="${s//</&lt;}"; printf '%s' "${s//>/&gt;}"; }
+keys=(); labels=()
+for e in "${ENTRIES[@]}"; do
+    IFS='|' read -r key icon name value <<<"$e"
+    keys+=("$key")
+    labels+=("$(printf '%s   %-24s' "$icon" "$(esc "$name")")<span alpha='55%'>$(esc "$value")</span>")
+done
+
+i=$(printf '%s\n' "${labels[@]}" | rofi -dmenu -i -markup-rows -format i -p "Settings" -theme "$ROFI_THEME") || exit 0
 [ -z "$i" ] && exit 0
 
 case "${keys[$i]}" in
     wallpaper)  bash "$SCRIPTS/rofi-wallpaper.sh" ;;
     transition) menu_transition ;;
     waybar)     menu_waybar ;;
+    powerstyle) menu_power_style ;;
     wifi)       bash "$SCRIPTS/wifi-menu.sh" ;;
     bluetooth)  bash "$SCRIPTS/bluetooth-menu.sh" ;;
     sound)      command -v pavucontrol &>/dev/null && { pavucontrol >/dev/null 2>&1 & } || notify "pavucontrol is not installed" ;;

@@ -28,9 +28,10 @@ if [ -d "$HOME/.config/cpmenu" ]; then
     [ -f "$HOME/.config/cpmenu/style.css" ] && ln -sf "$HOME/.config/cpmenu/style.css" "$HOME/.config/snmenu/style.css" 2>/dev/null || true
 fi
 
-# 1. Python GTK3/Cairo native radial menu (exact replica in Picture 3 & 4)
+# 1. Python GTK3/Cairo power menu; style chosen in Quick Settings (radial or cards)
 if [ -f "$HOME/.config/hypr/scripts/snmenu.py" ]; then
-    exec python3 "$HOME/.config/hypr/scripts/snmenu.py"
+    style=$(cat "$HOME/.config/hypr/power-menu-style" 2>/dev/null || echo radial)
+    exec python3 "$HOME/.config/hypr/scripts/snmenu.py" --style "$style"
 fi
 
 # 2. wlogout if installed

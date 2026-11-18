@@ -1,0 +1,118 @@
+/* Shared look for every Rofi menu except the launcher (launcher.rasi).
+   Compact list: a title row with the search on it, rows with a side accent bar when selected.
+   Each menu's own .rasi imports this and sets only its width, lines, icons and placeholder. */
+
+/* Fallbacks, overridden by the pywal colors imported next */
+* {
+    background-translucent: #16131cd9;
+    accent-soft:            #8f8cf02e;
+}
+@import "~/.cache/wal/colors-rofi-dark"
+
+configuration {
+    font: "JetBrainsMono Nerd Font 11";
+    show-icons: false;
+    location: 0;
+    fixed-num-lines: true;
+    hide-scrollbar: true;
+    click-to-exit: true;
+    cycle: true;
+}
+
+* {
+    background-color: transparent;
+    text-color: @text-color;
+}
+
+window {
+    width: 560px;
+    border: 1px;
+    border-radius: 16px;
+    border-color: #ffffff24;
+    background-color: @background-translucent;
+    padding: 0px;
+}
+
+mainbox {
+    padding: 14px;
+    spacing: 10px;
+    children: [ inputbar, listview ];
+}
+
+/* Title row: menu name on the left, search on the same line, hairline underneath */
+inputbar {
+    padding: 4px 8px 12px 8px;
+    spacing: 14px;
+    border: 0px 0px 1px 0px;
+    border-color: #ffffff14;
+    children: [ prompt, entry ];
+}
+prompt {
+    font: "JetBrainsMono Nerd Font Bold 13";
+    text-color: @text-color;
+    vertical-align: 0.5;
+}
+entry {
+    placeholder: "type to filter";
+    placeholder-color: #ffffff4d;
+    vertical-align: 0.5;
+    cursor: text;
+}
+
+listview {
+    lines: 8;
+    columns: 1;
+    spacing: 3px;
+    fixed-height: true;
+    scrollbar: false;
+}
+scrollbar {
+    width: 4px;
+    handle-width: 4px;
+    handle-color: @selected-normal-background;
+    background-color: #ffffff10;
+    border-radius: 4px;
+    margin: 0px 0px 0px 6px;
+}
+
+/* Rows: the selected one gets an accent bar on the left and a light tint (not a solid fill) */
+element {
+    padding: 9px 12px 9px 11px;
+    spacing: 12px;
+    border: 0px 0px 0px 3px;
+    border-color: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+}
+element normal.normal, element alternate.normal {
+    background-color: transparent;
+    text-color: @text-color;
+}
+element normal.active, element alternate.active {
+    text-color: @selected-normal-background;
+}
+element normal.urgent, element alternate.urgent {
+    text-color: @urgent-background;
+}
+element selected.normal, element selected.active {
+    background-color: @accent-soft;
+    border-color: @selected-normal-background;
+    text-color: @text-color;
+}
+element selected.urgent {
+    background-color: @urgent-background;
+    text-color: @urgent-foreground;
+}
+element-text, element-icon {
+    text-color: inherit;
+    vertical-align: 0.5;
+    cursor: inherit;
+}
+element-icon {
+    size: 24px;
+}
+
+message, textbox {
+    text-color: @text-color;
+    padding: 4px 8px;
+}

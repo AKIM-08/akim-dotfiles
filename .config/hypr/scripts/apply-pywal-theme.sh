@@ -82,6 +82,7 @@ s, c = data["special"], data["colors"]
     urgent-foreground: {s['background']};
     background-translucent: {s['background']}d9;
     accent-translucent: {c['color1']}99;
+    accent-soft: {c['color1']}2e;
 }}
 """)
 PY

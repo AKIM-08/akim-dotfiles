@@ -1,127 +1,149 @@
 #!/usr/bin/env python3
 """
-snmenu.py - Lightweight GTK3/Cairo circular radial power menu
-- Continuous hollow donut disc with 6 power options
-- Symmetrical dial: Suspend (right), Logout (bottom-right), Shutdown (bottom-left), Hibernate (left), Reboot (top-left), Lock (top-right)
-- Popped-out wedge highlight on hover using active pywal wallpaper accent
-- Crisp typography and Nerd Font icons
-- Instant ESC / click-outside dismiss
+snmenu.py - Power menu (Super + Escape) in two styles, GTK3/Cairo on a layer-shell overlay.
+
+    snmenu.py [--style radial|cards]
+
+radial  a donut with six sections; the selected one pops out in the wallpaper accent and the
+        center shows what it will do, plus uptime and battery.
+cards   a row of glass cards; the selected card grows and lifts.
+
+Both styles:
+  - mouse hover / click, arrow keys or the scroll wheel to pick, Enter or Space to run
+  - letter shortcuts: L lock, S suspend, O logout, P power off, H hibernate, R reboot
+  - Shutdown, Reboot and Logout need a second click / Enter within 3 s (no accidents)
+  - Esc, Q, right-click or a click outside closes it
+
+Actions and icons come from ~/.config/snmenu/layout (the pywal-themed cpmenu layout).
+Running it again while it is open closes it.
 """
 
-import sys
-import os
 import json
 import math
+import os
 import subprocess
+import sys
+import time
 
 try:
     import gi
-    gi.require_version('Gtk', '3.0')
-    gi.require_version('Gdk', '3.0')
-    from gi.repository import Gtk, Gdk, Pango, PangoCairo
-    import cairo
-except ImportError as e:
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("Gdk", "3.0")
+    from gi.repository import Gdk, GLib, Gtk, Pango, PangoCairo
+except (ImportError, ValueError) as e:
     sys.stderr.write(f"Error loading GTK3/Cairo: {e}\n")
     sys.exit(1)
 
-# Wayland overlay support via GtkLayerShell if present
 HAS_LAYER_SHELL = False
 try:
-    gi.require_version('GtkLayerShell', '0.1')
+    gi.require_version("GtkLayerShell", "0.1")
     from gi.repository import GtkLayerShell
     HAS_LAYER_SHELL = True
-except Exception:
-    HAS_LAYER_SHELL = False
+except (ImportError, ValueError):
+    pass
+
+FONT = "JetBrainsMono Nerd Font"
+CONFIRM_SECONDS = 3.0
+DANGEROUS = {"shutdown", "reboot", "logout"}
+KEYS = {"lock": "L", "suspend": "S", "logout": "O", "shutdown": "P", "hibernate": "H", "reboot": "R"}
+CARD_ORDER = ["lock", "logout", "suspend", "shutdown", "hibernate", "reboot"]
+WARN = (0.82, 0.38, 0.37)
 
 
+# ------------------------------------------------------------------------------ data
 def hex_to_rgb(hex_str, default=(0.1, 0.1, 0.1)):
-    hex_str = hex_str.strip().lstrip('#')
+    hex_str = hex_str.strip().lstrip("#")
     if len(hex_str) == 6:
         try:
-            return (
-                int(hex_str[0:2], 16) / 255.0,
-                int(hex_str[2:4], 16) / 255.0,
-                int(hex_str[4:6], 16) / 255.0,
-            )
+            return tuple(int(hex_str[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
         except ValueError:
             pass
     return default
 
 
 def load_theme():
-    colors_file = os.path.expanduser("~/.cache/wal/colors.json")
-    theme = {
-        "bg": (0.10, 0.08, 0.14),
-        "fg": (1.0, 1.0, 1.0),
-        "accent": (0.71, 0.24, 0.48), # Elegant magenta/pink default
-        "overlay": (0.0, 0.0, 0.0, 0.65),
-        "wedge_bg": (0.12, 0.09, 0.15, 0.94),
-        "center_bg": (0.07, 0.05, 0.09, 0.85),
-    }
-
-    if os.path.exists(colors_file):
-        try:
-            with open(colors_file, "r") as f:
-                data = json.load(f)
-                bg_hex = data.get("special", {}).get("background", "#14121a")
-                fg_hex = data.get("special", {}).get("foreground", "#ffffff")
-                colors = data.get("colors", {})
-                accent_hex = colors.get("color1") or colors.get("color9") or "#b53c7a"
-
-                bg_rgb = hex_to_rgb(bg_hex)
-                theme["bg"] = bg_rgb
-                theme["wedge_bg"] = (bg_rgb[0] * 1.1, bg_rgb[1] * 1.1, bg_rgb[2] * 1.1, 0.94)
-                theme["center_bg"] = (bg_rgb[0] * 0.6, bg_rgb[1] * 0.6, bg_rgb[2] * 0.6, 0.85)
-                theme["overlay"] = (bg_rgb[0] * 0.2, bg_rgb[1] * 0.2, bg_rgb[2] * 0.2, 0.65)
-                theme["fg"] = hex_to_rgb(fg_hex)
-                theme["accent"] = hex_to_rgb(accent_hex)
-        except Exception:
-            pass
-
+    theme = {"bg": (0.10, 0.08, 0.14), "fg": (1.0, 1.0, 1.0), "accent": (0.71, 0.24, 0.48)}
+    try:
+        with open(os.path.expanduser("~/.cache/wal/colors.json"), encoding="utf-8") as f:
+            data = json.load(f)
+        colors = data.get("colors", {})
+        theme["bg"] = hex_to_rgb(data.get("special", {}).get("background", "#14121a"))
+        theme["fg"] = hex_to_rgb(data.get("special", {}).get("foreground", "#ffffff"))
+        theme["accent"] = hex_to_rgb(colors.get("color1") or colors.get("color9") or "#b53c7a")
+    except Exception:
+        pass
+    bg = theme["bg"]
+    theme["overlay"] = (bg[0] * 0.2, bg[1] * 0.2, bg[2] * 0.2, 0.62)
+    theme["ring"] = (min(bg[0] * 1.1, 1), min(bg[1] * 1.1, 1), min(bg[2] * 1.1, 1), 0.94)
+    theme["hub"] = (bg[0] * 0.55, bg[1] * 0.55, bg[2] * 0.55, 0.88)
     return theme
 
 
 def load_layout():
-    layout_paths = [
-        os.path.expanduser("~/.config/snmenu/layout"),
-        os.path.expanduser("~/.config/cpmenu/layout"),
-    ]
-    for path in layout_paths:
+    for path in ("~/.config/snmenu/layout", "~/.config/cpmenu/layout"):
+        path = os.path.expanduser(path)
         if os.path.exists(path):
             try:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 sys.stderr.write(f"Failed to parse {path}: {e}\n")
-
     return [
-        {"label": "suspend", "action": "pidof hyprlock >/dev/null || hyprlock & sleep 0.5; loginctl lock-session; systemctl suspend", "text": "Suspend", "icon_char": ""},
-        {"label": "logout", "action": "hyprctl dispatch exit", "text": "Logout", "icon_char": ""},
+        {"label": "suspend", "action": "loginctl lock-session; systemctl suspend", "text": "Suspend", "icon_char": ""},
+        {"label": "logout", "action": "hyprctl dispatch exit", "text": "Logout", "icon_char": ""},
         {"label": "shutdown", "action": "systemctl poweroff", "text": "Shutdown", "icon_char": ""},
-        {"label": "hibernate", "action": "pidof hyprlock >/dev/null || hyprlock & sleep 0.5; loginctl lock-session; systemctl hibernate", "text": "Hibernate", "icon_char": ""},
+        {"label": "hibernate", "action": "loginctl lock-session; systemctl hibernate", "text": "Hibernate", "icon_char": ""},
         {"label": "reboot", "action": "systemctl reboot", "text": "Reboot", "icon_char": ""},
         {"label": "lock", "action": "hyprlock", "text": "Lock", "icon_char": ""},
     ]
 
 
-class RadialMenu(Gtk.Window):
-    def __init__(self):
-        super().__init__(type=Gtk.WindowType.TOPLEVEL)
+def system_info() -> str:
+    parts = []
+    try:
+        with open("/proc/uptime") as f:
+            secs = int(float(f.read().split()[0]))
+        h, m = divmod(secs // 60, 60)
+        parts.append(f"up {h}h {m:02d}m" if h else f"up {m}m")
+    except Exception:
+        pass
+    try:
+        for name in sorted(os.listdir("/sys/class/power_supply")):
+            if name.startswith("BAT"):
+                with open(f"/sys/class/power_supply/{name}/capacity") as f:
+                    parts.append(f"{f.read().strip()}%")
+                break
+    except Exception:
+        pass
+    return "  ·  ".join(parts)
 
+
+# ------------------------------------------------------------------------------ window
+class PowerMenu(Gtk.Window):
+    def __init__(self, style: str):
+        super().__init__(type=Gtk.WindowType.TOPLEVEL)
+        self.style = style
         self.set_title("snmenu")
         self.set_wmclass("snmenu", "snmenu")
 
         self.theme = load_theme()
-        self.items = load_layout()
-        self.num_items = len(self.items) if self.items else 6
+        items = load_layout()
+        if style == "cards":
+            rank = {name: i for i, name in enumerate(CARD_ORDER)}
+            items = sorted(items, key=lambda it: rank.get(it.get("label", ""), len(rank)))
+        self.items = items
+        self.n = len(items)
+        self.info = system_info()
 
-        self.hovered_index = -1
-        # Spacious circular dimensions
-        self.outer_radius = 345.0
-        self.inner_radius = 110.0
-        self.hover_pop_out = 55.0
+        self.selected = -1
+        self.armed = -1
+        self.armed_at = 0.0
+        self.tick = None
+        self.hit = []                     # cards: (x, y, w, h, index)
 
-        # Enable true RGBA transparency
+        # Radial geometry
+        self.outer_r, self.inner_r, self.pop = 330.0, 112.0, 22.0
+
         self.set_app_paintable(True)
         screen = self.get_screen()
         visual = screen.get_rgba_visual()
@@ -133,89 +155,64 @@ class RadialMenu(Gtk.Window):
             GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
             GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
             GtkLayerShell.set_exclusive_zone(self, -1)
-            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.TOP, True)
-            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
-            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
-            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.RIGHT, True)
+            for edge in (GtkLayerShell.Edge.TOP, GtkLayerShell.Edge.BOTTOM,
+                         GtkLayerShell.Edge.LEFT, GtkLayerShell.Edge.RIGHT):
+                GtkLayerShell.set_anchor(self, edge, True)
             GtkLayerShell.set_namespace(self, "snmenu")
         else:
             self.fullscreen()
             self.set_decorated(False)
 
-        self.add_events(
-            Gdk.EventMask.POINTER_MOTION_MASK
-            | Gdk.EventMask.BUTTON_PRESS_MASK
-            | Gdk.EventMask.KEY_PRESS_MASK
-            | Gdk.EventMask.LEAVE_NOTIFY_MASK
-        )
-
+        self.add_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK
+                        | Gdk.EventMask.KEY_PRESS_MASK | Gdk.EventMask.SCROLL_MASK
+                        | Gdk.EventMask.SMOOTH_SCROLL_MASK)
         self.connect("draw", self.on_draw)
         self.connect("motion-notify-event", self.on_motion)
         self.connect("button-press-event", self.on_click)
         self.connect("key-press-event", self.on_key)
+        self.connect("scroll-event", self.on_scroll)
         self.connect("destroy", Gtk.main_quit)
 
-    def get_center(self):
-        alloc = self.get_allocation()
-        return alloc.width / 2.0, alloc.height / 2.0
+    # -------------------------------------------------------------- selection & actions
+    def label(self, i) -> str:
+        return self.items[i].get("label", "")
 
-    def get_slice_index_at(self, x, y):
-        cx, cy = self.get_center()
-        dx = x - cx
-        dy = y - cy
-        dist = math.hypot(dx, dy)
+    def name(self, i) -> str:
+        return self.items[i].get("text", self.label(i)).capitalize()
 
-        # Inside center hole or far outside bounds
-        if dist < self.inner_radius or dist > (self.outer_radius + self.hover_pop_out + 20.0):
-            return -1
-
-        slice_angle = (2.0 * math.pi) / self.num_items
-        angle = math.atan2(dy, dx)
-        if angle < 0:
-            angle += 2.0 * math.pi
-
-        # Index 0 is centered at 0 rad (right / 3 o'clock)
-        rel_angle = (angle + slice_angle / 2.0) % (2.0 * math.pi)
-        index = int(rel_angle / slice_angle) % self.num_items
-        return index
-
-    def on_motion(self, widget, event):
-        new_index = self.get_slice_index_at(event.x, event.y)
-        if new_index != self.hovered_index:
-            self.hovered_index = new_index
-            window = self.get_window()
-            if window:
-                if new_index >= 0:
-                    cursor = Gdk.Cursor.new_from_name(window.get_display(), "pointer")
-                else:
-                    cursor = Gdk.Cursor.new_from_name(window.get_display(), "default")
-                window.set_cursor(cursor)
+    def select(self, i):
+        if i != self.selected:
+            self.selected = i
+            if self.armed != i:
+                self.disarm()
             self.queue_draw()
+
+    def disarm(self):
+        self.armed = -1
+        if self.tick:
+            GLib.source_remove(self.tick)
+            self.tick = None
+
+    def on_tick(self):
+        if self.armed >= 0 and time.monotonic() - self.armed_at >= CONFIRM_SECONDS:
+            self.tick = None
+            self.armed = -1
+            self.queue_draw()
+            return False
+        self.queue_draw()
         return True
 
-    def on_click(self, widget, event):
-        if event.button == 1:
-            index = self.get_slice_index_at(event.x, event.y)
-            if 0 <= index < len(self.items):
-                action = self.items[index].get("action", "")
-                self.execute_action(action)
-                return True
-            else:
-                # Click outside the donut or in the center dismisses menu
-                Gtk.main_quit()
-                return True
-        elif event.button == 3:
-            Gtk.main_quit()
-            return True
-        return False
-
-    def on_key(self, widget, event):
-        if event.keyval in (Gdk.KEY_Escape, Gdk.KEY_q):
-            Gtk.main_quit()
-            return True
-        return False
-
-    def execute_action(self, action):
+    def activate(self, i):
+        if not 0 <= i < self.n:
+            return
+        if self.label(i) in DANGEROUS and self.armed != i:
+            self.selected = i
+            self.disarm()
+            self.armed, self.armed_at = i, time.monotonic()
+            self.tick = GLib.timeout_add(33, self.on_tick)        # animate the countdown
+            self.queue_draw()
+            return
+        action = self.items[i].get("action", "")
         if action:
             try:
                 subprocess.Popen(action, shell=True)
@@ -223,111 +220,285 @@ class RadialMenu(Gtk.Window):
                 sys.stderr.write(f"Failed to execute '{action}': {e}\n")
         Gtk.main_quit()
 
-    def on_draw(self, widget, cr):
+    def step(self, delta):
+        if self.n:
+            self.select(0 if self.selected < 0 else (self.selected + delta) % self.n)
+
+    # -------------------------------------------------------------- input
+    def index_at(self, x, y) -> int:
+        if self.style == "cards":
+            for cx, cy, w, h, i in self.hit:
+                if cx <= x <= cx + w and cy <= y <= cy + h:
+                    return i
+            return -1
         alloc = self.get_allocation()
-        w, h = alloc.width, alloc.height
-        cx, cy = w / 2.0, h / 2.0
+        dx, dy = x - alloc.width / 2.0, y - alloc.height / 2.0
+        dist = math.hypot(dx, dy)
+        if dist < self.inner_r or dist > self.outer_r + self.pop + 20:
+            return -1
+        slice_a = 2 * math.pi / self.n
+        angle = math.atan2(dy, dx) % (2 * math.pi)
+        return int(((angle + slice_a / 2) % (2 * math.pi)) / slice_a) % self.n
 
-        # 1. Full-screen dimmed blurred background overlay
-        or_, og, ob, oa = self.theme["overlay"]
-        cr.set_source_rgba(or_, og, ob, oa)
+    def on_motion(self, _w, event):
+        i = self.index_at(event.x, event.y)
+        win = self.get_window()
+        if win:
+            win.set_cursor(Gdk.Cursor.new_from_name(win.get_display(), "pointer" if i >= 0 else "default"))
+        if i >= 0:
+            self.select(i)
+        return True
+
+    def on_click(self, _w, event):
+        if event.button == 1:
+            i = self.index_at(event.x, event.y)
+            if i >= 0:
+                self.activate(i)
+            else:
+                Gtk.main_quit()
+            return True
+        if event.button == 3:
+            Gtk.main_quit()
+            return True
+        return False
+
+    def on_scroll(self, _w, event):
+        d = 0
+        if event.direction in (Gdk.ScrollDirection.DOWN, Gdk.ScrollDirection.RIGHT):
+            d = 1
+        elif event.direction in (Gdk.ScrollDirection.UP, Gdk.ScrollDirection.LEFT):
+            d = -1
+        elif event.direction == Gdk.ScrollDirection.SMOOTH:
+            _, dx, dy = event.get_scroll_deltas()
+            v = dy or dx
+            d = 1 if v > 0.3 else -1 if v < -0.3 else 0
+        if d:
+            self.step(d)
+        return True
+
+    def on_key(self, _w, event):
+        k = event.keyval
+        if k in (Gdk.KEY_Escape, Gdk.KEY_q, Gdk.KEY_Q):
+            if self.armed >= 0:
+                self.disarm()
+                self.queue_draw()
+            else:
+                Gtk.main_quit()
+            return True
+        if k in (Gdk.KEY_Right, Gdk.KEY_Down, Gdk.KEY_Tab):
+            self.step(1)
+            return True
+        if k in (Gdk.KEY_Left, Gdk.KEY_Up, Gdk.KEY_ISO_Left_Tab):
+            self.step(-1)
+            return True
+        if k in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_space):
+            if self.selected >= 0:
+                self.activate(self.selected)
+            return True
+        ch = chr(Gdk.keyval_to_unicode(k) or 0).upper()
+        for i in range(self.n):
+            if KEYS.get(self.label(i)) == ch:
+                self.activate(i)
+                return True
+        return False
+
+    # -------------------------------------------------------------- drawing helpers
+    def text(self, cr, s, size, x, y, bold=False, rgba=(1, 1, 1, 1), center=True):
+        layout = self.create_pango_layout(s)
+        layout.set_font_description(Pango.FontDescription(f"{FONT}{' Bold' if bold else ''} {size}"))
+        _, rect = layout.get_pixel_extents()
+        cr.set_source_rgba(*rgba)
+        cr.move_to(x - rect.width / 2 - rect.x if center else x, y - rect.height / 2 - rect.y)
+        PangoCairo.show_layout(cr, layout)
+
+    def countdown_left(self) -> float:
+        return max(0.0, 1.0 - (time.monotonic() - self.armed_at) / CONFIRM_SECONDS)
+
+    def on_draw(self, _w, cr):
+        alloc = self.get_allocation()
+        cr.set_source_rgba(*self.theme["overlay"])
         cr.paint()
+        if self.style == "cards":
+            self.draw_cards(cr, alloc.width, alloc.height)
+        else:
+            self.draw_radial(cr, alloc.width, alloc.height)
+        return True
 
-        slice_angle = (2.0 * math.pi) / self.num_items
+    # -------------------------------------------------------------- radial
+    def draw_radial(self, cr, w, h):
+        cx, cy = w / 2, h / 2
+        fg, acc, t = self.theme["fg"], self.theme["accent"], self.theme
+        slice_a = 2 * math.pi / self.n
+        gap = 0.012
 
-        # 2. Draw continuous dark donut ring base (no dividing cuts)
-        br, bg, bb, ba = self.theme["wedge_bg"]
-        cr.arc(cx, cy, self.outer_radius, 0, 2.0 * math.pi)
-        cr.arc_negative(cx, cy, self.inner_radius, 2.0 * math.pi, 0)
-        cr.close_path()
-        cr.set_source_rgba(br, bg, bb, ba)
+        cr.new_path()
+        cr.arc(cx, cy, self.outer_r, 0, 2 * math.pi)
+        cr.arc_negative(cx, cy, self.inner_r, 2 * math.pi, 0)
+        cr.set_source_rgba(*t["ring"])
         cr.fill()
 
-        # Center circle is completely transparent (reveals blurred background)
+        for i in range(self.n):
+            mid = i * slice_a
+            sel = i == self.selected
+            a0, a1 = mid - slice_a / 2 + gap, mid + slice_a / 2 - gap
+            ox, oy = (math.cos(mid) * self.pop, math.sin(mid) * self.pop) if sel else (0, 0)
+            if sel:
+                # soft shadow, then the popped-out section
+                for k, alpha in ((10, 0.10), (5, 0.12)):
+                    cr.new_path()
+                    cr.arc(cx + ox, cy + oy + k, self.outer_r + 4, a0, a1)
+                    cr.arc_negative(cx + ox, cy + oy + k, self.inner_r, a1, a0)
+                    cr.close_path()
+                    cr.set_source_rgba(0, 0, 0, alpha)
+                    cr.fill()
+                col = WARN if i == self.armed else acc
+                cr.new_path()
+                cr.arc(cx + ox, cy + oy, self.outer_r, a0, a1)
+                cr.arc_negative(cx + ox, cy + oy, self.inner_r, a1, a0)
+                cr.close_path()
+                cr.set_source_rgba(*col, 0.96)
+                cr.fill()
+            else:
+                cr.new_path()
+                cr.arc(cx, cy, self.outer_r - 1, a0, a1)
+                cr.arc_negative(cx, cy, self.inner_r + 1, a1, a0)
+                cr.close_path()
+                cr.set_source_rgba(*fg, 0.035)
+                cr.fill()
 
-        # 4. Draw popped-out highlighted sector for hovered item
-        if 0 <= self.hovered_index < self.num_items:
-            mid_angle = self.hovered_index * slice_angle
-            start_angle = mid_angle - slice_angle / 2.0
-            end_angle = mid_angle + slice_angle / 2.0
-            hover_r = self.outer_radius + self.hover_pop_out
+            r_mid = (self.inner_r + self.outer_r) / 2
+            tx, ty = cx + ox + r_mid * math.cos(mid), cy + oy + r_mid * math.sin(mid)
+            self.text(cr, self.items[i].get("icon_char", ""), 42 if sel else 36, tx, ty - 14, rgba=(1, 1, 1, 1))
+            self.text(cr, self.name(i), 12.5, tx, ty + 32, bold=True, rgba=(1, 1, 1, 1))
+            key = KEYS.get(self.label(i))
+            if key:
+                self.text(cr, key, 9.5, tx, ty + 52, rgba=(1, 1, 1, 0.45))
 
-            cr.arc(cx, cy, hover_r, start_angle, end_angle)
-            cr.arc_negative(cx, cy, self.inner_radius, end_angle, start_angle)
+        # Center hub
+        hub_r = self.inner_r - 10
+        cr.new_path()
+        cr.arc(cx, cy, hub_r, 0, 2 * math.pi)
+        cr.set_source_rgba(*t["hub"])
+        cr.fill_preserve()
+        cr.set_source_rgba(*fg, 0.08)
+        cr.set_line_width(1)
+        cr.stroke()
+        if self.armed >= 0:
+            cr.set_line_width(4)
+            cr.set_source_rgba(*WARN, 1)
+            cr.new_path()
+            cr.arc(cx, cy, hub_r - 7, -math.pi / 2, -math.pi / 2 + 2 * math.pi * self.countdown_left())
+            cr.stroke()
+            self.text(cr, f"{self.name(self.armed)}?", 15, cx, cy - 8, bold=True)
+            self.text(cr, "click / Enter again", 9, cx, cy + 14, rgba=(1, 1, 1, 0.6))
+        elif self.selected >= 0:
+            self.text(cr, self.name(self.selected), 15, cx, cy - 14, bold=True)
+            if self.info:
+                self.text(cr, self.info, 9, cx, cy + 8, rgba=(1, 1, 1, 0.6))
+            self.text(cr, "Enter · Esc", 9, cx, cy + 26, rgba=(1, 1, 1, 0.45))
+        else:
+            self.text(cr, time.strftime("%H:%M"), 20, cx, cy - 10, bold=True)
+            if self.info:
+                self.text(cr, self.info, 9, cx, cy + 16, rgba=(1, 1, 1, 0.6))
+
+    # -------------------------------------------------------------- cards
+    def draw_cards(self, cr, w, h):
+        fg, acc = self.theme["fg"], self.theme["accent"]
+        cw, ch = 210.0, 330.0
+        total = cw * self.n
+        x0, y0 = (w - total) / 2, (h - ch) / 2
+        radius = 34.0
+        self.hit = []
+
+        def rounded(x, y, rw, rh, r_left, r_right):
+            cr.new_path()
+            cr.arc(x + rw - r_right, y + r_right, r_right, -math.pi / 2, 0) if r_right else cr.move_to(x + rw, y)
+            cr.arc(x + rw - r_right, y + rh - r_right, r_right, 0, math.pi / 2) if r_right else cr.line_to(x + rw, y + rh)
+            cr.arc(x + r_left, y + rh - r_left, r_left, math.pi / 2, math.pi) if r_left else cr.line_to(x, y + rh)
+            cr.arc(x + r_left, y + r_left, r_left, math.pi, 3 * math.pi / 2) if r_left else cr.line_to(x, y)
             cr.close_path()
 
-            ar, ag, ab = self.theme["accent"]
-            cr.set_source_rgba(ar, ag, ab, 0.96)
-            cr.fill()
+        order = list(range(self.n))
+        if self.selected >= 0:                       # draw the selected card last (on top)
+            order.remove(self.selected)
+            order.append(self.selected)
+        for i in order:
+            sel = i == self.selected
+            x = x0 + i * cw
+            if sel:
+                s = 1.12
+                sw, sh = cw * s, ch * s
+                sx, sy = x - (sw - cw) / 2, y0 - (sh - ch) / 2
+                rounded(sx + 2, sy + 14, sw, sh, radius, radius)     # shadow
+                cr.set_source_rgba(0, 0, 0, 0.25)
+                cr.fill()
+                rounded(sx, sy, sw, sh, radius, radius)
+                cr.set_source_rgba(*self.theme["ring"][:3], 0.97)
+                cr.fill_preserve()
+                if i == self.armed:
+                    cr.set_source_rgba(*WARN, 0.55)
+                else:
+                    cr.set_source_rgba(*acc, 0.42)
+                cr.fill_preserve()
+                cr.set_source_rgba(*fg, 0.18)
+                cr.set_line_width(1)
+                cr.stroke()
+                bx, by, bw, bh = sx, sy, sw, sh
+            else:
+                left = radius if i == 0 else 0
+                right = radius if i == self.n - 1 else 0
+                rounded(x, y0, cw, ch, left, right)
+                cr.set_source_rgba(*fg, 0.10)
+                cr.fill_preserve()
+                cr.set_source_rgba(*fg, 0.07)
+                cr.set_line_width(1)
+                cr.stroke()
+                bx, by, bw, bh = x, y0, cw, ch
+            self.hit.append((x, y0, cw, ch, i))
 
-        # 5. Draw icons and labels for all 6 items
-        for i in range(self.num_items):
-            item = self.items[i]
-            mid_angle = i * slice_angle
-            is_hov = (i == self.hovered_index)
-
-            outer_r = (self.outer_radius + self.hover_pop_out) if is_hov else self.outer_radius
-            content_r = (self.inner_radius + outer_r) / 2.0
-            tx = cx + content_r * math.cos(mid_angle)
-            ty = cy + content_r * math.sin(mid_angle)
-
-            icon_char = item.get("icon_char", "")
-            label_text = item.get("text", item.get("label", "")).capitalize()
-
-            # Crisp white icons & text
-            cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
-
-            # Draw icon
-            layout_icon = self.create_pango_layout(icon_char)
-            font_desc = Pango.FontDescription("JetBrainsMono Nerd Font 36")
-            layout_icon.set_font_description(font_desc)
-            _, rect = layout_icon.get_pixel_extents()
-
-            icon_x = tx - rect.width / 2.0
-            icon_y = ty - rect.height / 2.0 - 12
-            cr.move_to(icon_x, icon_y)
-            PangoCairo.show_layout(cr, layout_icon)
-
-            # Draw label underneath
-            if label_text:
-                layout_label = self.create_pango_layout(label_text)
-                font_label = Pango.FontDescription("JetBrainsMono Nerd Font Bold 12.5")
-                layout_label.set_font_description(font_label)
-                _, l_rect = layout_label.get_pixel_extents()
-
-                lbl_x = tx - l_rect.width / 2.0
-                lbl_y = ty + 22
-                cr.move_to(lbl_x, lbl_y)
-                PangoCairo.show_layout(cr, layout_label)
-
-        return True
+            mx = bx + bw / 2
+            self.text(cr, self.items[i].get("icon_char", ""), 46 if sel else 40, mx, by + bh * 0.42)
+            self.text(cr, self.name(i), 13 if sel else 12, mx, by + bh * 0.80, bold=sel,
+                      rgba=(1, 1, 1, 1 if sel else 0.85))
+            key = KEYS.get(self.label(i))
+            if key:
+                self.text(cr, key, 9.5, bx + bw - 22, by + 22, rgba=(1, 1, 1, 0.45))
+            if i == self.armed:
+                self.text(cr, "press again", 9.5, mx, by + bh * 0.88, rgba=(1, 1, 1, 0.85))
+                cr.set_source_rgba(1, 1, 1, 0.85)
+                cr.set_line_width(3)
+                cr.new_path()
+                cr.move_to(bx + 24, by + bh - 16)
+                cr.line_to(bx + 24 + (bw - 48) * self.countdown_left(), by + bh - 16)
+                cr.stroke()
 
 
 def main():
+    style = "radial"
+    if "--style" in sys.argv[1:]:
+        idx = sys.argv.index("--style")
+        if idx + 1 < len(sys.argv) and sys.argv[idx + 1] in ("radial", "cards"):
+            style = sys.argv[idx + 1]
+
     pid_file = "/tmp/snmenu.pid"
     if os.path.exists(pid_file):
         try:
-            with open(pid_file, "r") as f:
-                old_pid = int(f.read().strip())
-            os.kill(old_pid, 15)
+            with open(pid_file) as f:
+                os.kill(int(f.read().strip()), 15)
             os.remove(pid_file)
             sys.exit(0)
         except (OSError, ValueError):
             pass
-
     with open(pid_file, "w") as f:
         f.write(str(os.getpid()))
-
     try:
-        app = RadialMenu()
-        app.show_all()
+        PowerMenu(style).show_all()
         Gtk.main()
     finally:
-        if os.path.exists(pid_file):
-            try:
-                os.remove(pid_file)
-            except OSError:
-                pass
+        try:
+            os.remove(pid_file)
+        except OSError:
+            pass
 
 
 if __name__ == "__main__":
