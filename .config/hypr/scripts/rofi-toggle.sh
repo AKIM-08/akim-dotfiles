@@ -41,7 +41,9 @@ if rofi -dump-config 2>/dev/null | grep -q 'kb-element-next'; then
     keys+=(-kb-element-next "" -kb-element-prev "")
 fi
 
-# Files is our own script mode (Rofi's file browser can't open a folder without entering it)
-rofi -show drun -modi "drun,files:$HOME/.config/hypr/scripts/rofi-files.sh,window,run" \
-    -display-files "󰉋" "${keys[@]}" \
+# Files is our own script mode (Rofi's file browser can't open a folder without entering it).
+# Rofi 1.7.5 ignores -display-<name> for script modes, so the mode is named after its icon.
+FILES_ICON="󰉋"
+rofi -show drun -modi "drun,${FILES_ICON}:$HOME/.config/hypr/scripts/rofi-files.sh,window,run" \
+    "${keys[@]}" \
     -theme "$HOME/.config/rofi/launcher.rasi" -theme-str "$art_theme"
