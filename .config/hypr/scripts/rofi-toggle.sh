@@ -23,5 +23,22 @@ fi
 art_theme=""
 [ -f "$ART" ] && art_theme="imagebox { background-image: url(\"$ART\", both); }"
 
-rofi -show drun -modi "drun,filebrowser,window,run" \
+# Keys:
+#   Tab / Shift+Tab    next / previous mode (Apps, Files, Windows, Run); Shift+Right/Left too
+#   Enter              launch, or go into a folder (Files)
+#   Ctrl+Enter         open the selected folder in the file manager (also Shift+Enter)
+keys=(
+    -kb-row-tab ""
+    -kb-mode-next "Tab,Shift+Right,Control+Tab"
+    -kb-mode-previous "ISO_Left_Tab,Shift+Left,Control+ISO_Left_Tab"
+    -kb-accept-custom ""
+    -kb-accept-alt "Control+Return,Shift+Return"
+)
+# Newer Rofi also binds Tab/Shift+Tab to element-next/prev; free them (older Rofi lacks
+# these options and would reject them, so only pass them when they exist)
+if rofi -dump-config 2>/dev/null | grep -q 'kb-element-next'; then
+    keys+=(-kb-element-next "" -kb-element-prev "")
+fi
+
+rofi -show drun -modi "drun,filebrowser,window,run" "${keys[@]}" \
     -theme "$HOME/.config/rofi/launcher.rasi" -theme-str "$art_theme"
