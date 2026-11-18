@@ -201,11 +201,11 @@ def build(theme: str, position: str, size_name: str, gap: int = WINDOW_GAP_BAR) 
     write_if_changed(WAYBAR / "config", json.dumps(cfg, indent=4, ensure_ascii=False) + "\n")
     style = (THEMES / theme / f"style-{theme}.css").read_text(encoding="utf-8")
     # Waybar stretches workspace buttons to the tallest module; next to big dock icons the
-    # margins must absorb the app button's size (icon + its 10px/8px padding) to keep 8px dots
+    # margins must absorb the app button's size (icon + its 12px padding) to keep 8px dots
     dot_margins = None
     if dots and taskbar_scale != 1:
         icon = round(size["icon"] * taskbar_scale)
-        dot_margins = (max(size["dot"], (icon + 10 - 8) // 2), max(size["dot"], (icon - 1 + 8 - 8) // 2))
+        dot_margins = (max(size["dot"], (icon + 12 - 8) // 2), max(size["dot"], (icon - 1 + 12 - 8) // 2))
     write_if_changed(WAYBAR / "style.css", style + size_css(size, dots, scaled, dot_margins))
 
     gaps = [gap if side == position and not autohide else WINDOW_GAP_EDGE

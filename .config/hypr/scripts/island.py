@@ -2,7 +2,8 @@
 """island.py - Dynamic island: the whole top bar inside a notch (Waybar theme "Island").
 
 Started by ~/.config/waybar/scripts/launch.sh instead of Waybar when the Island theme is chosen.
-A black notch hangs from the top edge of the screen:
+A black notch hangs from the screen edge chosen in Settings -> Waybar -> Position (top, bottom,
+left or right; on the sides it is a tall, thin notch):
 
     at rest        workspace dots (click / scroll to switch), clock and date, a mini cover
                    with an equalizer while music plays, battery
@@ -108,12 +109,15 @@ def ease_out_back(t: float, s: float) -> float:
     return t * t * ((s + 1) * t + s) + 1.0
 
 
-def read_size():
+def read_layout():
+    """(notch height, text size, screen edge) from the Waybar choice in layout.json."""
     try:
-        name = json.loads(LAYOUT.read_text(encoding="utf-8")).get("size", "normal")
+        st = json.loads(LAYOUT.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        name = "normal"
-    return SIZES.get(name, SIZES["normal"])
+        st = {}
+    H, F = SIZES.get(st.get("size", "normal"), SIZES["normal"])
+    edge = st.get("position", "top")
+    return H, F, edge if edge in ("top", "bottom", "left", "right") else "top"
 
 
 def load_palette() -> dict:
@@ -216,8 +220,9 @@ class WsDots(Gtk.DrawingArea):
     """Workspace dots: exact circles, the active one a short pill (animated), occupied ones
     brighter. Click a dot to go to that workspace."""
 
-    def __init__(self, d, on_pick):
+    def __init__(self, d, on_pick, vertical=False):
         super().__init__()
+        self.vertical = vertical
         self.d = d
         self.gap = max(3, round(d * 0.7))
         self.long = round(d * 2.6)
@@ -228,6 +233,7 @@ class WsDots(Gtk.DrawingArea):
         self.accent = (0.5, 0.76, 0.87)
         self.tick_id = None
         self.set_valign(Gtk.Align.CENTER)
+        self.set_halign(Gtk.Align.CENTER)
         self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.POINTER_MOTION_MASK
                         | Gdk.EventMask.LEAVE_NOTIFY_MASK)
         self.connect("draw", self.on_draw)
@@ -243,7 +249,10 @@ class WsDots(Gtk.DrawingArea):
         for i in ids:
             self.widths.setdefault(i, float(self.target(i)))
         total = sum(self.target(i) for i in ids) + self.gap * max(0, len(ids) - 1)
-        self.set_size_request(total, self.d + 4)
+        if self.vertical:
+            self.set_size_request(self.d + 4, total)
+        else:
+            self.set_size_request(total, self.d + 4)
         if self.tick_id is None:
             self.tick_id = self.add_tick_callback(self.on_tick)
 
@@ -264,7 +273,7 @@ class WsDots(Gtk.DrawingArea):
         return True
 
     def spans(self):
-        W = self.get_allocated_width()
+        W = self.get_allocated_height() if self.vertical else self.get_allocated_width()
         total = sum(self.widths[i] for i in self.ids) + self.gap * max(0, len(self.ids) - 1)
         x = (W - total) / 2
         for i in self.ids:
@@ -272,7 +281,8 @@ class WsDots(Gtk.DrawingArea):
             x += self.widths[i] + self.gap
 
     def on_draw(self, _w, cr):
-        y = (self.get_allocated_height() - self.d) / 2
+        across = (self.get_allocated_width() if self.vertical else self.get_allocated_height())
+        y = (across - self.d) / 2
         for i, x, w in self.spans():
             if i == self.active:
                 cr.set_source_rgba(*self.accent, 1)
@@ -280,7 +290,10 @@ class WsDots(Gtk.DrawingArea):
                 cr.set_source_rgba(1, 1, 1, 0.95)
             else:
                 cr.set_source_rgba(1, 1, 1, 0.68 if i in self.occupied else 0.26)
-            rounded_rect(cr, x, y, w, self.d, self.d / 2)
+            if self.vertical:
+                rounded_rect(cr, y, x, self.d, w, self.d / 2)
+            else:
+                rounded_rect(cr, x, y, w, self.d, self.d / 2)
             cr.fill()
         return False
 
@@ -297,10 +310,10 @@ class WsDots(Gtk.DrawingArea):
         return False
 
     def on_motion(self, _w, e):
-        return self.set_hover(self.at(e.x))
+        return self.set_hover(self.at(e.y if self.vertical else e.x))
 
     def on_press(self, _w, e):
-        i = self.at(e.x)
+        i = self.at(e.y if self.vertical else e.x)
         if e.button == 1 and i is not None:
             self.on_pick(i)
         return True
@@ -366,9 +379,12 @@ class Island(Gtk.Window):
     def __init__(self):
         super().__init__(type=Gtk.WindowType.TOPLEVEL)
         self.set_title("island")
-        self.H, self.F = read_size()
+        self.H, self.F, self.edge = read_layout()
         H, F = self.H, self.F
-        self.REST_W = round(H * 11)          # at least; grows to fit workspaces, clock and battery
+        self.vertical = self.edge in ("left", "right")
+        self.T = round(H * 1.4) if self.vertical else H    # notch thickness at rest
+        # length along the edge at least; grows to fit workspaces, clock and battery
+        self.REST_W = round(H * (6 if self.vertical else 11))
         self.PANEL_W = round(F * 48)
         self.NOTIF_W = round(self.REST_W * 1.2)
         self.EAR = round(H * 0.45)           # concave curves joining the notch to the top edge
@@ -411,8 +427,10 @@ class Island(Gtk.Window):
         GtkLayerShell.set_namespace(self, "island")
         GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
         GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.NONE)
-        GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.TOP, True)
-        GtkLayerShell.set_exclusive_zone(self, H)          # windows start below the notch
+        anchor = {"top": GtkLayerShell.Edge.TOP, "bottom": GtkLayerShell.Edge.BOTTOM,
+                  "left": GtkLayerShell.Edge.LEFT, "right": GtkLayerShell.Edge.RIGHT}[self.edge]
+        GtkLayerShell.set_anchor(self, anchor, True)
+        GtkLayerShell.set_exclusive_zone(self, self.T)     # windows stay clear of the notch
 
         # A scrolled window without scrollbars is the notch's clip: its size is animated and
         # its content stays centered, so the notch reveals the content as it grows.
@@ -420,10 +438,17 @@ class Island(Gtk.Window):
         self.sw.set_policy(Gtk.PolicyType.EXTERNAL, Gtk.PolicyType.EXTERNAL)
         self.sw.set_kinetic_scrolling(False)
         self.sw.set_shadow_type(Gtk.ShadowType.NONE)
-        self.sw.set_halign(Gtk.Align.CENTER)
-        self.sw.set_valign(Gtk.Align.START)
-        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        content.pack_start(self.build_row(), False, False, 0)
+        A = Gtk.Align
+        halign, valign = {"top": (A.CENTER, A.START), "bottom": (A.CENTER, A.END),
+                          "left": (A.START, A.CENTER), "right": (A.END, A.CENTER)}[self.edge]
+        self.sw.set_halign(halign)
+        self.sw.set_valign(valign)
+        # The row (or column on the sides) touches the edge; what drops out goes away from it
+        content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL if self.vertical else Gtk.Orientation.VERTICAL)
+        row_last = self.edge in ("bottom", "right")
+        row = self.build_row()
+        if not row_last:
+            content.pack_start(row, False, False, 0)
         self.drop = Gtk.Stack()
         self.drop.set_hhomogeneous(False)
         self.drop.set_vhomogeneous(False)
@@ -435,6 +460,8 @@ class Island(Gtk.Window):
         self.panel = self.build_panel()
         self.drop.add_named(self.panel, "panel")
         content.pack_start(self.drop, False, False, 0)
+        if row_last:
+            content.pack_start(row, False, False, 0)
         self.sw.add(content)
         child = self.sw.get_child()
         if isinstance(child, Gtk.Viewport):
@@ -444,10 +471,15 @@ class Island(Gtk.Window):
         # Surface big enough for the open panel plus the spring's overshoot
         content.show_all()
         pw = self.panel.get_preferred_size()[1]
-        self.surface_w = max(self.PANEL_W, pw.width) + 2 * self.EAR + 60
-        self.surface_h = H + max(pw.height, F * 20) + 50
+        if self.vertical:
+            col = self.row.get_preferred_size()[1].height + 20 * (self.ws_dots.d + self.ws_dots.gap)
+            self.surface_w = self.T + max(self.PANEL_W, pw.width) + 60
+            self.surface_h = max(pw.height, col, F * 20) + 2 * self.EAR + 80
+        else:
+            self.surface_w = max(self.PANEL_W, pw.width) + 2 * self.EAR + 60
+            self.surface_h = H + max(pw.height, F * 20) + 50
         self.set_size_request(self.surface_w, self.surface_h)
-        self.cur_w = float(self.rest_width())
+        self.cur_w, self.cur_h = (float(v) for v in self.target_for("rest"))
         self.apply_size()
 
         self.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
@@ -459,8 +491,9 @@ class Island(Gtk.Window):
         self.sw.connect("scroll-event", self.on_scroll)
         self.sw.connect("button-press-event", self.on_press)
         self.sw.connect("size-allocate", self.on_allocate)
-        self.sw.get_hadjustment().connect("changed", lambda *_: self.center_content())
-        self.sw.get_vadjustment().connect("value-changed", lambda a: a.get_value() and a.set_value(0))
+        for adj in (self.sw.get_hadjustment(), self.sw.get_vadjustment()):
+            adj.connect("changed", lambda *_: self.align_content())
+            adj.connect("value-changed", lambda *_: self.align_content())
 
         self.tick()
         GLib.timeout_add(1000, self.tick)
@@ -483,7 +516,7 @@ class Island(Gtk.Window):
         scrolledwindow undershoot, scrolledwindow overshoot {{ background: none; }}
         button {{ background: none; border: none; box-shadow: none; padding: 0; margin: 0;
                   min-height: 0; min-width: 0; border-radius: 0; }}
-        .row {{ padding: 0 {self.PAD}px; }}
+        .row {{ padding: {f"{self.PAD}px 0" if self.vertical else f"0 {self.PAD}px"}; }}
         .clock {{ font-weight: 800; }}
         .dim {{ color: rgba(255,255,255,0.55); }}
         .bat {{ font-weight: 700; }}
@@ -532,11 +565,15 @@ class Island(Gtk.Window):
 
     # -------------------------------------------------------------- building
     def build_row(self):
-        F = self.F
-        row = cls(Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL), "row")
-        row.set_size_request(-1, self.H)
+        F, V = self.F, self.vertical
+        O = Gtk.Orientation.VERTICAL if V else Gtk.Orientation.HORIZONTAL
+        row = cls(Gtk.Box(orientation=O, spacing=round(F * 0.8) if V else 0), "row")
+        if V:
+            row.set_size_request(self.T, -1)
+        else:
+            row.set_size_request(-1, self.H)
 
-        self.ws_dots = WsDots(max(6, round(self.H * 0.24)), lambda i: hypr(f"dispatch workspace {i}"))
+        self.ws_dots = WsDots(max(6, round(self.H * 0.24)), lambda i: hypr(f"dispatch workspace {i}"), V)
         row.pack_start(self.ws_dots, False, False, 0)
         self.row = row
 
@@ -544,31 +581,40 @@ class Island(Gtk.Window):
         self.mid.set_hhomogeneous(True)
         self.mid.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         self.mid.set_transition_duration(160)
-        clock = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=round(F * 0.6))
+        clock = Gtk.Box(orientation=O, spacing=round(F * 0.6))
         clock.set_halign(Gtk.Align.CENTER)
         self.clock_l = label("", "clock")
+        self.clock_l.set_justify(Gtk.Justification.CENTER)
         self.date_l = label("", "dim")
+        if V:                                   # no room for the date on a side notch
+            self.date_l.set_no_show_all(True)
         clock.pack_start(self.clock_l, False, False, 0)
         clock.pack_start(self.date_l, False, False, 0)
         self.mid.add_named(clock, "clock")
-        level = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=round(F * 0.6))
+        level = Gtk.Box(orientation=O, spacing=round(F * 0.6))
         level.set_halign(Gtk.Align.CENTER)
         self.lv_icon = label("")
         self.lv_bar = Gtk.DrawingArea()
-        self.lv_bar.set_size_request(round(F * 7), round(F * 0.45))
+        if V:
+            self.lv_bar.set_size_request(round(F * 0.45), round(F * 6))
+        else:
+            self.lv_bar.set_size_request(round(F * 7), round(F * 0.45))
         self.lv_bar.set_valign(Gtk.Align.CENTER)
+        self.lv_bar.set_halign(Gtk.Align.CENTER)
         self.lv_value = 0.0
         self.lv_bar.connect("draw", self.draw_level)
         self.lv_text = label("", "bat")
         self.lv_text.set_width_chars(4)
+        self.lv_text.set_justify(Gtk.Justification.CENTER)
         level.pack_start(self.lv_icon, False, False, 0)
         level.pack_start(self.lv_bar, False, False, 0)
         level.pack_start(self.lv_text, False, False, 0)
         self.mid.add_named(level, "level")
         row.set_center_widget(self.mid)
 
-        right = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=round(F * 0.6))
-        self.mini = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=round(F * 0.4))
+        right = Gtk.Box(orientation=O, spacing=round(F * 0.6))
+        self.mini = Gtk.Box(orientation=O, spacing=round(F * 0.4))
+        self.mini.set_halign(Gtk.Align.CENTER)
         self.mini_art = RoundImage(round(F * 1.25), round(F * 1.25), radius=4)
         self.eq = Gtk.DrawingArea()
         self.eq.set_size_request(round(F * 1.1), round(F * 0.95))
@@ -580,21 +626,28 @@ class Island(Gtk.Window):
         self.mini_art.show()
         self.eq.show()
         self.bat_l = label("", "bat")
+        self.bat_l.set_justify(Gtk.Justification.CENTER)
         right.pack_start(self.mini, False, False, 0)
         right.pack_start(self.bat_l, False, False, 0)
         row.pack_end(right, False, False, 0)
         return row
 
+    def drop_margins(self, w):
+        """Padding around what drops out of the notch; small on the side that meets the row."""
+        small, P = round(self.F * 0.3), self.PAD
+        w.set_margin_top(small if self.edge == "top" else P)
+        w.set_margin_bottom(small if self.edge == "bottom" else P)
+        w.set_margin_start(small if self.edge == "left" else P)
+        w.set_margin_end(small if self.edge == "right" else P)
+
     def build_notif(self):
         F = self.F
         ev = Gtk.EventBox()
         ev.set_visible_window(False)
+        ev.set_above_child(True)                # clicks on the avatar count too
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=round(F * 0.8))
         box.set_size_request(self.NOTIF_W - 2 * self.PAD, -1)
-        box.set_margin_start(self.PAD)
-        box.set_margin_end(self.PAD)
-        box.set_margin_top(round(F * 0.3))
-        box.set_margin_bottom(self.PAD)
+        self.drop_margins(box)
         self.n_avatar = RoundImage(round(F * 2.6), round(F * 2.6))
         text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         text.set_valign(Gtk.Align.CENTER)
@@ -622,10 +675,7 @@ class Island(Gtk.Window):
         F, P = self.F, self.PAD
         panel = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=round(F * 0.8))
         panel.set_size_request(self.PANEL_W - 2 * P, -1)
-        panel.set_margin_start(P)
-        panel.set_margin_end(P)
-        panel.set_margin_top(round(F * 0.3))
-        panel.set_margin_bottom(P)
+        self.drop_margins(panel)
         top = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=round(F * 0.8), homogeneous=True)
         top.pack_start(self.build_music(), True, True, 0)
         top.pack_start(self.build_controls(), True, True, 0)
@@ -744,6 +794,8 @@ class Island(Gtk.Window):
         for i in range(n):
             ev = Gtk.EventBox()
             ev.set_visible_window(False)
+            # Above the image: a DrawingArea has its own window, which would swallow the click
+            ev.set_above_child(True)
             img = RoundImage(tw, th, radius=round(F * 0.6))
             ev.add(img)
             ev.connect("button-press-event", lambda _w, e, i=i: self.pick_wallpaper(i) if e.button == 1 else False)
@@ -758,9 +810,18 @@ class Island(Gtk.Window):
         cr.set_source_rgba(0, 0, 0, 0)
         cr.paint()
         cr.set_operator(cairo.OPERATOR_OVER)
+        # The shape is drawn as a top notch in (along the edge, away from the edge) coordinates
+        # and mapped onto the real edge
         a = self.sw.get_allocation()
-        x, w, h, e = a.x, a.width, a.height, self.EAR
-        r = min(h / 2, self.H * 0.5 + max(0, h - self.H) * 0.07, self.F * 2.6)
+        Ws, Hs = self.get_allocated_width(), self.get_allocated_height()
+        if self.vertical:
+            x, w, h = a.y, a.height, a.width
+        else:
+            x, w, h = a.x, a.width, a.height
+        cr.transform({"top": cairo.Matrix(1, 0, 0, 1, 0, 0), "bottom": cairo.Matrix(1, 0, 0, -1, 0, Hs),
+                      "left": cairo.Matrix(0, 1, 1, 0, 0, 0), "right": cairo.Matrix(0, 1, -1, 0, Ws, 0)}[self.edge])
+        e = self.EAR
+        r = min(h / 2, self.T * 0.5 + max(0, h - self.T) * 0.07, self.F * 2.6)
         cr.move_to(x - e, 0)
         cr.arc(x - e, e, e, -math.pi / 2, 0)                  # left ear (concave)
         cr.line_to(x, h - r)
@@ -775,34 +836,48 @@ class Island(Gtk.Window):
         return False
 
     def on_allocate(self, _w, a):
-        self.center_content()
+        self.align_content()
+        e = self.EAR
         try:
-            rect = cairo.RectangleInt(max(0, a.x - self.EAR), 0, a.width + 2 * self.EAR, max(1, a.height))
+            if self.vertical:
+                rect = cairo.RectangleInt(a.x, max(0, a.y - e), max(1, a.width), a.height + 2 * e)
+            else:
+                rect = cairo.RectangleInt(max(0, a.x - e), a.y, a.width + 2 * e, max(1, a.height))
             self.input_shape_combine_region(cairo.Region(rect))
         except Exception:
             pass
         self.queue_draw()
 
-    def center_content(self):
-        adj = self.sw.get_hadjustment()
-        v = max(0.0, (adj.get_upper() - adj.get_page_size()) / 2)
-        if abs(adj.get_value() - v) > 0.5:
-            adj.set_value(v)
+    def align_content(self):
+        """Content centered along the edge and pinned to the edge, so the notch reveals it
+        from the middle as it grows."""
+        h, v = self.sw.get_hadjustment(), self.sw.get_vadjustment()
+        along, depth = (v, h) if self.vertical else (h, v)
+        far = self.edge in ("bottom", "right")
+        for adj, k in ((along, 0.5), (depth, 1.0 if far else 0.0)):
+            target = max(0.0, (adj.get_upper() - adj.get_page_size()) * k)
+            if abs(adj.get_value() - target) > 0.5:
+                adj.set_value(target)
 
     # -------------------------------------------------------------- size animation
     def apply_size(self):
         self.sw.set_size_request(max(1, round(self.cur_w)), max(1, round(self.cur_h)))
 
-    def rest_width(self):
-        """Wide enough for everything in the row (many workspaces make it longer)."""
-        return max(self.REST_W, self.row.get_preferred_width()[1] + round(self.H * 0.4))
+    def rest_length(self):
+        """Long enough for everything in the row (many workspaces make it longer)."""
+        nat = self.row.get_preferred_size()[1]
+        return max(self.REST_W, (nat.height if self.vertical else nat.width) + round(self.H * 0.4))
 
     def target_for(self, mode):
+        """Size of the notch (width, height) for a mode."""
+        L, T = self.rest_length(), self.T
         if mode in ("rest", "level"):
-            return self.rest_width(), self.H
+            return (T, L) if self.vertical else (L, T)
         child = self.notif if mode == "notif" else self.panel
         nat = child.get_preferred_size()[1]
-        return max(self.rest_width(), nat.width), self.H + nat.height
+        if self.vertical:
+            return T + nat.width, max(L, nat.height)
+        return max(L, nat.width), T + nat.height
 
     def animate_to(self, w, h):
         grow = w * h > self.cur_w * self.cur_h
@@ -886,8 +961,20 @@ class Island(Gtk.Window):
             self.do_expand()
         return False
 
+    def pointer_in(self, widget, e) -> bool:
+        try:
+            rx, ry = e.window.get_root_coords(e.x, e.y)
+            tx, ty = self.get_window().get_root_coords(0, 0)
+            res = widget.translate_coordinates(self, 0, 0)
+            wx, wy = res[-2], res[-1]
+            a = widget.get_allocation()
+            x, y = rx - tx - wx, ry - ty - wy
+            return 0 <= x < a.width and 0 <= y < a.height
+        except Exception:
+            return True
+
     def on_scroll(self, _w, e):
-        if e.y > self.H:
+        if not self.pointer_in(self.row, e):
             return True                 # never scroll the panel itself
         ok, _dx, dy = e.get_scroll_deltas()
         if not ok:
@@ -902,14 +989,14 @@ class Island(Gtk.Window):
     # -------------------------------------------------------------- rest-state content
     def tick(self):
         self.ticks += 1
-        self.clock_l.set_text(time.strftime("%H:%M"))
+        self.clock_l.set_text(time.strftime("%H\n%M" if self.vertical else "%H:%M"))
         self.date_l.set_text(time.strftime("%a %d"))
         if self.ticks % 20 == 1:
             bat = read_battery()
             if bat:
                 cap, charging = bat
                 icon = ICON["charging"] if charging else BATTERY_ICONS[min(10, max(0, round(cap / 10)))]
-                self.bat_l.set_text(f"{icon} {cap}%")
+                self.bat_l.set_text(f"{icon}\n{cap}" if self.vertical else f"{icon} {cap}%")
             self.bat_l.set_visible(bool(bat))
         if self.ticks % 2:
             self.reload_colors_if_changed()
@@ -919,6 +1006,16 @@ class Island(Gtk.Window):
 
     def draw_level(self, w, cr):
         W, H = w.get_allocated_width(), w.get_allocated_height()
+        if H > W:                               # side notch: fills from the bottom
+            rounded_rect(cr, 0, 0, W, H, W / 2)
+            cr.set_source_rgba(1, 1, 1, 0.22)
+            cr.fill()
+            if self.lv_value > 0:
+                fh = max(W, H * min(1.0, self.lv_value))
+                rounded_rect(cr, 0, H - fh, W, fh, W / 2)
+                cr.set_source_rgba(1, 1, 1, 1)
+                cr.fill()
+            return False
         rounded_rect(cr, 0, 0, W, H, H / 2)
         cr.set_source_rgba(1, 1, 1, 0.22)
         cr.fill()

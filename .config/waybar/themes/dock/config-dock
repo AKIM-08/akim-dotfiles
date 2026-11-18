@@ -5,6 +5,15 @@
     "x-autohide": true,
     "x-dot-workspaces": true,
     "x-taskbar-scale": 2,
+    // Shown over the windows (not reserving space) while visible. Hidden, it moves to the bottom
+    // layer: dock-autohide.py reads the layer from Hyprland to know whether the dock is shown.
+    "mode": "overlay",
+    "modes": {
+        "overlay":   { "layer": "overlay", "exclusive": false, "passthrough": false, "visible": true },
+        "invisible": { "layer": "bottom",  "exclusive": false, "passthrough": true,  "visible": false }
+    },
+    // On the left/right edge smaller icons, so a long list of apps still fits the screen height
+    "x-vertical": { "x-taskbar-scale": 1.55 },
 
     "modules-left": [],
     "modules-center": ["clock", "hyprland/workspaces", "wlr/taskbar", "group/dock-status"],
