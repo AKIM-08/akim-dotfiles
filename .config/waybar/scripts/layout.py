@@ -145,18 +145,18 @@ def program(theme: str) -> str:
     return "dock" if hints.get("x-autohide") else "waybar"
 
 
-def size_css(size: dict, dots: bool, scaled: dict = None) -> str:
+def size_css(size: dict, dots: bool, scaled: dict = None, dot_margins=None) -> str:
     css = ("\n/* ---- Bar size (added by scripts/layout.py) ---- */\n"
            "* { font-size: %dpx; }\n"
            "#custom-launcher { font-size: %dpx; }\n" % (size["font"], size["logo"]))
     for selector, scale in (scaled or {}).items():
         css += "%s { font-size: %dpx; }\n" % (selector, round(size["font"] * float(scale)))
     if dots:
-        m = size["dot"]
+        mh, mv = dot_margins or (size["dot"], size["dot"])
         css += ("window#waybar.pos-top #workspaces button, window#waybar.pos-bottom #workspaces button "
                 "{ margin-top: %dpx; margin-bottom: %dpx; }\n"
                 "window#waybar.pos-left #workspaces button, window#waybar.pos-right #workspaces button "
-                "{ margin-left: %dpx; margin-right: %dpx; }\n" % (m, m, m, m))
+                "{ margin-left: %dpx; margin-right: %dpx; }\n" % (mh, mh, mv, mv))
     return css
 
 
@@ -200,7 +200,13 @@ def build(theme: str, position: str, size_name: str, gap: int = WINDOW_GAP_BAR) 
 
     write_if_changed(WAYBAR / "config", json.dumps(cfg, indent=4, ensure_ascii=False) + "\n")
     style = (THEMES / theme / f"style-{theme}.css").read_text(encoding="utf-8")
-    write_if_changed(WAYBAR / "style.css", style + size_css(size, dots, scaled))
+    # Waybar stretches workspace buttons to the tallest module; next to big dock icons the
+    # margins must absorb the app button's size (icon + its 10px/8px padding) to keep 8px dots
+    dot_margins = None
+    if dots and taskbar_scale != 1:
+        icon = round(size["icon"] * taskbar_scale)
+        dot_margins = (max(size["dot"], (icon + 10 - 8) // 2), max(size["dot"], (icon - 1 + 8 - 8) // 2))
+    write_if_changed(WAYBAR / "style.css", style + size_css(size, dots, scaled, dot_margins))
 
     gaps = [gap if side == position and not autohide else WINDOW_GAP_EDGE
             for side in ("top", "right", "bottom", "left")]      # Hyprland order

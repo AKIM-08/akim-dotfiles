@@ -207,6 +207,105 @@ def rounded_rect(cr, x, y, w, h, r):
     cr.close_path()
 
 
+def hex_rgb(hex_color: str):
+    h = hex_color.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+
+
+class WsDots(Gtk.DrawingArea):
+    """Workspace dots: exact circles, the active one a short pill (animated), occupied ones
+    brighter. Click a dot to go to that workspace."""
+
+    def __init__(self, d, on_pick):
+        super().__init__()
+        self.d = d
+        self.gap = max(3, round(d * 0.7))
+        self.long = round(d * 2.6)
+        self.on_pick = on_pick
+        self.ids, self.active, self.occupied = [], None, set()
+        self.widths = {}
+        self.hover = None
+        self.accent = (0.5, 0.76, 0.87)
+        self.tick_id = None
+        self.set_valign(Gtk.Align.CENTER)
+        self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.POINTER_MOTION_MASK
+                        | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+        self.connect("draw", self.on_draw)
+        self.connect("button-press-event", self.on_press)
+        self.connect("motion-notify-event", self.on_motion)
+        self.connect("leave-notify-event", lambda *_: self.set_hover(None))
+
+    def target(self, i):
+        return self.long if i == self.active else self.d
+
+    def set_state(self, ids, active, occupied):
+        self.ids, self.active, self.occupied = ids, active, occupied
+        for i in ids:
+            self.widths.setdefault(i, float(self.target(i)))
+        total = sum(self.target(i) for i in ids) + self.gap * max(0, len(ids) - 1)
+        self.set_size_request(total, self.d + 4)
+        if self.tick_id is None:
+            self.tick_id = self.add_tick_callback(self.on_tick)
+
+    def on_tick(self, *_):
+        done = True
+        for i in self.ids:
+            t, w = self.target(i), self.widths[i]
+            w += (t - w) * 0.3
+            if abs(t - w) < 0.3:
+                w = float(t)
+            else:
+                done = False
+            self.widths[i] = w
+        self.queue_draw()
+        if done:
+            self.tick_id = None
+            return False
+        return True
+
+    def spans(self):
+        W = self.get_allocated_width()
+        total = sum(self.widths[i] for i in self.ids) + self.gap * max(0, len(self.ids) - 1)
+        x = (W - total) / 2
+        for i in self.ids:
+            yield i, x, self.widths[i]
+            x += self.widths[i] + self.gap
+
+    def on_draw(self, _w, cr):
+        y = (self.get_allocated_height() - self.d) / 2
+        for i, x, w in self.spans():
+            if i == self.active:
+                cr.set_source_rgba(*self.accent, 1)
+            elif i == self.hover:
+                cr.set_source_rgba(1, 1, 1, 0.95)
+            else:
+                cr.set_source_rgba(1, 1, 1, 0.68 if i in self.occupied else 0.26)
+            rounded_rect(cr, x, y, w, self.d, self.d / 2)
+            cr.fill()
+        return False
+
+    def at(self, ex):
+        for i, x, w in self.spans():
+            if x - self.gap / 2 <= ex <= x + w + self.gap / 2:
+                return i
+        return None
+
+    def set_hover(self, i):
+        if i != self.hover:
+            self.hover = i
+            self.queue_draw()
+        return False
+
+    def on_motion(self, _w, e):
+        return self.set_hover(self.at(e.x))
+
+    def on_press(self, _w, e):
+        i = self.at(e.x)
+        if e.button == 1 and i is not None:
+            self.on_pick(i)
+        return True
+
+
 class RoundImage(Gtk.DrawingArea):
     """An image drawn with rounded corners (a circle when radius is None); a letter or a soft
     placeholder when there is no picture; an optional white outline (current wallpaper)."""
@@ -269,10 +368,10 @@ class Island(Gtk.Window):
         self.set_title("island")
         self.H, self.F = read_size()
         H, F = self.H, self.F
-        self.REST_W = round(H * 13)
+        self.REST_W = round(H * 11)          # at least; grows to fit workspaces, clock and battery
         self.PANEL_W = round(F * 48)
         self.NOTIF_W = round(self.REST_W * 1.2)
-        self.EAR = round(H * 0.34)
+        self.EAR = round(H * 0.45)           # concave curves joining the notch to the top edge
         self.PAD = round(H * 0.45)
         self.palette = load_palette()
         self.colors_mtime = None
@@ -290,7 +389,6 @@ class Island(Gtk.Window):
         self.collapse_timer = None
         self.scroll_acc = 0.0
         self.ws_ids = []
-        self.ws_buttons = {}
         self.ws_pending = False
         self.media = None
         self.media_at = 0.0
@@ -349,6 +447,7 @@ class Island(Gtk.Window):
         self.surface_w = max(self.PANEL_W, pw.width) + 2 * self.EAR + 60
         self.surface_h = H + max(pw.height, F * 20) + 50
         self.set_size_request(self.surface_w, self.surface_h)
+        self.cur_w = float(self.rest_width())
         self.apply_size()
 
         self.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
@@ -377,7 +476,6 @@ class Island(Gtk.Window):
         F, H = self.F, self.H
         acc = self.palette["accent"]
         ink = ink_for(acc)
-        D = max(6, round(H * 0.27))
         css = f"""
         * {{ font-family: "JetBrainsMono Nerd Font", monospace; font-size: {F}px; color: #f2f2f2;
              outline-style: none; outline-width: 0; text-shadow: none; -gtk-icon-shadow: none; }}
@@ -389,11 +487,6 @@ class Island(Gtk.Window):
         .clock {{ font-weight: 800; }}
         .dim {{ color: rgba(255,255,255,0.55); }}
         .bat {{ font-weight: 700; }}
-        .ws-dot {{ min-width: {D}px; min-height: {D}px; border-radius: 99px; margin: 0 {max(2, D // 3)}px;
-                   background: rgba(255,255,255,0.28); transition: all 220ms ease; }}
-        .ws-dot.occupied {{ background: rgba(255,255,255,0.68); }}
-        .ws-dot.active {{ background: {acc}; min-width: {round(D * 2.6)}px; }}
-        .ws-dot:hover {{ background: #ffffff; }}
         .card {{ background: rgba(255,255,255,0.08); border-radius: {round(F * 1.2)}px; padding: {round(F * 0.85)}px; }}
         .title {{ font-weight: 700; }}
         .head {{ font-size: {F - 2}px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 1px; }}
@@ -432,6 +525,9 @@ class Island(Gtk.Window):
             self.colors_mtime = mtime
             self.palette = load_palette()
             self.apply_css()
+            if hasattr(self, "ws_dots"):
+                self.ws_dots.accent = hex_rgb(self.palette["accent"])
+                self.ws_dots.queue_draw()
             self.queue_draw()
 
     # -------------------------------------------------------------- building
@@ -440,9 +536,9 @@ class Island(Gtk.Window):
         row = cls(Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL), "row")
         row.set_size_request(-1, self.H)
 
-        self.ws_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.ws_box.set_valign(Gtk.Align.CENTER)
-        row.pack_start(self.ws_box, False, False, 0)
+        self.ws_dots = WsDots(max(6, round(self.H * 0.24)), lambda i: hypr(f"dispatch workspace {i}"))
+        row.pack_start(self.ws_dots, False, False, 0)
+        self.row = row
 
         self.mid = Gtk.Stack()
         self.mid.set_hhomogeneous(True)
@@ -697,12 +793,16 @@ class Island(Gtk.Window):
     def apply_size(self):
         self.sw.set_size_request(max(1, round(self.cur_w)), max(1, round(self.cur_h)))
 
+    def rest_width(self):
+        """Wide enough for everything in the row (many workspaces make it longer)."""
+        return max(self.REST_W, self.row.get_preferred_width()[1] + round(self.H * 0.4))
+
     def target_for(self, mode):
         if mode in ("rest", "level"):
-            return self.REST_W, self.H
+            return self.rest_width(), self.H
         child = self.notif if mode == "notif" else self.panel
         nat = child.get_preferred_size()[1]
-        return max(self.REST_W, nat.width), self.H + nat.height
+        return max(self.rest_width(), nat.width), self.H + nat.height
 
     def animate_to(self, w, h):
         grow = w * h > self.cur_w * self.cur_h
@@ -837,7 +937,7 @@ class Island(Gtk.Window):
         r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
         cr.set_source_rgba(r, g, b, 1 if playing else 0.5)
         for i in range(3):
-            k = 0.35 + 0.65 * abs(math.sin(t * (5.2 + i * 1.7) + i * 1.3)) if playing else 0.3
+            k = 0.35 + 0.65 * abs(math.sin(t * (5.2 + i * 1.7) + i * 1.3)) if playing else (0.55, 0.9, 0.7)[i]
             bh = max(2, H * k)
             rounded_rect(cr, i * 2 * bw, H - bh, bw, bh, bw / 2)
             cr.fill()
@@ -859,22 +959,11 @@ class Island(Gtk.Window):
             return False
         ids = sorted({1, 2, 3, 4, 5} | {w.get("id", 0) for w in wss if w.get("id", 0) > 0})
         occupied = {w.get("id") for w in wss if w.get("windows", 0) > 0}
-        if ids != self.ws_ids:
-            for b in self.ws_box.get_children():
-                self.ws_box.remove(b)
-            self.ws_buttons = {}
-            for i in ids:
-                b = flat_button("", "ws-dot")
-                b.set_valign(Gtk.Align.CENTER)
-                b.set_tooltip_text(f"Workspace {i}")
-                b.connect("clicked", lambda _b, i=i: hypr(f"dispatch workspace {i}"))
-                self.ws_box.pack_start(b, False, False, 0)
-                self.ws_buttons[i] = b
-            self.ws_box.show_all()
-            self.ws_ids = ids
-        for i, b in self.ws_buttons.items():
-            set_cls(b, "active", i == active)
-            set_cls(b, "occupied", i in occupied)
+        grew = ids != self.ws_ids
+        self.ws_ids = ids
+        self.ws_dots.set_state(ids, active, occupied)
+        if grew and self.mode in ("rest", "level"):      # more or fewer dots: resize the notch
+            self.animate_to(*self.target_for(self.mode))
         return False
 
     # -------------------------------------------------------------- media

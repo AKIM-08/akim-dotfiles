@@ -55,6 +55,22 @@ window#waybar { background: alpha(@background, 0.88); }
 #window        { color: alpha(@foreground, 0.8); font-weight: normal; }
 #tray          { padding: 0 10px; }
 
+/* Left / right edge: the same colored blocks stacked from top to bottom */
+window#waybar.pos-left #custom-launcher, window#waybar.pos-right #custom-launcher { padding: 12px 0 10px; }
+window#waybar.pos-left #workspaces, window#waybar.pos-right #workspaces { padding: 6px 0; }
+window#waybar.pos-left #workspaces button, window#waybar.pos-right #workspaces button { padding: 3px 0; margin: 1px 4px; }
+window#waybar.pos-left #pl-sound, window#waybar.pos-right #pl-sound,
+window#waybar.pos-left #pl-net, window#waybar.pos-right #pl-net { padding: 6px 0; }
+window#waybar.pos-left #pulseaudio, window#waybar.pos-right #pulseaudio,
+window#waybar.pos-left #backlight, window#waybar.pos-right #backlight,
+window#waybar.pos-left #network, window#waybar.pos-right #network,
+window#waybar.pos-left #bluetooth, window#waybar.pos-right #bluetooth { padding: 4px 0; }
+window#waybar.pos-left #battery, window#waybar.pos-right #battery { padding: 10px 0; }
+window#waybar.pos-left #clock, window#waybar.pos-right #clock { padding: 10px 0 4px; }
+window#waybar.pos-left #custom-notification, window#waybar.pos-right #custom-notification { padding: 4px 0 12px; }
+window#waybar.pos-left #custom-media, window#waybar.pos-right #custom-media { padding: 8px 0; }
+window#waybar.pos-left #tray, window#waybar.pos-right #tray { padding: 8px 0; }
+
 /* Status colors from common.css would be unreadable on the colored blocks: keep them dark */
 #pulseaudio.muted, #bluetooth.off, #bluetooth.disabled { color: alpha(@background, 0.5); }
 #network.disconnected, #network.disabled               { color: alpha(@background, 0.5); }

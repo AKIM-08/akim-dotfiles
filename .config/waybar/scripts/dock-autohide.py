@@ -5,7 +5,7 @@ Started by launch.sh with the Dock theme. Waybar starts hidden ("start_hidden" i
 config); this asks Hyprland where the pointer is about ten times a second (through Hyprland's
 socket, no process is started) and toggles Waybar's visibility with SIGUSR1:
 
-    pointer touches the dock's edge (bottom, left or right)  -> the dock slides in
+    pointer touches the dock's edge (top, bottom, left or right)  -> the dock slides in
     pointer moves away from the dock for HIDE_DELAY seconds  -> it hides again
 """
 
@@ -130,7 +130,8 @@ def main():
                     if mx <= x < mx + mw and my <= y < my + mh), None)
         if mon and pid:
             mx, my, mw, mh = mon
-            dist = {"bottom": my + mh - 1 - y, "left": x - mx, "right": mx + mw - 1 - x}.get(edge, my + mh - 1 - y)
+            dist = {"bottom": my + mh - 1 - y, "top": y - my, "left": x - mx,
+                    "right": mx + mw - 1 - x}.get(edge, my + mh - 1 - y)
             if not shown:
                 if dist <= EDGE:
                     at_edge_since = at_edge_since or now

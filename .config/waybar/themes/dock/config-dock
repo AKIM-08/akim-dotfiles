@@ -1,9 +1,9 @@
 // Dock: one floating dock with big app icons; hidden until the pointer touches its screen edge
-// (scripts/dock-autohide.py shows and hides it). Windows use the whole screen.
+// (top, bottom, left or right; scripts/dock-autohide.py shows and hides it). Windows use the
+// whole screen.
 {
     "x-autohide": true,
     "x-dot-workspaces": true,
-    "x-positions": ["bottom", "left", "right"],
     "x-taskbar-scale": 2,
 
     "modules-left": [],

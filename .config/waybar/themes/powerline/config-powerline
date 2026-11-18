@@ -2,8 +2,14 @@
 // The arrows are separate modules (custom/pl-*) colored to blend one segment into the next.
 {
     "x-floating": false,
-    "x-positions": ["top", "bottom"],
-    "x-scale-ids": { "#custom-pl-a, #custom-pl-b, #custom-pl-c, #custom-pl-d, #custom-pl-e, #custom-pl-f": 1.55 },
+    // On the left/right edge the arrows can't point down, so the blocks are simply stacked
+    // (no arrow modules, no window title)
+    "x-vertical": {
+        "modules-left": ["custom/launcher", "hyprland/workspaces"],
+        "modules-center": ["custom/media"],
+        "modules-right": ["tray", "group/pl-sound", "group/pl-net", "battery", "clock", "custom/notification"]
+    },
+    "x-scale-ids":{ "#custom-pl-a, #custom-pl-b, #custom-pl-c, #custom-pl-d, #custom-pl-e, #custom-pl-f": 1.55 },
 
     "modules-left": ["custom/launcher", "custom/pl-a", "hyprland/workspaces", "custom/pl-b", "custom/media"],
     "modules-center": ["hyprland/window"],
