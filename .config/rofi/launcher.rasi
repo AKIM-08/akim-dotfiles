@@ -1,0 +1,162 @@
+/* Launcher (Super + Q): wallpaper art panel with mode buttons on the left, search + list on the right.
+   rofi-toggle.sh sets the art image (a crop of the current wallpaper) at launch. */
+
+/* Fallbacks, overridden by the pywal colors imported next */
+* {
+    background-translucent: #16131cd9;
+    accent-translucent:     #8f8cf099;
+}
+@import "~/.cache/wal/colors-rofi-dark"
+
+configuration {
+    font: "JetBrainsMono Nerd Font 11";
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    drun-display-format: "{name} [<span weight='light' size='small' alpha='60%'><i>({generic})</i></span>]";
+    location: 0;
+    fixed-num-lines: true;
+    hide-scrollbar: true;
+    click-to-exit: true;
+    cycle: true;
+    display-drun: "󰀻";
+    display-filebrowser: "󰉋";
+    display-window: "󰖯";
+    display-run: "";
+}
+
+* {
+    background-color: transparent;
+    text-color: @text-color;
+}
+
+window {
+    width: 780px;
+    border: 2px;
+    border-radius: 22px;
+    border-color: @accent-translucent;
+    background-color: @background-translucent;
+    padding: 0px;
+}
+
+mainbox {
+    orientation: horizontal;
+    spacing: 0px;
+    children: [ imagebox, listbox ];
+}
+
+/* ---------- Left: wallpaper art + mode buttons ---------- */
+imagebox {
+    expand: false;
+    width: 280px;
+    orientation: horizontal;
+    border-radius: 20px 0px 0px 20px;
+    background-color: @background-translucent;
+    children: [ art-spacer, modes ];
+}
+art-spacer {
+    expand: true;
+}
+modes {
+    expand: false;
+    orientation: vertical;
+    padding: 0px 18px 0px 0px;
+    children: [ modes-top, mode-switcher, modes-bottom ];
+}
+modes-top, modes-bottom {
+    expand: true;
+}
+mode-switcher {
+    expand: false;
+    orientation: vertical;
+    spacing: 16px;
+}
+button {
+    width: 46px;
+    padding: 12px 0px;
+    border-radius: 23px;
+    background-color: #00000066;
+    text-color: @text-color;
+    font: "JetBrainsMono Nerd Font 14";
+    horizontal-align: 0.5;
+    vertical-align: 0.5;
+    cursor: pointer;
+}
+button selected {
+    background-color: @selected-normal-background;
+    text-color: @selected-normal-foreground;
+}
+
+/* ---------- Right: search + results ---------- */
+listbox {
+    orientation: vertical;
+    padding: 22px 22px 20px 22px;
+    spacing: 14px;
+    children: [ inputbar, listview ];
+}
+inputbar {
+    padding: 11px 16px;
+    spacing: 12px;
+    border-radius: 16px;
+    background-color: #ffffff10;
+    children: [ textbox-search, entry ];
+}
+textbox-search {
+    expand: false;
+    str: "󰍉";
+    text-color: @selected-normal-background;
+    vertical-align: 0.5;
+}
+entry {
+    placeholder: "Search...";
+    placeholder-color: #ffffff59;
+    vertical-align: 0.5;
+    cursor: text;
+}
+
+listview {
+    lines: 7;
+    columns: 1;
+    spacing: 6px;
+    scrollbar: false;
+    fixed-height: true;
+}
+element {
+    padding: 8px 14px;
+    spacing: 16px;
+    border-radius: 16px;
+    cursor: pointer;
+}
+element-icon {
+    size: 30px;
+    vertical-align: 0.5;
+    cursor: inherit;
+}
+element-text {
+    vertical-align: 0.5;
+    cursor: inherit;
+}
+element normal.normal, element alternate.normal {
+    background-color: transparent;
+    text-color: @text-color;
+}
+element normal.active, element alternate.active {
+    text-color: @selected-normal-background;
+}
+element normal.urgent, element alternate.urgent {
+    text-color: @urgent-background;
+}
+element selected.normal, element selected.active {
+    background-color: @selected-normal-background;
+    text-color: @selected-normal-foreground;
+}
+element selected.urgent {
+    background-color: @urgent-background;
+    text-color: @urgent-foreground;
+}
+element-text selected, element-icon selected {
+    text-color: inherit;
+}
+
+message, textbox {
+    text-color: @text-color;
+}

@@ -80,6 +80,8 @@ s, c = data["special"], data["colors"]
     active-foreground: {s['background']};
     urgent-background: {c['color9']};
     urgent-foreground: {s['background']};
+    background-translucent: {s['background']}d9;
+    accent-translucent: {c['color1']}99;
 }}
 """)
 PY
