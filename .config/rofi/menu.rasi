@@ -6,6 +6,7 @@
 * {
     background-translucent: #16131cd9;
     accent-soft:            #8f8cf02e;
+    menu-background:        #2c2a33a6;
 }
 @import "~/.cache/wal/colors-rofi-dark"
 
@@ -29,7 +30,7 @@ window {
     border: 1px;
     border-radius: 16px;
     border-color: #ffffff24;
-    background-color: @background-translucent;
+    background-color: @menu-background;
     padding: 0px;
 }
 

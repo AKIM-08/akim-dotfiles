@@ -70,6 +70,14 @@ import json, pathlib, sys
 d = pathlib.Path(sys.argv[1])
 data = json.loads((d / "colors.json").read_text())
 s, c = data["special"], data["colors"]
+
+def blend(a, b, t):
+    """Mix hex colors a and b (t = share of b)."""
+    pa, pb = (tuple(int(h.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)) for h in (a, b))
+    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(pa, pb))
+
+# Menus: background lifted 12% toward the text color, 65% opaque (frosted, not black)
+menu_bg = blend(s["background"], s["foreground"], 0.12) + "a6"
 (d / "colors-rofi-dark").write_text(f"""* {{
     background-color: {s['background']};
     text-color:       {s['foreground']};
@@ -83,6 +91,7 @@ s, c = data["special"], data["colors"]
     background-translucent: {s['background']}d9;
     accent-translucent: {c['color1']}99;
     accent-soft: {c['color1']}2e;
+    menu-background: {menu_bg};
 }}
 """)
 PY

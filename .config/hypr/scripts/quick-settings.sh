@@ -312,7 +312,7 @@ keys=(); labels=()
 for e in "${ENTRIES[@]}"; do
     IFS='|' read -r key icon name value <<<"$e"
     keys+=("$key")
-    labels+=("$(printf '%s   %-24s' "$icon" "$(esc "$name")")<span alpha='55%'>$(esc "$value")</span>")
+    labels+=("$(printf '%s   %-24s' "$icon" "$(esc "$name")")<span alpha='70%'>$(esc "$value")</span>")
 done
 
 i=$(printf '%s\n' "${labels[@]}" | rofi -dmenu -i -markup-rows -format i -p "Settings" -theme "$ROFI_THEME") || exit 0

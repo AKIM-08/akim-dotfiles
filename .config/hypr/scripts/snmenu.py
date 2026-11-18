@@ -136,6 +136,7 @@ class PowerMenu(Gtk.Window):
         self.info = system_info()
 
         self.selected = -1
+        self.keyboard = False              # last selection came from the keyboard / wheel
         self.armed = -1
         self.armed_at = 0.0
         self.tick = None
@@ -221,6 +222,7 @@ class PowerMenu(Gtk.Window):
         Gtk.main_quit()
 
     def step(self, delta):
+        self.keyboard = True
         if self.n:
             self.select(0 if self.selected < 0 else (self.selected + delta) % self.n)
 
@@ -245,7 +247,13 @@ class PowerMenu(Gtk.Window):
         win = self.get_window()
         if win:
             win.set_cursor(Gdk.Cursor.new_from_name(win.get_display(), "pointer" if i >= 0 else "default"))
-        if i >= 0:
+        # Pointer off the menu: back to the initial state (nothing selected, any pending
+        # confirmation cancelled). Keyboard selection is left alone.
+        if i < 0 and not self.keyboard:
+            self.disarm()
+            self.select(-1)
+        elif i >= 0:
+            self.keyboard = False
             self.select(i)
         return True
 
@@ -298,6 +306,7 @@ class PowerMenu(Gtk.Window):
         ch = chr(Gdk.keyval_to_unicode(k) or 0).upper()
         for i in range(self.n):
             if KEYS.get(self.label(i)) == ch:
+                self.keyboard = True
                 self.activate(i)
                 return True
         return False
