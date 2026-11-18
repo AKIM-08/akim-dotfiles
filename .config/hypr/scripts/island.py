@@ -2,8 +2,8 @@
 """island.py - Dynamic island: the whole top bar inside a notch (Waybar theme "Island").
 
 Started by ~/.config/waybar/scripts/launch.sh instead of Waybar when the Island theme is chosen.
-A black notch hangs from the screen edge chosen in Settings -> Waybar -> Position (top, bottom,
-left or right; on the sides it is a tall, thin notch):
+A black notch hangs from the top edge of the screen (the Island theme only allows the top; the
+drawing code also handles the other edges):
 
     at rest        workspace dots (click / scroll to switch), clock and date, a mini cover
                    with an equalizer while music plays, battery

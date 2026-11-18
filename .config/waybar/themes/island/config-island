@@ -1,8 +1,9 @@
 // Island: no Waybar. The whole bar is the dynamic island, ~/.config/hypr/scripts/island.py
-// (started by scripts/launch.sh), on any edge. This file only tells layout.py so; the island
-// draws itself.
+// (started by scripts/launch.sh), always at the top. This file only tells layout.py so; the
+// island draws itself.
 {
     "x-program": "island",
+    "x-positions": ["top"],
     "modules-left": [],
     "modules-center": ["clock"],
     "modules-right": []
