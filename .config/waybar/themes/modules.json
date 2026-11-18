@@ -30,10 +30,11 @@
         "return-type": "json",
         "exec-if": "which swaync-client",
         "exec": "swaync-client -swb",
-        "on-click": "swaync-client -t -sw",
+        "on-click": "python3 ~/.config/hypr/scripts/quickpanel.py",
         "on-click-right": "swaync-client -d -sw",
         "tooltip": true,
-        "escape": true
+        "escape": true,
+        "on-click-middle": "swaync-client -t -sw"
     },
     "clock": {
         "format": "󰥔 {:%H:%M  %a %d %b}",
