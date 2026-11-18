@@ -532,7 +532,7 @@ class QuickPanel(Gtk.Window):
         return False
 
     def open_settings(self):
-        self.close_then(str(SCRIPTS / "quick-settings.sh"))
+        self.close_then(f"python3 {SCRIPTS / 'settings.py'}")
 
     def open_power(self):
         self.close_then(str(SCRIPTS / "snmenu-toggle.sh"))

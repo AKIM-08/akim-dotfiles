@@ -12,7 +12,8 @@ fi
 
 SHORTCUTS=(
     "󰌌  SUPER + G                  󰄾  Shortcuts Documentation / Cheatsheet (Toggle)"
-    "󰒓  SUPER + H                  󰄾  Quick Settings (Mouse Speed, Defaults, Profiles...)"
+    "󰒓  SUPER + H                  󰄾  Settings (window: appearance, network, sound, apps...)"
+    "󰒓  SUPER + SHIFT + H          󰄾  Quick Settings menu (Rofi)"
     "󰌾  SUPER + L                  󰄾  Lock Screen (hyprlock - Windows style)"
     "󰞷  SUPER + Return             󰄾  Open Terminal (Kitty)"
     "󰀻  SUPER + Q                  󰄾  Application Launcher (Rofi - Toggle)"
