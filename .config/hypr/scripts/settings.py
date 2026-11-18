@@ -706,13 +706,21 @@ class Settings(Gtk.Window):
             preview.pos = v
             preview.queue_draw()
             apply("--position", v)
+            GLib.timeout_add(900, lambda: (self.refresh(), False)[1])   # a theme may move it back
+
+        def set_theme(v):
+            apply(v)
+            GLib.timeout_add(900, lambda: (self.refresh(), False)[1])   # its position may change
+
+        THEMES = ("default", "line", "zen", "experimental", "capsule", "powerline", "dock", "island")
 
         return [
             preview,
             section("Bar"),
             group(
-                row("Theme", "", segmented([(t, t.capitalize()) for t in ("default", "line", "zen", "experimental", "capsule")],
-                                           theme, lambda v: apply(v))),
+                row("Theme", "Powerline: top or bottom · Dock: hides until the pointer touches its edge · "
+                             "Island: the whole bar in a notch at the top",
+                    dropdown([(t, t.capitalize()) for t in THEMES], theme, set_theme)),
                 row("Position", "", segmented([(p, p.capitalize()) for p in ("top", "bottom", "left", "right")], pos, set_pos)),
                 row("Size", "Thickness of the bar", segmented([(s, s.capitalize()) for s in ("compact", "normal", "large")],
                                                              size, lambda v: apply("--size", v))),

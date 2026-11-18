@@ -1,0 +1,4 @@
+/* Island: Waybar is not used with this theme (see config-island); the island styles itself
+   from the pywal colors. */
+@import url("colors-waybar.css");
+@import url("themes/common.css");

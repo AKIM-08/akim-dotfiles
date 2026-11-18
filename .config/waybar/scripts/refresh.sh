@@ -1,12 +1,10 @@
 #!/bin/bash
+# refresh.sh - toggle the bar: stop it if it runs (Waybar or the island), otherwise start it
 
-# Check if waybar is running
-if pgrep -x "waybar" > /dev/null; then
-    # If running, kill the waybar process
-    pkill -x "waybar"
+if pgrep -x waybar >/dev/null || pgrep -f "hypr/scripts/island\.py" >/dev/null; then
+    pkill -f "waybar/scripts/dock-autohide\.py" 2>/dev/null
+    pkill -f "hypr/scripts/island\.py" 2>/dev/null
+    pkill -x waybar
 else
-    # If not running, start waybar
-    waybar &
+    "$HOME/.config/waybar/scripts/launch.sh"
 fi
-
-

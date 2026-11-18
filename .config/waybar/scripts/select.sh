@@ -26,10 +26,8 @@ restart_waybar() {
         rm -f "$WAYBAR_DIR/colors-waybar.css"
         cat "$WAL_CACHE/colors-waybar.css" > "$WAYBAR_DIR/colors-waybar.css"
     fi
-    pkill -x waybar 2>/dev/null
-    for _ in 1 2 3 4 5 6 7 8 9 10; do pgrep -x waybar >/dev/null || break; sleep 0.05; done
-    waybar >/dev/null 2>&1 &
-    disown
+    # Waybar, the Dock (Waybar + auto-hide) or the Island, depending on the theme
+    bash "$WAYBAR_DIR/scripts/launch.sh"
 }
 
 apply() {   # arguments are passed through to layout.py
@@ -54,13 +52,16 @@ index_of() {   # index_of <value> <items...>
 
 read -r cur_theme cur_pos cur_size < <(python3 "$LAYOUT" --get 2>/dev/null)
 
-THEMES=(default line zen experimental capsule)
+THEMES=(default line zen experimental capsule powerline dock island)
 THEME_LABELS=(
     "󰕮  Default       —  Three floating islands"
     "󰤄  Line          —  Thin edge-to-edge strip"
     "󰾍  Zen           —  One island, drawer on hover"
     "󰘚  Experimental  —  Color bars, media, load"
     "󰍹  Capsule       —  Floating capsules"
+    "󱞩  Powerline     —  Colored segments with arrows"
+    "󰍜  Dock          —  Big app icons, hides until the edge"
+    "󰹑  Island        —  Dynamic island at the top"
 )
 EDGES=(top bottom left right)
 EDGE_LABELS=("󰁝  Top" "󰁅  Bottom" "󰁍  Left" "󰁔  Right")

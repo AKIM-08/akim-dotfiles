@@ -298,7 +298,7 @@ fi
 
 if ! command -v snmenu &>/dev/null && [ ! -x "$HOME/.local/bin/snmenu" ]; then
     echo "    Setting up snmenu (radial power menu)..."
-    sudo apt-get install -y python3-gi gir1.2-gtk-3.0 python3-cairo gir1.2-gtklayershell-0.1 2>/dev/null || true
+    sudo apt-get install -y python3-gi gir1.2-gtk-3.0 python3-cairo python3-gi-cairo gir1.2-gtklayershell-0.1 dbus-bin 2>/dev/null || true
     
     mkdir -p "$HOME/.local/bin"
     if [ -f "$REPO_ROOT/.config/hypr/scripts/snmenu.py" ]; then

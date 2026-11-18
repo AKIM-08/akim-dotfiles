@@ -1,0 +1,25 @@
+// Powerline: full-width strip of colored segments joined by arrows, like a terminal prompt.
+// The arrows are separate modules (custom/pl-*) colored to blend one segment into the next.
+{
+    "x-floating": false,
+    "x-positions": ["top", "bottom"],
+    "x-scale-ids": { "#custom-pl-a, #custom-pl-b, #custom-pl-c, #custom-pl-d, #custom-pl-e, #custom-pl-f": 1.55 },
+
+    "modules-left": ["custom/launcher", "custom/pl-a", "hyprland/workspaces", "custom/pl-b", "custom/media"],
+    "modules-center": ["hyprland/window"],
+    "modules-right": ["tray", "custom/pl-c", "group/pl-sound", "custom/pl-d", "group/pl-net",
+                      "custom/pl-e", "battery", "custom/pl-f", "clock", "custom/notification"],
+
+    "custom/pl-a": { "format": "", "tooltip": false },
+    "custom/pl-b": { "format": "", "tooltip": false },
+    "custom/pl-c": { "format": "", "tooltip": false },
+    "custom/pl-d": { "format": "", "tooltip": false },
+    "custom/pl-e": { "format": "", "tooltip": false },
+    "custom/pl-f": { "format": "", "tooltip": false },
+
+    "group/pl-sound": { "orientation": "inherit", "modules": ["pulseaudio", "backlight"] },
+    "group/pl-net":   { "orientation": "inherit", "modules": ["network", "bluetooth"] },
+
+    "clock": { "format": "󰥔 {:%H:%M}" },
+    "hyprland/window": { "format": "{title}", "max-length": 50, "separate-outputs": true }
+}

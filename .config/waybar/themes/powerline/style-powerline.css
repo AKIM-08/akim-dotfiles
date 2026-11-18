@@ -1,0 +1,67 @@
+@import url("colors-waybar.css");
+@import url("themes/common.css");
+
+/* Powerline: one full-width strip; each group is a block of a bright wallpaper color
+   (color9 to color14) with dark text, and the arrow modules blend one block into the next:
+   the arrow's text color is the block it comes from, its background the block it goes to. */
+window#waybar { background: alpha(@background, 0.88); }
+
+#custom-launcher, #workspaces, #pl-sound, #pl-net, #battery, #clock, #custom-notification {
+    color: @background;
+    padding: 0 10px;
+}
+#pulseaudio, #backlight, #network, #bluetooth { color: @background; padding: 0 5px; }
+
+#custom-launcher             { background: @color9; padding: 0 12px 0 14px; }
+#workspaces                  { background: @color10; padding: 0 6px; }
+#pl-sound                    { background: @color11; padding: 0 6px; }
+#pl-net                      { background: @color12; padding: 0 6px; }
+#battery                     { background: @color13; }
+#clock, #custom-notification { background: @color14; }
+#custom-notification         { padding: 0 14px 0 4px; }
+
+/* Arrows: no padding so they touch both blocks */
+#custom-pl-a, #custom-pl-b, #custom-pl-c, #custom-pl-d, #custom-pl-e, #custom-pl-f {
+    padding: 0;
+    margin: 0;
+    font-weight: normal;
+}
+#custom-pl-a { color: @color9;  background: @color10; }
+#custom-pl-b { color: @color10; background: transparent; }
+#custom-pl-c { color: @color11; background: transparent; }
+#custom-pl-d { color: @color12; background: @color11; }
+#custom-pl-e { color: @color13; background: @color12; }
+#custom-pl-f { color: @color14; background: @color13; }
+
+/* Launcher: the Debian logo in dark on its colored block */
+#custom-launcher { color: @background; }
+#custom-launcher:hover { background: mix(@color9, @foreground, 0.25); }
+
+/* Workspaces: numbers; the active one sits in a darker pill */
+#workspaces button {
+    padding: 0 7px;
+    margin: 3px 1px;
+    border-radius: 6px;
+    background: transparent;
+}
+#workspaces button label        { color: alpha(@background, 0.75); }
+#workspaces button.empty label  { color: alpha(@background, 0.45); }
+#workspaces button.active       { background: alpha(@background, 0.82); }
+#workspaces button.active label { color: @color10; }
+#workspaces button:hover        { background: alpha(@background, 0.25); }
+
+/* Plain text between the blocks */
+#custom-media  { padding: 0 12px; }
+#window        { color: alpha(@foreground, 0.8); font-weight: normal; }
+#tray          { padding: 0 10px; }
+
+/* Status colors from common.css would be unreadable on the colored blocks: keep them dark */
+#pulseaudio.muted, #bluetooth.off, #bluetooth.disabled { color: alpha(@background, 0.5); }
+#network.disconnected, #network.disabled               { color: alpha(@background, 0.5); }
+#battery.charging, #battery.plugged,
+#battery.warning:not(.charging)                         { color: @background; }
+#battery.critical:not(.charging)                        { color: @background; background: #ff5555; }
+#custom-notification.notification,
+#custom-notification.inhibited-notification             { color: @background; }
+#custom-notification.dnd-none,
+#custom-notification.dnd-notification                   { color: alpha(@background, 0.55); }
