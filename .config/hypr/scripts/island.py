@@ -487,6 +487,8 @@ class Island(Gtk.Window):
         self.connect("enter-notify-event", self.on_enter)
         self.connect("leave-notify-event", self.on_leave)
         self.connect("destroy", Gtk.main_quit)
+        # Measure again once it is on screen (fonts and texts are final then)
+        self.connect("map", lambda *_: [GLib.timeout_add(d, self.fit_rest) for d in (50, 300, 1000)])
         self.sw.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
         self.sw.connect("scroll-event", self.on_scroll)
         self.sw.connect("button-press-event", self.on_press)
@@ -1002,7 +1004,17 @@ class Island(Gtk.Window):
             self.reload_colors_if_changed()
         if self.mode == "big":
             self.tick_progress()
+        self.fit_rest()
         return True
+
+    def fit_rest(self):
+        """At rest, follow the row's real size: at startup the first measure is taken before the
+        clock, battery and workspace dots are filled in (and texts change width over time)."""
+        if self.anim is None and self.mode in ("rest", "level"):
+            w, h = self.target_for(self.mode)
+            if abs(w - self.cur_w) > 1 or abs(h - self.cur_h) > 1:
+                self.animate_to(w, h)
+        return False
 
     def draw_level(self, w, cr):
         W, H = w.get_allocated_width(), w.get_allocated_height()
