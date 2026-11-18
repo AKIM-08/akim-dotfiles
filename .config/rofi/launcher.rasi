@@ -31,9 +31,9 @@ configuration {
 
 window {
     width: 780px;
-    border: 2px;
+    border: 1px;
     border-radius: 22px;
-    border-color: @accent-translucent;
+    border-color: #ffffff2e;          /* thin, light glass edge (works on any wallpaper) */
     background-color: @background-translucent;
     padding: 0px;
 }
