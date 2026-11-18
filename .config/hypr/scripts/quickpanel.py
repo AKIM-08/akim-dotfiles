@@ -92,11 +92,29 @@ def fmt_time(seconds: float) -> str:
 
 
 # ------------------------------------------------------------------------------ state
-def read_state() -> dict:
-    """Everything the panel shows. Runs in a background thread."""
-    st = {}
+def backlight_dir():
+    """The backlight device brightnessctl uses (first one), read straight from sysfs."""
+    devs = sorted(Path("/sys/class/backlight").glob("*"))
+    return devs[0] if devs else None
 
-    # Volume / mute (sink) and microphone (source)
+
+BACKLIGHT = backlight_dir()
+
+
+def read_brightness():
+    if not BACKLIGHT:
+        return None
+    try:
+        cur = int((BACKLIGHT / "brightness").read_text())
+        top = int((BACKLIGHT / "max_brightness").read_text())
+        return round(cur * 100 / top) if top else None
+    except (OSError, ValueError):
+        return None
+
+
+def read_fast() -> dict:
+    """What keys change: volume, mute, mic, brightness. Cheap; read ~4 times a second."""
+    st = {}
     sink = run(["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"])          # "Volume: 0.70 [MUTED]"
     try:
         st["volume"] = round(float(sink.split()[1]) * 100)
@@ -104,10 +122,13 @@ def read_state() -> dict:
         st["volume"] = None
     st["mute"] = "MUTED" in sink
     st["mic_muted"] = "MUTED" in run(["wpctl", "get-volume", "@DEFAULT_AUDIO_SOURCE@"])
+    st["brightness"] = read_brightness()
+    return st
 
-    # Brightness
-    b = run(["brightnessctl", "-m"]).split(",")                         # dev,class,cur,NN%,max
-    st["brightness"] = int(b[3].rstrip("%")) if len(b) > 3 and b[3].rstrip("%").isdigit() else None
+
+def read_state() -> dict:
+    """Everything else (network, Bluetooth, toggles, battery, media). Read about once a second."""
+    st = {}
 
     # Wi-Fi
     st["wifi_on"] = run(["nmcli", "-t", "radio", "wifi"]) == "enabled"
@@ -224,8 +245,12 @@ class QuickPanel(Gtk.Window):
         super().__init__(type=Gtk.WindowType.TOPLEVEL)
         self.set_title("quickpanel")
         self.colors = load_colors()
+        self.colors_mtime = None
+        self.css_provider = None
         self.state = {}
-        self.busy = False                 # a background read is running
+        self.busy = False                 # a slow background read is running
+        self.fast_busy = False            # a fast (volume/brightness) read is running
+        self.fast_pending = False         # another fast read was requested meanwhile
         self.hold = {}                    # slider -> time until external updates are ignored
         self.last_art = None
         self.apply_css()
@@ -276,6 +301,7 @@ class QuickPanel(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
         self.refresh()
         GLib.timeout_add(1000, self.refresh)
+        GLib.timeout_add(250, self.refresh_fast)
         GLib.timeout_add(1000, self.tick_media)
         threading.Thread(target=self.watch_audio, daemon=True).start()
 
@@ -331,8 +357,11 @@ class QuickPanel(Gtk.Window):
         """
         provider = Gtk.CssProvider()
         provider.load_from_data(css.encode())
-        Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider,
-                                                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        screen = Gdk.Screen.get_default()
+        if self.css_provider:                       # re-theme: replace the previous colors
+            Gtk.StyleContext.remove_provider_for_screen(screen, self.css_provider)
+        Gtk.StyleContext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        self.css_provider = provider
 
     @staticmethod
     def round_button(text, action, extra=None):
@@ -405,7 +434,6 @@ class QuickPanel(Gtk.Window):
         card.pack_start(top, False, False, 0)
         card.pack_start(prog, False, False, 0)
         card.pack_start(ctl, False, False, 0)
-        card.set_no_show_all(True)
         return card
 
     def build_tiles(self):
@@ -513,15 +541,32 @@ class QuickPanel(Gtk.Window):
     # -------------------------------------------------------------- updates
     def refresh_once(self):
         self.refresh()
+        self.refresh_fast()
         return False
 
     def refresh(self):
+        """Slow cycle (~1 s): clock, colors, network, Bluetooth, toggles, battery, media."""
         self.time_label.set_text(time.strftime("%H:%M"))
         self.date_label.set_text(time.strftime("%a %d %b"))
+        self.reload_colors_if_changed()
         if not self.busy:
             self.busy = True
             threading.Thread(target=self._read, daemon=True).start()
         return True
+
+    def refresh_fast(self):
+        """Fast cycle (~250 ms and on every PipeWire event): volume, mute, mic, brightness.
+        A request that arrives during a read is remembered and run right after it."""
+        if self.fast_busy:
+            self.fast_pending = True
+        else:
+            self.fast_busy = True
+            threading.Thread(target=self._read_fast, daemon=True).start()
+        return True
+
+    def refresh_fast_once(self):
+        self.refresh_fast()
+        return False
 
     def _read(self):
         try:
@@ -531,6 +576,39 @@ class QuickPanel(Gtk.Window):
             sys.stderr.write(f"quickpanel: {e}\n")
             st, art = None, None
         GLib.idle_add(self._apply, st, art)
+
+    def _read_fast(self):
+        try:
+            st = read_fast()
+        except Exception as e:
+            sys.stderr.write(f"quickpanel: {e}\n")
+            st = None
+        GLib.idle_add(self._apply_fast, st)
+
+    def _apply_fast(self, st):
+        self.fast_busy = False
+        if st:
+            self.state.update(st)
+            self.tiles["mute"].set_state(st["mute"], "Sound off" if st["mute"] else "Sound on")
+            self.tiles["mic"].set_state(st["mic_muted"], "Muted" if st["mic_muted"] else "Listening")
+            self.set_scale(self.vol_scale, st["volume"], "volume")
+            self.set_scale(self.bri_scale, st["brightness"], "brightness")
+            self.bri_scale.get_parent().set_visible(st["brightness"] is not None)
+        if self.fast_pending:
+            self.fast_pending = False
+            self.refresh_fast()
+        return False
+
+    def reload_colors_if_changed(self):
+        """Follow wallpaper changes while open: re-theme when the pywal palette changes."""
+        try:
+            mtime = (HOME / ".cache" / "wal" / "colors.json").stat().st_mtime
+        except OSError:
+            return
+        if mtime != self.colors_mtime:
+            self.colors_mtime = mtime
+            self.colors = load_colors()
+            self.apply_css()
 
     def set_scale(self, scale, value, key):
         if value is None or time.time() < self.hold.get(key, 0):
@@ -544,20 +622,14 @@ class QuickPanel(Gtk.Window):
         self.busy = False
         if not st:
             return False
-        self.state = st
+        self.state.update(st)
         t = self.tiles
         t["wifi"].set_state(st["wifi_on"], st["ssid"] or ("Not connected" if st["wifi_on"] else "Off"))
         t["bt"].set_state(st["bt_on"], st["bt_device"] or ("No device" if st["bt_on"] else "Off"))
-        t["mute"].set_state(st["mute"], "Sound off" if st["mute"] else "Sound on")
-        t["mic"].set_state(st["mic_muted"], "Muted" if st["mic_muted"] else "Listening")
         t["dnd"].set_state(st["dnd"], "On" if st["dnd"] else "Off")
         t["night"].set_state(bool(st["night"]), f"{st['night']}K" if st["night"] else "Off")
         t["caffeine"].set_state(st["caffeine"], "Staying awake" if st["caffeine"] else "Off")
         t["shot"].set_state(False, "Region")
-
-        self.set_scale(self.vol_scale, st["volume"], "volume")
-        self.set_scale(self.bri_scale, st["brightness"], "brightness")
-        self.bri_scale.get_parent().set_visible(st["brightness"] is not None)
 
         bat = st["battery"]
         bat_icon = "\U000f0084" if st["charging"] else "\U000f0079"
@@ -566,7 +638,6 @@ class QuickPanel(Gtk.Window):
 
         m = st["media"]
         if m:
-            self.media.show_all()
             self.media.set_visible(True)
             self.m_title.set_text(m["title"])
             self.m_artist.set_text(m["artist"])
@@ -617,7 +688,7 @@ class QuickPanel(Gtk.Window):
                 now = time.time()
                 if now - last > 0.15:
                     last = now
-                    GLib.idle_add(self.refresh_once)
+                    GLib.idle_add(self.refresh_fast_once)
 
 
 def main():
