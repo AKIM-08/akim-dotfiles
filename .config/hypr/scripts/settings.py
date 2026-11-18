@@ -141,7 +141,7 @@ def css_for(c: dict) -> str:
     bg, fg, acc = c["bg"], c["fg"], c["accent"]
     return f"""
     * {{ font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif; color: {fg}; outline-style: none; }}
-    window.settings {{ background: {rgba(bg, 0.86)}; border-radius: 18px; }}
+    window.settings {{ background: {rgba(bg, 0.95)}; border-radius: 18px; }}
     .sidebar {{ background: {rgba(fg, 0.025)}; border-right: 1px solid {rgba(fg, 0.08)}; padding: 22px 14px 14px 14px; }}
     .app-title {{ font-size: 21px; font-weight: 700; margin: 0 0 12px 6px; }}
     entry.search {{

@@ -424,6 +424,7 @@ windowrule {
     name = settings-window
     match:class = ^(dotfiles-settings)$
     float = true
+    opacity = 1.0 override 1.0 override
     size = 1040 700
     center = 1
 }
