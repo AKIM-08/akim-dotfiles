@@ -81,7 +81,7 @@ def set_block(name: str, content: str):
     """Replace (or add) a marked block in user-settings.hl (same markers as quick-settings.sh)."""
     begin, end = f"# >>> quick-settings: {name}", f"# <<< quick-settings: {name}"
     try:
-        lines = USER_SETTINGS.read_text().splitlines()
+        lines = USER_SETTINGS.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
         lines = []
     out, skip = [], False
@@ -93,7 +93,7 @@ def set_block(name: str, content: str):
         if line == end:
             skip = False
     out += [begin, content, end]
-    USER_SETTINGS.write_text("\n".join(out) + "\n")
+    USER_SETTINGS.write_text("\n".join(out) + "\n", encoding="utf-8")
 
 
 def set_app_var(name: str, value: str):
@@ -101,8 +101,8 @@ def set_app_var(name: str, value: str):
     pat = re.compile(rf"^\s*\${name}\s*=")
     for f in (USER_APPS, USER_SETTINGS):
         try:
-            kept = [l for l in f.read_text().splitlines() if not pat.match(l)]
-            f.write_text("\n".join(kept) + ("\n" if kept else ""))
+            kept = [l for l in f.read_text(encoding="utf-8", errors="replace").splitlines() if not pat.match(l)]
+            f.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
         except OSError:
             pass
     with open(USER_APPS, "a") as f:
@@ -111,7 +111,7 @@ def set_app_var(name: str, value: str):
 
 def read_app_var(name: str, default: str) -> str:
     try:
-        for line in reversed(USER_APPS.read_text().splitlines()):
+        for line in reversed(USER_APPS.read_text(encoding="utf-8", errors="replace").splitlines()):
             m = re.match(rf"^\s*\${name}\s*=\s*(\S+)", line)
             if m:
                 return m.group(1)
@@ -120,11 +120,151 @@ def read_app_var(name: str, default: str) -> str:
     return default
 
 
+# ------------------------------------------------------------------------------ shortcuts
+USER_BINDS = HYPR / "user-binds.hl"
+MOD_ORDER = ["SUPER", "CTRL", "ALT", "SHIFT"]
+MOD_ALIASES = {"SUPER": "SUPER", "WIN": "SUPER", "LOGO": "SUPER", "MOD4": "SUPER", "CTRL": "CTRL", "CONTROL": "CTRL",
+               "ALT": "ALT", "MOD1": "ALT", "SHIFT": "SHIFT"}
+KEY_LABELS = {"ampersand": "&", "eacute": "é", "quotedbl": '"', "apostrophe": "'", "parenleft": "(", "parenright": ")",
+              "minus": "-", "egrave": "è", "underscore": "_", "ccedilla": "ç", "agrave": "à", "escape": "Esc",
+              "return": "Return", "print": "Print", "left": "←", "right": "→", "up": "↑", "down": "↓", "space": "Space",
+              "tab": "Tab", "comma": ",", "semicolon": ";", "colon": ":", "exclam": "!", "dollar": "$", "asterisk": "*"}
+
+
+def norm_mods(text: str, main_mod: str = "SUPER") -> str:
+    words = text.replace("$mainMod", main_mod).replace("_", " ").upper().split()
+    found = {MOD_ALIASES[w] for w in words if w in MOD_ALIASES}
+    return " ".join(m for m in MOD_ORDER if m in found)
+
+
+def combo_label(mods: str, key: str) -> str:
+    k = KEY_LABELS.get(key.lower(), key.upper() if len(key) == 1 else key)
+    return " + ".join([m.capitalize() if m != "CTRL" else "Ctrl" for m in mods.split()] + [k])
+
+
+def combo_id(mods: str, key: str) -> str:
+    return f"{mods}|{key.lower()}"
+
+
+def parse_binds(text: str) -> list:
+    """bind/binde/... lines of hyprland.hl outside submaps, with $mainMod resolved."""
+    main_mod = "SUPER"
+    m = re.search(r"^\$mainMod\s*=\s*(\S+)", text, re.M)
+    if m:
+        main_mod = norm_mods(m.group(1)) or "SUPER"
+    binds, submap = [], "reset"
+    for line in text.splitlines():
+        s = line.strip()
+        sm = re.match(r"^submap\s*=\s*(\S+)", s)
+        if sm:
+            submap = sm.group(1)
+            continue
+        bm = re.match(r"^(bind[a-z]*)\s*=\s*(.*)$", s)
+        if not bm or submap != "reset":
+            continue
+        parts = [p.strip() for p in bm.group(2).split(",", 3)]
+        if len(parts) < 3 or parts[1].lower().startswith("mouse"):
+            continue
+        binds.append({"type": bm.group(1), "mods": norm_mods(parts[0], main_mod), "key": parts[1],
+                      "dispatcher": parts[2], "args": parts[3] if len(parts) > 3 else ""})
+    return binds
+
+
+def read_overrides() -> dict:
+    """{original combo id: (new mods, new key)} from user-binds.hl."""
+    out = {}
+    try:
+        text = USER_BINDS.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return out
+    for m in re.finditer(r"^# >>> settings: (.+?)\n(.*?)^# <<< settings: \1$", text, re.M | re.S):
+        bind = re.search(r"^bind[a-z]*\s*=\s*([^,]*),\s*([^,]+),", m.group(2), re.M)
+        if bind:
+            out[m.group(1)] = (norm_mods(bind.group(1)), bind.group(2).strip())
+    return out
+
+
+def write_override(bind: dict, new_mods: str, new_key: str):
+    """Rebind `bind` to new_mods + new_key (or drop the override when it's the original keys)."""
+    ident = combo_id(bind["mods"], bind["key"])
+    try:
+        text = USER_BINDS.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        text = "# Shortcuts changed in Settings (Super + H -> Shortcuts). Managed by settings.py.\n"
+    text = re.sub(rf"^# >>> settings: {re.escape(ident)}\n.*?^# <<< settings: {re.escape(ident)}\n?", "",
+                  text, flags=re.M | re.S)
+    if combo_id(new_mods, new_key) != ident:
+        args = f", {bind['args']}" if bind["args"] else ","
+        text = text.rstrip("\n") + "\n" + "\n".join([
+            f"# >>> settings: {ident}",
+            f"unbind = {bind['mods']}, {bind['key']}",
+            f"{bind['type']} = {new_mods}, {new_key}, {bind['dispatcher']}{args}",
+            f"# <<< settings: {ident}"]) + "\n"
+    USER_BINDS.write_text(text, encoding="utf-8")
+
+
+def reset_overrides():
+    USER_BINDS.write_text("# Shortcuts changed in Settings (Super + H -> Shortcuts). Managed by settings.py.\n", encoding="utf-8")
+
+
+def describe(bind: dict, cheatsheet: dict) -> str:
+    known = cheatsheet.get(combo_id(bind["mods"], bind["key"]))
+    if known:
+        return known
+    d, a = bind["dispatcher"], bind["args"]
+    if d == "workspace":
+        return f"Go to workspace {a}"
+    if d == "movetoworkspace":
+        return f"Move window to workspace {a}"
+    if d in ("movefocus", "movewindow"):
+        side = {"l": "left", "r": "right", "u": "up", "d": "down"}.get(a, a)
+        return ("Focus " if d == "movefocus" else "Move window ") + side
+    if d == "resizeactive":
+        return f"Resize window ({a})"
+    if d == "exec":
+        script = re.search(r"([\w-]+)\.(?:sh|py)\b(.*)", a)
+        if script:
+            name = script.group(1).replace("-", " ").capitalize()
+            extra = script.group(2).strip()
+            return f"{name} ({extra})" if extra else name
+        return a.split()[0] if a else "Run a command"
+    return {"killactive": "Close window", "exit": "Exit Hyprland", "togglespecialworkspace": "Scratchpad",
+            "togglefloating": "Toggle floating", "fullscreen": "Fullscreen", "layoutmsg": f"Layout: {a}"}.get(d, f"{d} {a}".strip())
+
+
+def cheatsheet_descriptions() -> dict:
+    """Descriptions from keybinds.sh ("icon  SUPER + Q   󰄾  Launcher") by combo."""
+    out = {}
+    try:
+        text = (SCRIPTS / "keybinds.sh").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return out
+    for m in re.finditer(r'^\s*"(.+?)"\s*$', text, re.M):
+        parts = [p.strip() for p in m.group(1).split("\U000f013e")]
+        if len(parts) != 2:
+            continue
+        keys = [k.strip() for k in re.sub(r"^\S+\s+", "", parts[0]).split("+")]
+        if not keys:
+            continue
+        mods = norm_mods(" ".join(keys[:-1]))
+        out[combo_id(mods, keys[-1])] = parts[1]
+    return out
+
+
+def bind_group(bind: dict) -> str:
+    if bind["dispatcher"] in ("workspace", "movetoworkspace", "togglespecialworkspace"):
+        return "Workspaces"
+    if bind["dispatcher"] in ("movefocus", "movewindow", "resizeactive", "layoutmsg", "killactive",
+                              "togglefloating", "fullscreen", "pseudo"):
+        return "Windows"
+    return "Apps and menus"
+
+
 # ------------------------------------------------------------------------------ colors
 def load_colors() -> dict:
     c = {"bg": "#1f2230", "fg": "#eceaf4", "accent": "#8f86d8"}
     try:
-        data = json.loads((HOME / ".cache" / "wal" / "colors.json").read_text())
+        data = json.loads((HOME / ".cache" / "wal" / "colors.json").read_text(encoding="utf-8", errors="replace"))
         c = {"bg": data["special"]["background"], "fg": data["special"]["foreground"],
              "accent": data["colors"].get("color1") or c["accent"]}
     except Exception:
@@ -333,6 +473,7 @@ class Settings(Gtk.Window):
 
         self.colors_mtime = None
         self.css = None
+        self.capturing = False
         self.reload_colors()
         GLib.timeout_add(1500, self.reload_colors)
 
@@ -543,7 +684,7 @@ class Settings(Gtk.Window):
             {"id": "apps", "icon": "\U000f003b", "name": "Default apps", "sub": "Browser, terminal, file manager", "keywords": "browser terminal files default",
              "tabs": [("Apps", self.page_apps, "Only installed apps are listed. Terminal: Super + Return, file manager: Super + F.", "")]},
             {"id": "shortcuts", "icon": "\U000f030c", "name": "Shortcuts", "sub": "Keyboard shortcuts", "keywords": "keys keybinds hotkeys",
-             "tabs": [("Shortcuts", self.page_shortcuts, "The same list as Super + G.", "")]},
+             "tabs": [("Shortcuts", self.page_shortcuts, "Click Change, then press the new keys. Your changes are kept in user-binds.hl; Reset puts a shortcut back. If keys stop working while recording, Ctrl + Alt + Esc restores them.", "")]},
             {"id": "about", "icon": "\U000f02fd", "name": "About", "sub": "This system", "keywords": "system info version",
              "tabs": [("About", self.page_about, "Versions and uptime; fastfetch shows more.", "")]},
         ]
@@ -575,8 +716,18 @@ class Settings(Gtk.Window):
                 row("Position", "", segmented([(p, p.capitalize()) for p in ("top", "bottom", "left", "right")], pos, set_pos)),
                 row("Size", "Thickness of the bar", segmented([(s, s.capitalize()) for s in ("compact", "normal", "large")],
                                                              size, lambda v: apply("--size", v))),
+                row("Gap to windows", "Space between the bar and your windows",
+                    slider(self.bar_gap(), 0, 40, lambda v: f"{int(v)} px",
+                           lambda v: spawn(["python3", str(WAYBAR / "layout.py"), "--gap", str(int(v))]), delay=250)),
             ),
         ]
+
+    @staticmethod
+    def bar_gap() -> int:
+        try:
+            return int(json.loads((HOME / ".config" / "waybar" / "layout.json").read_text(encoding="utf-8", errors="replace")).get("gap", 12))
+        except (OSError, ValueError, TypeError):
+            return 12
 
     def bar_preview(self, pos):
         area = add_class(Gtk.DrawingArea(), "preview")
@@ -622,7 +773,7 @@ class Settings(Gtk.Window):
             cr.set_source_rgba(1, 1, 1, 0.9)
             cr.select_font_face("sans")
             cr.set_font_size(12)
-            cr.move_to(14, H - 14 if w.pos != "bottom" else 24)
+            cr.move_to(40 if w.pos == "left" else 14, H - 14 if w.pos != "bottom" else 24)
             cr.show_text("Preview · changes apply immediately")
             cr.restore()
 
@@ -631,13 +782,13 @@ class Settings(Gtk.Window):
 
     def page_wallpaper(self):
         mode_file = HYPR / "wallpaper-transition"
-        mode = mode_file.read_text().strip() if mode_file.exists() else "outline"
+        mode = mode_file.read_text(encoding="utf-8", errors="replace").strip() if mode_file.exists() else "outline"
         data = HOME / ".local" / "share" / "wallfx"
         installed = (data / "isnet-anime.onnx").is_file()
         setup = str(SCRIPTS / "wallfx" / "wallfx-setup.sh")
 
         def set_mode(v):
-            mode_file.write_text(v + "\n")
+            mode_file.write_text(v + "\n", encoding="utf-8")
 
         def remove():
             spawn(["bash", setup, "--remove"])
@@ -661,7 +812,7 @@ class Settings(Gtk.Window):
 
     def page_lock(self):
         active = HYPR / "hyprlock" / "active.conf"
-        m = re.search(r"hyprlock/([a-z]+)\.conf", active.read_text() if active.exists() else "")
+        m = re.search(r"hyprlock/([a-z]+)\.conf", active.read_text(encoding="utf-8", errors="replace") if active.exists() else "")
         cur = m.group(1) if m else "classic"
         styles = [("classic", "Classic", "Avatar, name, password"), ("clock", "Clock first", "Big clock, live status"),
                   ("card", "Glass card", "Frosted card on the right"), ("minimal", "Minimal", "Time and password only")]
@@ -676,7 +827,7 @@ class Settings(Gtk.Window):
             for b in buttons:
                 b.set_active(b is btn)
             state["busy"] = False
-            active.write_text(f"source = ~/.config/hypr/hyprlock/{value}.conf\n")
+            active.write_text(f"source = ~/.config/hypr/hyprlock/{value}.conf\n", encoding="utf-8")
             notify(f"Lock screen: {value}")
 
         for i, (value, name, desc) in enumerate(styles):
@@ -695,7 +846,7 @@ class Settings(Gtk.Window):
 
     def page_menus(self):
         style_file = HYPR / "power-menu-style"
-        style = style_file.read_text().strip() if style_file.exists() else "radial"
+        style = style_file.read_text(encoding="utf-8", errors="replace").strip() if style_file.exists() else "radial"
         anim = "int: 0" not in run(["hyprctl", "getoption", "animations:enabled"])
 
         def set_anim(on):
@@ -705,7 +856,7 @@ class Settings(Gtk.Window):
         return [
             section("Power menu (Super + Esc)"),
             group(row("Style", "", segmented([("radial", "Radial"), ("cards", "Cards")], style,
-                                             lambda v: style_file.write_text(v + "\n"))),
+                                             lambda v: style_file.write_text(v + "\n", encoding="utf-8"))),
                   row("Open it", "", button("Power menu", lambda: spawn([str(SCRIPTS / "snmenu-toggle.sh")])))),
             section("Effects"),
             group(row("Animations", "Window and workspace animations; off is snappier and saves battery", switch(anim, set_anim))),
@@ -717,7 +868,7 @@ class Settings(Gtk.Window):
         devs = sorted(Path("/sys/class/backlight").glob("*"))
         if devs:
             try:
-                bri = round(int((devs[0] / "brightness").read_text()) * 100 / int((devs[0] / "max_brightness").read_text()))
+                bri = round(int((devs[0] / "brightness").read_text(encoding="utf-8", errors="replace")) * 100 / int((devs[0] / "max_brightness").read_text(encoding="utf-8", errors="replace")))
             except (OSError, ValueError, ZeroDivisionError):
                 pass
         night = run([str(SCRIPTS / "nightlight.sh"), "status"])
@@ -925,8 +1076,8 @@ class Settings(Gtk.Window):
         rows = []
         for bat in sorted(Path("/sys/class/power_supply").glob("BAT*")):
             try:
-                cap = (bat / "capacity").read_text().strip()
-                status = (bat / "status").read_text().strip()
+                cap = (bat / "capacity").read_text(encoding="utf-8", errors="replace").strip()
+                status = (bat / "status").read_text(encoding="utf-8", errors="replace").strip()
                 rows.append(row("Battery", status, label(f"{cap}%", "dim")))
             except OSError:
                 pass
@@ -944,7 +1095,7 @@ class Settings(Gtk.Window):
     def page_mouse(self):
         cur = None
         try:
-            m = re.findall(r"^\s*sensitivity\s*=\s*(-?[0-9.]+)", USER_SETTINGS.read_text(), re.M)
+            m = re.findall(r"^\s*sensitivity\s*=\s*(-?[0-9.]+)", USER_SETTINGS.read_text(encoding="utf-8", errors="replace"), re.M)
             cur = float(m[-1]) if m else None
         except OSError:
             pass
@@ -971,7 +1122,7 @@ class Settings(Gtk.Window):
                 if f.name in seen:
                     continue
                 try:
-                    text = f.read_text(errors="ignore")
+                    text = f.read_text(encoding="utf-8", errors="ignore")
                 except OSError:
                     continue
                 if re.search(r"^Categories=.*WebBrowser", text, re.M) and not re.search(r"^NoDisplay=true", text, re.M | re.I):
@@ -1008,40 +1159,133 @@ class Settings(Gtk.Window):
     # -------------------------------------------------------------- Shortcuts
     def page_shortcuts(self):
         try:
-            text = (SCRIPTS / "keybinds.sh").read_text()
+            binds = parse_binds((HYPR / "hyprland.hl").read_text(encoding="utf-8", errors="replace"))
         except OSError:
-            text = ""
-        rows = []
-        for m in re.finditer(r'^\s*"(.+?)"\s*$', text, re.M):
-            parts = [p.strip() for p in m.group(1).split("\U000f013e")]      # "icon  KEYS   󰄾  description"
-            if len(parts) == 2:
-                keys = re.sub(r"^\S+\s+", "", parts[0])
-                rows.append(row(parts[1], "", label(keys, "dim", "small")))
-        return [group(*rows)] if rows else [placeholder("No shortcuts found (keybinds.sh)")]
+            binds = []
+        if not binds:
+            return [placeholder("No shortcuts found in hyprland.hl")]
+        overrides = read_overrides()
+        names = cheatsheet_descriptions()
+        widgets = []
+        if overrides:
+            widgets.append(group(row(f"{len(overrides)} shortcut{'s' if len(overrides) > 1 else ''} changed",
+                                     "Your changes are kept in user-binds.hl",
+                                     button("Reset all", lambda: (reset_overrides(), self.refresh())))))
+        for title in ("Apps and menus", "Windows", "Workspaces"):
+            rows = []
+            for b in [b for b in binds if bind_group(b) == title]:
+                ident = combo_id(b["mods"], b["key"])
+                mods, key = overrides.get(ident, (b["mods"], b["key"]))
+                controls = Gtk.Box(spacing=8)
+                keys = label(combo_label(mods, key), "dim", "small", xalign=1.0)
+                controls.pack_start(keys, False, False, 0)
+                if ident in overrides:
+                    controls.pack_start(button("Reset", lambda b=b: (write_override(b, b["mods"], b["key"]), self.refresh())),
+                                        False, False, 0)
+                controls.pack_start(button("Change", lambda b=b: self.change_shortcut(b, binds)), False, False, 0)
+                sub = "changed" if ident in overrides else ""
+                rows.append(row(describe(b, names), sub, controls))
+            if rows:
+                widgets += [section(title), group(*rows)]
+        return widgets
+
+    def change_shortcut(self, bind, binds):
+        """Record a new key combination for `bind` and save it as an override."""
+        got = self.capture_keys(describe(bind, cheatsheet_descriptions()))
+        if not got:
+            return
+        mods, key = got
+        new_id = combo_id(mods, key)
+        overrides = read_overrides()
+        for other in binds:
+            if other is bind:
+                continue
+            o_mods, o_key = overrides.get(combo_id(other["mods"], other["key"]), (other["mods"], other["key"]))
+            if combo_id(o_mods, o_key) == new_id:
+                notify(f"{combo_label(mods, key)} is already used by: {describe(other, cheatsheet_descriptions())}")
+                return
+        write_override(bind, mods, key)
+        notify(f"New shortcut: {combo_label(mods, key)}")
+        self.refresh()
+
+    def capture_keys(self, what):
+        """Modal dialog that returns (mods, key) of the next combination pressed, or None.
+        Hyprland is switched to an empty submap meanwhile, so existing shortcuts don't fire."""
+        modifier_keys = {"Shift_L", "Shift_R", "Control_L", "Control_R", "Alt_L", "Alt_R", "Super_L", "Super_R",
+                         "Meta_L", "Meta_R", "ISO_Level3_Shift", "Hyper_L", "Hyper_R", "Caps_Lock"}
+        dialog = Gtk.Dialog(title="New shortcut", transient_for=self, modal=True)
+        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        box = dialog.get_content_area()
+        box.set_spacing(10)
+        box.set_border_width(18)
+        box.add(label(f"Press the new shortcut for:\n{what}", "row-title"))
+        hint = label("Esc to cancel", "dim", "small")
+        box.add(hint)
+        result = {}
+
+        def on_key(_w, event):
+            name = Gdk.keyval_name(event.keyval) or ""
+            if name in modifier_keys:
+                return True
+            state = event.state
+            mods = []
+            if state & Gdk.ModifierType.MOD4_MASK or state & Gdk.ModifierType.SUPER_MASK:
+                mods.append("SUPER")
+            if state & Gdk.ModifierType.CONTROL_MASK:
+                mods.append("CTRL")
+            if state & Gdk.ModifierType.MOD1_MASK:
+                mods.append("ALT")
+            if state & Gdk.ModifierType.SHIFT_MASK:
+                mods.append("SHIFT")
+            if name == "Escape" and not mods:
+                dialog.response(Gtk.ResponseType.CANCEL)
+                return True
+            # Unshifted key name, the way Hyprland matches it (Shift + & is still "ampersand")
+            keymap = Gdk.Keymap.get_for_display(Gdk.Display.get_default())
+            ok, keyval, *_ = keymap.translate_keyboard_state(event.hardware_keycode, 0, event.group)
+            key = Gdk.keyval_name(keyval) if ok else name
+            if not mods and not re.match(r"^(F\d+|Print|XF86\w+)$", key or ""):
+                hint.set_text("Use at least one of Super, Ctrl, Alt or Shift (or an F key)")
+                return True
+            result["combo"] = (norm_mods(" ".join(mods)), key)
+            dialog.response(Gtk.ResponseType.OK)
+            return True
+
+        dialog.connect("key-press-event", on_key)
+        self.capturing = True
+        run(["hyprctl", "dispatch", "submap", "settings-capture"])
+        try:
+            dialog.show_all()
+            dialog.run()
+        finally:
+            run(["hyprctl", "dispatch", "submap", "reset"])
+            self.capturing = False
+            dialog.destroy()
+        return result.get("combo")
 
     # -------------------------------------------------------------- About
     def page_about(self):
         os_name = "Linux"
         try:
-            m = re.search(r'^PRETTY_NAME="?([^"\n]+)', Path("/etc/os-release").read_text(), re.M)
+            m = re.search(r'^PRETTY_NAME="?([^"\n]+)', Path("/etc/os-release").read_text(encoding="utf-8", errors="replace"), re.M)
             os_name = m.group(1) if m else os_name
         except OSError:
             pass
         hypr = (run(["hyprctl", "version"]).splitlines() or [""])[0].replace("Hyprland ", "")
         cpu = ""
         try:
-            m = re.search(r"^model name\s*:\s*(.+)$", Path("/proc/cpuinfo").read_text(), re.M)
+            m = re.search(r"^model name\s*:\s*(.+)$", Path("/proc/cpuinfo").read_text(encoding="utf-8", errors="replace"), re.M)
             cpu = m.group(1) if m else ""
         except OSError:
             pass
         mem = ""
         try:
-            kb = int(re.search(r"MemTotal:\s+(\d+)", Path("/proc/meminfo").read_text()).group(1))
+            kb = int(re.search(r"MemTotal:\s+(\d+)", Path("/proc/meminfo").read_text(encoding="utf-8", errors="replace")).group(1))
             mem = f"{kb / 1048576:.1f} GiB"
         except (OSError, AttributeError):
             pass
         try:
-            secs = int(float(Path("/proc/uptime").read_text().split()[0]))
+            secs = int(float(Path("/proc/uptime").read_text(encoding="utf-8", errors="replace").split()[0]))
             up = f"{secs // 3600}h {secs // 60 % 60:02d}m"
         except OSError:
             up = ""
@@ -1062,19 +1306,22 @@ def main():
     # Toggle: a second launch closes the open window
     if PID_FILE.exists():
         try:
-            os.kill(int(PID_FILE.read_text().strip()), 15)
+            os.kill(int(PID_FILE.read_text(encoding="utf-8", errors="replace").strip()), 15)
             PID_FILE.unlink(missing_ok=True)
             return
         except (OSError, ValueError):
             PID_FILE.unlink(missing_ok=True)
     PID_FILE.write_text(str(os.getpid()))
+    win = None
     try:
         win = Settings()
         win.show_all()
         Gtk.main()
     finally:
+        if win is not None and win.capturing:      # never leave Hyprland in the capture submap
+            run(["hyprctl", "dispatch", "submap", "reset"])
         try:
-            if PID_FILE.read_text().strip() == str(os.getpid()):
+            if PID_FILE.read_text(encoding="utf-8", errors="replace").strip() == str(os.getpid()):
                 PID_FILE.unlink()
         except OSError:
             pass

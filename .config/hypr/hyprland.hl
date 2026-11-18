@@ -461,4 +461,13 @@ source = ~/.config/hypr/user-settings.hl
 # (No glob: Hyprland reports an error when a glob matches nothing. The repo ships a default file.)
 source = ~/.config/hypr/waybar-gaps.hl
 
+# Shortcuts changed in Settings (Super + H -> Shortcuts): unbind/bind pairs, loaded last so they win
+source = ~/.config/hypr/user-binds.hl
+
+# While Settings records a new shortcut it switches to this empty submap, so the keys you
+# press reach it instead of triggering your current shortcuts. Ctrl + Alt + Esc always leaves it.
+submap = settings-capture
+bind = CTRL ALT, escape, submap, reset
+submap = reset
+
 
