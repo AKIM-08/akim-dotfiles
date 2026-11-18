@@ -214,6 +214,7 @@ class Tile(Gtk.Button):
     def __init__(self, icon, name, on_click, on_right=None):
         super().__init__()
         self.get_style_context().add_class("tile")
+        self.set_focus_on_click(False)          # no dashed focus ring after a click
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         self.icon = Gtk.Label(label=icon)
         self.icon.get_style_context().add_class("tile-icon")
@@ -318,6 +319,7 @@ class QuickPanel(Gtk.Window):
         .time {{ font-size: 28px; font-weight: 800; }}
         .date, .battery, .dim {{ color: {rgba(fg, 0.62)}; font-size: 12px; }}
         button {{ background: none; border: none; box-shadow: none; padding: 0; }}
+        *:focus, button:focus, scale:focus {{ outline: none; outline-width: 0; }}
         .round {{
             background: {rgba(fg, 0.12)}; border-radius: 99px; min-width: 34px; min-height: 34px;
             font-size: 15px;
@@ -366,6 +368,7 @@ class QuickPanel(Gtk.Window):
     @staticmethod
     def round_button(text, action, extra=None):
         b = Gtk.Button(label=text)
+        b.set_focus_on_click(False)
         b.get_style_context().add_class("round")
         if extra:
             b.get_style_context().add_class(extra)
@@ -487,6 +490,7 @@ class QuickPanel(Gtk.Window):
 
     def build_notifications(self):
         b = Gtk.Button()
+        b.set_focus_on_click(False)
         b.get_style_context().add_class("notif")
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         box.pack_start(Gtk.Label(label="\U000f009a"), False, False, 0)
