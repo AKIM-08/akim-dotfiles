@@ -215,6 +215,7 @@ class Tile(Gtk.Button):
         super().__init__()
         self.get_style_context().add_class("tile")
         self.set_focus_on_click(False)          # no dashed focus ring after a click
+        self.set_can_focus(False)               # ...or when the panel opens
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         self.icon = Gtk.Label(label=icon)
         self.icon.get_style_context().add_class("tile-icon")
@@ -319,7 +320,7 @@ class QuickPanel(Gtk.Window):
         .time {{ font-size: 28px; font-weight: 800; }}
         .date, .battery, .dim {{ color: {rgba(fg, 0.62)}; font-size: 12px; }}
         button {{ background: none; border: none; box-shadow: none; padding: 0; }}
-        *:focus, button:focus, scale:focus {{ outline: none; outline-width: 0; }}
+        * {{ outline-style: none; outline-width: 0; outline-offset: 0; }}
         .round {{
             background: {rgba(fg, 0.12)}; border-radius: 99px; min-width: 34px; min-height: 34px;
             font-size: 15px;
@@ -369,6 +370,7 @@ class QuickPanel(Gtk.Window):
     def round_button(text, action, extra=None):
         b = Gtk.Button(label=text)
         b.set_focus_on_click(False)
+        b.set_can_focus(False)
         b.get_style_context().add_class("round")
         if extra:
             b.get_style_context().add_class(extra)
@@ -421,6 +423,7 @@ class QuickPanel(Gtk.Window):
         self.m_len.get_style_context().add_class("dim")
         self.m_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 1, 1)
         self.m_scale.set_draw_value(False)
+        self.m_scale.set_can_focus(False)
         self.m_scale.connect("button-press-event", lambda *_: self.hold.__setitem__("seek", time.time() + 30) or False)
         self.m_scale.connect("button-release-event", self.on_seek)
         prog.pack_start(self.m_pos, False, False, 0)
@@ -466,6 +469,7 @@ class QuickPanel(Gtk.Window):
             ic.get_style_context().add_class("slider-icon")
             scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
             scale.set_draw_value(False)
+            scale.set_can_focus(False)
             value = Gtk.Label(label="")
             value.get_style_context().add_class("dim")
             value.set_width_chars(4)
@@ -491,6 +495,7 @@ class QuickPanel(Gtk.Window):
     def build_notifications(self):
         b = Gtk.Button()
         b.set_focus_on_click(False)
+        b.set_can_focus(False)
         b.get_style_context().add_class("notif")
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         box.pack_start(Gtk.Label(label="\U000f009a"), False, False, 0)
