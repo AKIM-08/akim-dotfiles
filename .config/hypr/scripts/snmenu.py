@@ -401,10 +401,9 @@ class PowerMenu(Gtk.Window):
             self.text(cr, f"{self.name(self.armed)}?", 15, cx, cy - 8, bold=True)
             self.text(cr, "click / Enter again", 9, cx, cy + 14, rgba=(1, 1, 1, 0.6))
         elif self.selected >= 0:
-            self.text(cr, self.name(self.selected), 15, cx, cy - 14, bold=True)
+            self.text(cr, self.name(self.selected), 15, cx, cy - 9, bold=True)
             if self.info:
-                self.text(cr, self.info, 9, cx, cy + 8, rgba=(1, 1, 1, 0.6))
-            self.text(cr, "Enter · Esc", 9, cx, cy + 26, rgba=(1, 1, 1, 0.45))
+                self.text(cr, self.info, 9, cx, cy + 14, rgba=(1, 1, 1, 0.6))
         else:
             self.text(cr, time.strftime("%H:%M"), 20, cx, cy - 10, bold=True)
             if self.info:
