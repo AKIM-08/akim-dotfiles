@@ -690,10 +690,12 @@ scale trough slider,
 /* ==========================================================================
    Labelled tiles (two per row) and per-app volume
    ========================================================================== */
+/* Two tiles per row: the panel leaves ~330px for the grid, and each tile takes its
+   min-width plus 8px of flowboxchild padding, so 140px fits two (296px) but not three. */
 .widget-buttons-grid > flowbox > flowboxchild > button {
-    min-width: 160px;
-    min-height: 46px;
-    padding: 6px 14px;
+    min-width: 140px;
+    min-height: 44px;
+    padding: 6px 10px;
     border-radius: 14px;
 }
 
