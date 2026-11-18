@@ -275,6 +275,34 @@ menu_power_style() {
     esac
 }
 
+# ---------------------------------------------------------------- Lock screen style
+LOCK_DIR="$HYPR_DIR/hyprlock"
+
+lock_style() {
+    local s
+    s=$(grep -oP 'hyprlock/\K[a-z]+(?=\.conf)' "$LOCK_DIR/active.conf" 2>/dev/null)
+    echo "${s:-classic}"
+}
+
+menu_lock_style() {
+    local styles labels active="" i
+    styles=(classic clock card minimal preview)
+    labels=("󰌾  Classic     —  Avatar, name, password and clock"
+            "󰥔  Clock first —  Big clock, status along the bottom"
+            "󰆍  Glass card  —  Bold clock, frosted card on the right"
+            "󰘕  Minimal     —  Time, date and password only"
+            "󰈈  Lock now to try the current style")
+    for i in 0 1 2 3; do [ "${styles[$i]}" = "$(lock_style)" ] && active="$i"; done
+    i=$(rofi_pick "Lock screen style" "$active" "${labels[@]}") || return
+    [ -z "$i" ] && return
+    if [ "${styles[$i]}" = preview ]; then
+        pidof hyprlock >/dev/null 2>&1 || hyprlock
+        return
+    fi
+    echo "source = ~/.config/hypr/hyprlock/${styles[$i]}.conf" > "$LOCK_DIR/active.conf"
+    notify "Lock screen: ${labels[$i]#*  }"
+}
+
 # ---------------------------------------------------------------- Main menu
 caffeine="OFF"; [ -f "$HOME/.cache/caffeine_active" ] && caffeine="ON"
 power=$(powerprofilesctl get 2>/dev/null || echo "n/a")
@@ -288,6 +316,7 @@ ENTRIES=(
     "transition|󰸉|Wallpaper transition|$(transition_label)"
     "waybar|󱄄|Waybar|${wb_theme^}, ${wb_pos}, ${wb_size}"
     "powerstyle|󰐥|Power menu style|${power_style^}"
+    "lockstyle|󰌾|Lock screen style|$(lock_style | sed 's/^./\u&/')"
     "wifi|󰤨|Wi-Fi|Networks"
     "bluetooth|󰂯|Bluetooth|Devices"
     "sound|󰕾|Sound|Audio mixer"
@@ -323,6 +352,7 @@ case "${keys[$i]}" in
     transition) menu_transition ;;
     waybar)     menu_waybar ;;
     powerstyle) menu_power_style ;;
+    lockstyle)  menu_lock_style ;;
     wifi)       bash "$SCRIPTS/wifi-menu.sh" ;;
     bluetooth)  bash "$SCRIPTS/bluetooth-menu.sh" ;;
     sound)      command -v pavucontrol &>/dev/null && { pavucontrol >/dev/null 2>&1 & } || notify "pavucontrol is not installed" ;;

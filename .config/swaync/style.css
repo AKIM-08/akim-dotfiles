@@ -686,3 +686,50 @@ scale trough slider,
 .widget-buttons > flowbox > flowboxchild > button.toggle:checked label {
     color: @background;
 }
+
+/* ==========================================================================
+   Labelled tiles (two per row) and per-app volume
+   ========================================================================== */
+.widget-buttons-grid > flowbox > flowboxchild > button {
+    min-width: 160px;
+    min-height: 46px;
+    padding: 6px 14px;
+    border-radius: 14px;
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button label {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Per-app sliders under the volume slider (expand with the little arrow) */
+.widget-volume > box > button {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: alpha(@foreground, 0.7);
+    min-width: 24px;
+    padding: 0 4px;
+}
+
+.widget-volume revealer list,
+.widget-volume revealer row {
+    background: transparent;
+    padding: 2px 0 2px 28px;
+}
+
+.widget-volume revealer label {
+    font-size: 11px;
+    color: alpha(@foreground, 0.75);
+}
+
+/* Section title for the notification list, now below the controls */
+.widget-title {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid alpha(@foreground, 0.10);
+}
+
+.widget-title > button label {
+    font-size: 11px;
+}

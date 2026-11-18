@@ -7,6 +7,7 @@ exec-once = ~/.config/hypr/scripts/polkit.sh
 exec-once = xhost +SI:localuser:root
 exec-once = awww-daemon
 exec-once = ~/.config/swaync/start.sh
+exec-once = ~/.config/hypr/scripts/cc-sync.sh
 exec-once = waybar
 exec-once = sh -c 'sleep 30 && hypridle'
 exec-once = hyprctl setcursor Nordzy-cursors 28

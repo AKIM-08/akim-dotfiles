@@ -34,17 +34,17 @@
     "script-fail-notify": true,
     "widgets": [
         "mpris",
-        "title",
-        "notifications",
+        "buttons-grid",
         "volume",
         "backlight",
-        "buttons-grid"
+        "title",
+        "notifications"
     ],
     "widget-config": {
         "title": {
-            "text": "Notification Center",
+            "text": "Notifications",
             "clear-all-button": true,
-            "button-text": "󰆴"
+            "button-text": "Clear all"
         },
         "label": {
             "max-lines": 1,
@@ -56,7 +56,13 @@
         },
         "volume": {
             "label": "󰕾 ",
-            "show-value": true
+            "show-value": true,
+            "show-per-app": true,
+            "show-per-app-icon": true,
+            "show-per-app-label": true,
+            "expand-button-label": "▾",
+            "collapse-button-label": "▴",
+            "empty-list-label": "No app is playing sound"
         },
         "backlight": {
             "label": "󰃟 ",
@@ -64,38 +70,51 @@
             "subsystem": "backlight"
         },
         "buttons-grid": {
+            "buttons-per-row": 2,
             "actions": [
                 {
-                    "label": "󰝟",
+                    "label": "󰝟   Mute",
                     "type": "toggle",
-                    "command": "$HOME/.config/hypr/scripts/volume-mute.sh",
+                    "command": "$HOME/.config/hypr/scripts/cc-action.sh $HOME/.config/hypr/scripts/volume-mute.sh",
                     "update-command": "$HOME/.config/hypr/scripts/check-mute.sh"
                 },
                 {
-                    "label": "󰍭",
+                    "label": "󰍭   Mic off",
                     "type": "toggle",
-                    "command": "$HOME/.config/hypr/scripts/mic-mute.sh",
+                    "command": "$HOME/.config/hypr/scripts/cc-action.sh $HOME/.config/hypr/scripts/mic-mute.sh",
                     "update-command": "$HOME/.config/hypr/scripts/check-mic.sh"
                 },
                 {
-                    "label": "",
-                    "command": "kitty -e nmtui"
+                    "label": "󰤨   Wi-Fi",
+                    "command": "swaync-client -cp; $HOME/.config/hypr/scripts/wifi-menu.sh"
                 },
                 {
-                    "label": "",
+                    "label": "󰂯   Bluetooth",
                     "type": "toggle",
-                    "command": "$HOME/.config/hypr/scripts/toggle-bluetooth.sh",
+                    "command": "$HOME/.config/hypr/scripts/cc-action.sh $HOME/.config/hypr/scripts/toggle-bluetooth.sh",
                     "update-command": "$HOME/.config/hypr/scripts/check-bluetooth.sh"
                 },
                 {
-                    "label": "󰤄",
+                    "label": "󰂛   Do Not Disturb",
                     "type": "toggle",
-                    "command": "swaync-client -d -sw",
+                    "command": "$HOME/.config/hypr/scripts/cc-action.sh swaync-client -d -sw",
                     "update-command": "swaync-client -D"
                 },
                 {
-                    "label": "󰄪",
-                    "command": "kitty -e btop"
+                    "label": "󰖔   Night light",
+                    "type": "toggle",
+                    "command": "$HOME/.config/hypr/scripts/cc-action.sh $HOME/.config/hypr/scripts/nightlight.sh toggle",
+                    "update-command": "$HOME/.config/hypr/scripts/nightlight.sh is-on"
+                },
+                {
+                    "label": "󰅶   Caffeine",
+                    "type": "toggle",
+                    "command": "$HOME/.config/hypr/scripts/cc-action.sh $HOME/.config/hypr/scripts/caffeine-toggle.sh",
+                    "update-command": "[ -f $HOME/.cache/caffeine_active ] && echo true || echo false"
+                },
+                {
+                    "label": "󰄀   Screenshot",
+                    "command": "swaync-client -cp; sleep 0.4; $HOME/.config/hypr/scripts/screenshot.sh region"
                 }
             ]
         }

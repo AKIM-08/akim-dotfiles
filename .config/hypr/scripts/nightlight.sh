@@ -5,6 +5,8 @@
 #   nightlight.sh off
 #   nightlight.sh restore     re-apply the saved choice (run at login)
 #   nightlight.sh status      print the saved choice ("off" or a temperature)
+#   nightlight.sh toggle      off <-> the last temperature used (control-center tile)
+#   nightlight.sh is-on       print true / false
 #
 # Uses hyprsunset if installed, otherwise gammastep, otherwise wlsunset. The tool keeps
 # running while the filter is on; turning it off stops it and the colors return to normal.
@@ -46,6 +48,23 @@ case "${1:-status}" in
         ;;
     status)
         cat "$STATE" 2>/dev/null || echo off
+        ;;
+    is-on)     # "true"/"false" for the control-center tile
+        k=$(cat "$STATE" 2>/dev/null)
+        [[ "$k" =~ ^[0-9]+$ ]] && echo true || echo false
+        ;;
+    toggle)    # off <-> the last temperature used (3500K the first time)
+        k=$(cat "$STATE" 2>/dev/null)
+        if [[ "$k" =~ ^[0-9]+$ ]]; then
+            echo "$k" > "$STATE.last"
+            stop_all
+            echo off > "$STATE"
+        else
+            last=$(cat "$STATE.last" 2>/dev/null)
+            [[ "$last" =~ ^[0-9]+$ ]] || last=3500
+            stop_all
+            start "$last" && echo "$last" > "$STATE"
+        fi
         ;;
     *)
         if ! [[ "$1" =~ ^[0-9]+$ ]] || [ "$1" -lt 1000 ] || [ "$1" -gt 6500 ]; then
