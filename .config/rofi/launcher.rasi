@@ -21,7 +21,7 @@ configuration {
     display-drun: "󰀻";
     display-filebrowser: "󰉋";
     display-window: "󰖯";
-    display-run: "";
+    display-run: "󰆍";
 }
 
 * {

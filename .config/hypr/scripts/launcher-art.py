@@ -11,7 +11,10 @@ import sys
 
 from PIL import Image
 
-PANEL_W, PANEL_H = 280, 420      # must match imagebox in ~/.config/rofi/launcher.rasi
+# 3:4 portrait. Rofi scales it to the panel's height (url(..., height)); at that size it is
+# wider than the 280px panel whenever the launcher is >= ~374px tall (it is ~460), so it
+# always covers the panel instead of tiling
+PANEL_W, PANEL_H = 300, 400
 SCALE = 2
 
 
