@@ -134,8 +134,8 @@ if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
 fi
 
 if [ -d "$HOME/.oh-my-zsh/themes" ]; then
-    echo "--> Installing the Oh My Zsh themes (akim, fishy)..."
-    for theme in akim fishy; do
+    echo "--> Installing the Oh My Zsh themes (akim-blocks, akim-frame, akim-right, fishy)..."
+    for theme in akim-blocks akim-frame akim-right fishy; do
         [ -f "$REPO_ROOT/omz-custom/themes/$theme.zsh-theme" ]             && cp "$REPO_ROOT/omz-custom/themes/$theme.zsh-theme" "$HOME/.oh-my-zsh/themes/"
     done
 fi

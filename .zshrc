@@ -1,9 +1,17 @@
 # Path to Oh My Zsh (installed by install.sh into ~/.oh-my-zsh)
 export ZSH="$HOME/.oh-my-zsh"
 
-# Framed two-line prompt, status on the right, in the wallpaper's colors (omz-custom/themes/akim.zsh-theme)
-ZSH_THEME="akim"
-[[ -f "$ZSH/themes/akim.zsh-theme" || -f "$ZSH/custom/themes/akim.zsh-theme" ]] || ZSH_THEME="fishy"
+# Prompt, in the wallpaper's colors (omz-custom/themes/akim-*.zsh-theme):
+#   blocks  colored blocks joined by arrows, two lines
+#   frame   ╭─ folder via venv on branch / ╰─❯, status at the right edge (default)
+#   right   one line: folder ❯, everything else at the right edge
+# Change it with `prompt-style blocks|frame|right` or Settings -> Appearance -> Terminal.
+_akim_style=""
+[[ -r "$HOME/.config/zsh-prompt-style" ]] && _akim_style=$(<"$HOME/.config/zsh-prompt-style")
+_akim_style=${_akim_style//[[:space:]]/}
+[[ $_akim_style == (blocks|frame|right) ]] || _akim_style=frame
+ZSH_THEME="akim-$_akim_style"
+[[ -f "$ZSH/themes/$ZSH_THEME.zsh-theme" || -f "$ZSH/custom/themes/$ZSH_THEME.zsh-theme" ]] || ZSH_THEME="fishy"
 
 # Disable Oh My Zsh update prompts (manage updates yourself)
 zstyle ':omz:update' mode disabled
@@ -102,6 +110,19 @@ command -v fdfind &>/dev/null && ! command -v fd &>/dev/null && alias fd='fdfind
 # bar). Its default is color 2, which is a different hue on every wallpaper. Options you pass
 # still win (e.g. `tty-clock -C 4`).
 tty-clock() { command tty-clock -c -C 1 "$@"; }
+
+# prompt-style blocks|frame|right: switch the prompt (this terminal reloads; others on their next start)
+prompt-style() {
+    case $1 in
+        blocks|frame|right)
+            mkdir -p "$HOME/.config"
+            print -r -- "$1" > "$HOME/.config/zsh-prompt-style"
+            exec zsh ;;
+        *)
+            print "Usage: prompt-style blocks|frame|right   (now: $_akim_style)"
+            return 1 ;;
+    esac
+}
 
 alias ..='cd ..'
 alias ...='cd ../..'

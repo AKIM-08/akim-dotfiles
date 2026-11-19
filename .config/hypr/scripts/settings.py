@@ -295,6 +295,7 @@ def css_for(c: dict) -> str:
     row.nav:selected {{ background: {rgba(acc, 0.32)}; }}
     .nav-icon {{ font-family: "JetBrainsMono Nerd Font"; font-size: 15px; min-width: 22px; }}
     .foot {{ color: {rgba(fg, 0.5)}; font-family: "JetBrainsMono Nerd Font"; font-size: 11px; margin: 0 6px; }}
+    .mono {{ font-family: "JetBrainsMono Nerd Font", monospace; font-size: 12px; }}
     .header {{ padding: 20px 24px 16px 24px; border-bottom: 1px solid {rgba(fg, 0.08)}; }}
     .header-icon {{ background: {rgba(fg, 0.07)}; border-radius: 12px; min-width: 42px; min-height: 42px;
                     font-family: "JetBrainsMono Nerd Font"; font-size: 18px; }}
@@ -667,6 +668,7 @@ class Settings(Gtk.Window):
                  ("Wallpaper", self.page_wallpaper, "Outline draws characters first when switching wallpapers (needs character detection); Classic uses awww wipes and waves.", "wallpaper transition outline"),
                  ("Lock screen", self.page_lock, "The design used by Super + L, idle lock and the power menu.", "lock hyprlock"),
                  ("Menus", self.page_menus, "Radial: ring around the center. Cards: a row of glass cards. Both ask again before Shutdown, Reboot and Logout.", "power menu animations"),
+                 ("Terminal", self.page_terminal, "The zsh prompt, in the wallpaper's colors. New terminals use it; in an open one, type prompt-style to switch.", "zsh prompt shell kitty"),
              ]},
             {"id": "display", "icon": "\U000f0379", "name": "Display", "sub": "Brightness and night light",
              "keywords": "screen brightness night light warm blue",
@@ -868,6 +870,33 @@ class Settings(Gtk.Window):
                   row("Open it", "", button("Power menu", lambda: spawn([str(SCRIPTS / "snmenu-toggle.sh")])))),
             section("Effects"),
             group(row("Animations", "Window and workspace animations; off is snappier and saves battery", switch(anim, set_anim))),
+        ]
+
+    def page_terminal(self):
+        style_file = HOME / ".config" / "zsh-prompt-style"
+        style = style_file.read_text(encoding="utf-8", errors="replace").strip() if style_file.exists() else "frame"
+        if style not in ("blocks", "frame", "right"):
+            style = "frame"
+        examples = {
+            "blocks": " ~/akim-dotfiles   main ✚1 ●2 \n❯",
+            "frame": "╭─ ~/akim-dotfiles via .venv on  main ✚1 ●2\n╰─❯                                   ✘ 1  4s  20:48",
+            "right": "akim-dotfiles ❯                    ✘ 1  4s   main ✚1 ●2",
+        }
+        sample = label(examples[style], "mono")
+        sample.set_xalign(0)
+
+        def set_style(v):
+            style_file.parent.mkdir(parents=True, exist_ok=True)
+            style_file.write_text(v + "\n", encoding="utf-8")
+            sample.set_text(examples[v])
+
+        return [
+            section("Prompt"),
+            group(row("Style", "Blocks: colored blocks · Frame: two framed lines, status on the right · "
+                               "Right side: one line, everything else at the right edge",
+                      segmented([("blocks", "Blocks"), ("frame", "Frame"), ("right", "Right side")], style, set_style)),
+                  row("Looks like", "", sample),
+                  row("Open a terminal", "", button("Terminal", lambda: spawn(["kitty"])))),
         ]
 
     # -------------------------------------------------------------- Display
