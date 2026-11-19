@@ -16,7 +16,7 @@ WAL_CACHE="$HOME/.cache/wal"
 PALETTE_ROOT="$WAL_CACHE/palettes"
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 # Bump to invalidate every cached palette after changing how palettes are built.
-CACHE_VERSION=4
+CACHE_VERSION=5
 
 # Cache key: wallpaper identity + anything that changes the generated files
 # (pywal templates, the fallback extractor and this script's GTK CSS).
@@ -50,6 +50,7 @@ build_palette() {
     [ -f "$src/colors-hyprland.conf" ] && cp "$src/colors-hyprland.conf" "$src/colors-hyprland.hl"
     write_rofi_colors "$src" || echo "WARNING: could not write Rofi colors" >&2
     write_cava_config "$src" || echo "WARNING: could not write the Cava config" >&2
+    write_sequences "$src" || echo "WARNING: could not write the terminal color sequences" >&2
     write_fastfetch_logo "$wallpaper" "$src" || echo "WARNING: could not write the fastfetch logo" >&2
     build_gtk_css "$src"
     rm -rf "$src/schemes"
@@ -140,8 +141,9 @@ noise_reduction = 77
 PY
 }
 
-# fastfetch logo (~/.cache/wal/fastfetch-logo.png): a round crop of the wallpaper with a thin
-# ring in the accent color. Needs Pillow (python3-pil); without it fastfetch shows its own logo.
+# fastfetch logo (~/.cache/wal/fastfetch-logo.png): the whole wallpaper as a small 16:9 card
+# with rounded corners and a thin border in the accent color. fastfetch's config shows it 32x8
+# text cells, which keeps the 16:9 shape in kitty. Needs Pillow (python3-pil).
 write_fastfetch_logo() {
     python3 -I - "$1" "$2" <<'PY'
 import json, pathlib, sys
@@ -151,16 +153,34 @@ except ImportError:
     sys.exit(0)
 wall, d = sys.argv[1], pathlib.Path(sys.argv[2])
 accent = json.loads((d / "colors.json").read_text())["colors"]["color1"]
-S, K = 360, 4                      # final size, oversampling for smooth edges
-img = ImageOps.fit(Image.open(wall).convert("RGB"), (S, S), Image.LANCZOS)
-mask = Image.new("L", (S * K, S * K), 0)
-ImageDraw.Draw(mask).ellipse((0, 0, S * K - 1, S * K - 1), fill=255)
-img.putalpha(mask.resize((S, S), Image.LANCZOS))
-ring = Image.new("RGBA", (S * K, S * K), (0, 0, 0, 0))
-w = 7 * K
-ImageDraw.Draw(ring).ellipse((w // 2, w // 2, S * K - 1 - w // 2, S * K - 1 - w // 2), outline=accent, width=w)
-img = Image.alpha_composite(img, ring.resize((S, S), Image.LANCZOS))
+W, H, R, B, K = 640, 360, 30, 4, 4          # size, corner radius, border, oversampling
+img = ImageOps.fit(Image.open(wall).convert("RGB"), (W, H), Image.LANCZOS).convert("RGBA")
+mask = Image.new("L", (W * K, H * K), 0)
+ImageDraw.Draw(mask).rounded_rectangle((0, 0, W * K - 1, H * K - 1), radius=R * K, fill=255)
+img.putalpha(mask.resize((W, H), Image.LANCZOS))
+edge = Image.new("RGBA", (W * K, H * K), (0, 0, 0, 0))
+half = B * K // 2
+ImageDraw.Draw(edge).rounded_rectangle((half, half, W * K - 1 - half, H * K - 1 - half),
+                                       radius=R * K - half, outline=accent, width=B * K)
+img = Image.alpha_composite(img, edge.resize((W, H), Image.LANCZOS))
 img.save(d / "fastfetch-logo.png")
+PY
+}
+
+# Terminal color escape codes (~/.cache/wal/sequences), pushed into every open terminal by
+# reload_ui so they recolor in place. Written here from colors.json: palettes are built with
+# `wal -s`, which writes no sequences file, and an old one left in the cache would repaint
+# every open terminal with a previous wallpaper's colors.
+write_sequences() {
+    python3 -I - "$1" <<'PY'
+import json, pathlib, sys
+d = pathlib.Path(sys.argv[1])
+data = json.loads((d / "colors.json").read_text())
+s, c = data["special"], data["colors"]
+ST = "\033\\"
+out = "".join(f"\033]4;{i};{c[f'color{i}']}{ST}" for i in range(16) if f"color{i}" in c)
+out += f"\033]10;{s['foreground']}{ST}\033]11;{s['background']}{ST}\033]12;{s.get('cursor', s['foreground'])}{ST}"
+(d / "sequences").write_text(out)
 PY
 }
 
