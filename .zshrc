@@ -98,6 +98,11 @@ else
 fi
 command -v batcat &>/dev/null && ! command -v bat &>/dev/null && alias bat='batcat'   # Debian's name
 command -v fdfind &>/dev/null && ! command -v fd &>/dev/null && alias fd='fdfind'
+# tty-clock: centered, in the wallpaper's accent (palette color 1, the same as cava and the
+# bar). Its default is color 2, which is a different hue on every wallpaper. Options you pass
+# still win (e.g. `tty-clock -C 4`).
+tty-clock() { command tty-clock -c -C 1 "$@"; }
+
 alias ..='cd ..'
 alias ...='cd ../..'
 alias grep='grep --color=auto'
