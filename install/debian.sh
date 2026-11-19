@@ -169,6 +169,14 @@ APT_EXTRA_PKGS=(
     pavucontrol
     bluez
     wf-recorder
+    # Terminal: fuzzy history/file search, smart cd, ls with icons, cat with colors, fast find
+    fzf
+    zoxide
+    eza
+    bat
+    fd-find
+    command-not-found
+    cava
 )
 
 # Hyprland packages (REQUIRED)

@@ -133,9 +133,11 @@ if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
         || warn "Oh My Zsh installation failed"
 fi
 
-if [ -f "$REPO_ROOT/omz-custom/themes/fishy.zsh-theme" ] && [ -d "$HOME/.oh-my-zsh/themes" ]; then
-    echo "--> Installing custom fishy theme..."
-    cp "$REPO_ROOT/omz-custom/themes/fishy.zsh-theme" "$HOME/.oh-my-zsh/themes/"
+if [ -d "$HOME/.oh-my-zsh/themes" ]; then
+    echo "--> Installing the Oh My Zsh themes (akim, fishy)..."
+    for theme in akim fishy; do
+        [ -f "$REPO_ROOT/omz-custom/themes/$theme.zsh-theme" ]             && cp "$REPO_ROOT/omz-custom/themes/$theme.zsh-theme" "$HOME/.oh-my-zsh/themes/"
+    done
 fi
 
 if [ -n "$(command -v zsh 2>/dev/null)" ] && [ "$SHELL" != "$(command -v zsh)" ]; then
