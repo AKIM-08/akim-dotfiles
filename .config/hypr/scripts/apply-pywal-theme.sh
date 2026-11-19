@@ -16,7 +16,7 @@ WAL_CACHE="$HOME/.cache/wal"
 PALETTE_ROOT="$WAL_CACHE/palettes"
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 # Bump to invalidate every cached palette after changing how palettes are built.
-CACHE_VERSION=5
+CACHE_VERSION=6
 
 # Cache key: wallpaper identity + anything that changes the generated files
 # (pywal templates, the fallback extractor and this script's GTK CSS).
@@ -141,28 +141,27 @@ noise_reduction = 77
 PY
 }
 
-# fastfetch logo (~/.cache/wal/fastfetch-logo.png): the whole wallpaper as a small 16:9 card
-# with rounded corners and a thin border in the accent color. fastfetch's config shows it 32x8
+# fastfetch logo (~/.cache/wal/fastfetch-logo.png): the whole wallpaper (16:9) cut into five
+# vertical strips with small transparent gaps and rounded ends. fastfetch's config shows it 34x9
 # text cells, which keeps the 16:9 shape in kitty. Needs Pillow (python3-pil).
 write_fastfetch_logo() {
     python3 -I - "$1" "$2" <<'PY'
-import json, pathlib, sys
+import pathlib, sys
 try:
     from PIL import Image, ImageDraw, ImageOps
 except ImportError:
     sys.exit(0)
 wall, d = sys.argv[1], pathlib.Path(sys.argv[2])
-accent = json.loads((d / "colors.json").read_text())["colors"]["color1"]
-W, H, R, B, K = 640, 360, 30, 4, 4          # size, corner radius, border, oversampling
+W, H, N, K = 720, 405, 5, 4                  # size, strips, oversampling for smooth corners
+gap = round(W * 0.035)
+strip = (W - (N - 1) * gap) / N
 img = ImageOps.fit(Image.open(wall).convert("RGB"), (W, H), Image.LANCZOS).convert("RGBA")
 mask = Image.new("L", (W * K, H * K), 0)
-ImageDraw.Draw(mask).rounded_rectangle((0, 0, W * K - 1, H * K - 1), radius=R * K, fill=255)
+draw = ImageDraw.Draw(mask)
+for i in range(N):
+    x = i * (strip + gap)
+    draw.rounded_rectangle((round(x * K), 0, round((x + strip) * K) - 1, H * K - 1), radius=14 * K, fill=255)
 img.putalpha(mask.resize((W, H), Image.LANCZOS))
-edge = Image.new("RGBA", (W * K, H * K), (0, 0, 0, 0))
-half = B * K // 2
-ImageDraw.Draw(edge).rounded_rectangle((half, half, W * K - 1 - half, H * K - 1 - half),
-                                       radius=R * K - half, outline=accent, width=B * K)
-img = Image.alpha_composite(img, edge.resize((W, H), Image.LANCZOS))
 img.save(d / "fastfetch-logo.png")
 PY
 }
