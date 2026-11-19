@@ -16,7 +16,7 @@ WAL_CACHE="$HOME/.cache/wal"
 PALETTE_ROOT="$WAL_CACHE/palettes"
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 # Bump to invalidate every cached palette after changing how palettes are built.
-CACHE_VERSION=3
+CACHE_VERSION=4
 
 # Cache key: wallpaper identity + anything that changes the generated files
 # (pywal templates, the fallback extractor and this script's GTK CSS).
@@ -50,6 +50,7 @@ build_palette() {
     [ -f "$src/colors-hyprland.conf" ] && cp "$src/colors-hyprland.conf" "$src/colors-hyprland.hl"
     write_rofi_colors "$src" || echo "WARNING: could not write Rofi colors" >&2
     write_cava_config "$src" || echo "WARNING: could not write the Cava config" >&2
+    write_fastfetch_logo "$wallpaper" "$src" || echo "WARNING: could not write the fastfetch logo" >&2
     build_gtk_css "$src"
     rm -rf "$src/schemes"
 
@@ -136,6 +137,30 @@ gradient_count = {len(stops)}
 monstercat = 1
 noise_reduction = 77
 """)
+PY
+}
+
+# fastfetch logo (~/.cache/wal/fastfetch-logo.png): a round crop of the wallpaper with a thin
+# ring in the accent color. Needs Pillow (python3-pil); without it fastfetch shows its own logo.
+write_fastfetch_logo() {
+    python3 -I - "$1" "$2" <<'PY'
+import json, pathlib, sys
+try:
+    from PIL import Image, ImageDraw, ImageOps
+except ImportError:
+    sys.exit(0)
+wall, d = sys.argv[1], pathlib.Path(sys.argv[2])
+accent = json.loads((d / "colors.json").read_text())["colors"]["color1"]
+S, K = 360, 4                      # final size, oversampling for smooth edges
+img = ImageOps.fit(Image.open(wall).convert("RGB"), (S, S), Image.LANCZOS)
+mask = Image.new("L", (S * K, S * K), 0)
+ImageDraw.Draw(mask).ellipse((0, 0, S * K - 1, S * K - 1), fill=255)
+img.putalpha(mask.resize((S, S), Image.LANCZOS))
+ring = Image.new("RGBA", (S * K, S * K), (0, 0, 0, 0))
+w = 7 * K
+ImageDraw.Draw(ring).ellipse((w // 2, w // 2, S * K - 1 - w // 2, S * K - 1 - w // 2), outline=accent, width=w)
+img = Image.alpha_composite(img, ring.resize((S, S), Image.LANCZOS))
+img.save(d / "fastfetch-logo.png")
 PY
 }
 
