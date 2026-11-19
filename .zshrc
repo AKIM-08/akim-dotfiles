@@ -1,7 +1,7 @@
 # Path to Oh My Zsh (installed by install.sh into ~/.oh-my-zsh)
 export ZSH="$HOME/.oh-my-zsh"
 
-# Two-line powerline prompt in the wallpaper's colors (omz-custom/themes/akim.zsh-theme)
+# Framed two-line prompt, status on the right, in the wallpaper's colors (omz-custom/themes/akim.zsh-theme)
 ZSH_THEME="akim"
 [[ -f "$ZSH/themes/akim.zsh-theme" || -f "$ZSH/custom/themes/akim.zsh-theme" ]] || ZSH_THEME="fishy"
 

@@ -1,22 +1,22 @@
-# akim.zsh-theme - two-line powerline prompt in the wallpaper's colors
+# akim.zsh-theme - framed two-line prompt with status on the right, in the wallpaper's colors
 #
-#   [ ~/akim-dotfiles ]>[  main ✚1 ●2 …1 ]>   󰔟 4s  ✘ 1
-#   ❯
+#   ╭─ <folder> ~/akim-dotfiles via <py> .venv on <branch> main ✚1 ●2 …1
+#   ╰─❯ git push                                          ✘ 1  <timer> 4s  20:48
 #
-# Colored blocks use the terminal palette (colors 1-6 come from pywal, so the prompt follows the
-# wallpaper like the rest of the desktop). Shown only when useful: git branch and changes, Python
-# venv, how long the last command took (2 s or more), its exit code when it failed, user@host
-# over SSH. The arrow turns red after a failed command.
+# First line: the folder, then (when there is one) the Python venv and the git branch with its
+# changes, joined by words. Right edge of the input line: the exit code after a failure, how long
+# the last command took (2 s or more) and the time; it disappears when a long command needs the
+# room. The arrow turns red after a failed command. user@host appears over SSH.
+# Colors are terminal palette slots, which pywal fills from the wallpaper.
 
 setopt PROMPT_SUBST
 zmodload zsh/datetime 2>/dev/null
 
 # Nerd Font glyphs, written as escapes so editors can't mangle them
-typeset -g _AKIM_SEP=$'' _AKIM_BRANCH=$'' _AKIM_DIR=$'' _AKIM_PY=$'' _AKIM_ROOT=$'' _AKIM_CAP=$''
+typeset -g _AKIM_DIR=$'\uf07c' _AKIM_BRANCH=$'\ue0a0' _AKIM_PY=$'\ue73c' _AKIM_TIMER=$'\U000f051f' _AKIM_SSH=$'\U000f08c0'
 
-typeset -g _AKIM_START=""
-typeset -g _AKIM_TOOK=""
-typeset -g _AKIM_GIT=""
+typeset -g _AKIM_START="" _AKIM_TOOK="" _AKIM_GIT=""
+ZLE_RPROMPT_INDENT=0          # the right side touches the window edge
 
 _akim_preexec() { _AKIM_START=$EPOCHREALTIME }
 
@@ -31,7 +31,7 @@ _akim_took() {
     else _AKIM_TOOK="${s}s"; fi
 }
 
-# Branch and counts from one `git status` call (fast enough for normal repos)
+# Branch and counts from one `git status` call
 _akim_git() {
     _AKIM_GIT=""
     local out
@@ -51,52 +51,43 @@ _akim_git() {
         esac
     done
     [[ $branch == "(detached)" ]] && branch="detached"
-    local s="$_AKIM_BRANCH $branch"
-    (( ahead ))     && s+=" ⇡$ahead"
-    (( behind ))    && s+=" ⇣$behind"
-    (( conflicts )) && s+=" ✖$conflicts"
-    (( staged ))    && s+=" ✚$staged"
-    (( changed ))   && s+=" ●$changed"
-    (( untracked )) && s+=" …$untracked"
-    _AKIM_GIT=${s//\%/%%}          # a % in a branch name must not become a prompt escape
-}
-
-# A block: _akim_seg <color> <text>; joins the previous block with an arrow
-_akim_seg() {
-    if [[ -n $_akim_prev ]]; then
-        _akim_line+="%K{$1}%F{$_akim_prev}$_AKIM_SEP%f"
-    else
-        _akim_line+="%F{$1}$_AKIM_CAP%f"                # rounded left end
-    fi
-    _akim_line+="%K{$1}%F{0}%B $2 %b"
-    _akim_prev=$1
+    branch=${branch//\%/%%}       # a % in a branch name must not become a prompt escape
+    local s="%F{8}on%f %F{5}%B$_AKIM_BRANCH $branch%b%f"
+    local c=""
+    (( ahead ))     && c+=" ⇡$ahead"
+    (( behind ))    && c+=" ⇣$behind"
+    (( conflicts )) && c+=" ✖$conflicts"
+    (( staged ))    && c+=" ✚$staged"
+    (( changed ))   && c+=" ●$changed"
+    (( untracked )) && c+=" …$untracked"
+    [[ -n $c ]] && s+="%F{3}$c%f"
+    _AKIM_GIT=$s
 }
 
 _akim_precmd() {
     _akim_took
     _akim_git
-    local _akim_line="" _akim_prev=""
-
+    local top="%F{8}╭─%f "
     if [[ -n $SSH_CONNECTION || -n $SSH_TTY ]]; then
-        _akim_seg 3 "󰣀 %n@%m"
+        top+="%F{3}%B$_AKIM_SSH %n@%m%b%f %F{8}in%f "
     elif (( UID == 0 )); then
-        _akim_seg 1 "$_AKIM_ROOT root"
+        top+="%F{1}%Broot%b%f %F{8}in%f "
     fi
-    _akim_seg 4 "$_AKIM_DIR %(4~|…/%3~|%~)"
-    [[ -n $VIRTUAL_ENV ]] && _akim_seg 2 "$_AKIM_PY ${VIRTUAL_ENV:t}"
-    [[ -n $_AKIM_GIT ]] && _akim_seg 5 "$_AKIM_GIT"
-    _akim_line+="%k%F{$_akim_prev}$_AKIM_SEP%f"
-
-    [[ -n $_AKIM_TOOK ]] && _akim_line+="  %F{8}󰔟 $_AKIM_TOOK%f"
-    _akim_line+="%(?..  %F{1}✘ %?%f)"         # exit code, only after a failure
+    top+="%F{4}%B$_AKIM_DIR %(4~|…/%3~|%~)%b%f"
+    [[ -n $VIRTUAL_ENV ]] && top+=" %F{8}via%f %F{2}$_AKIM_PY ${VIRTUAL_ENV:t}%f"
+    [[ -n $_AKIM_GIT ]] && top+=" $_AKIM_GIT"
 
     PROMPT="
-$_akim_line
-%(?.%F{6}.%F{1})❯%f "
+$top
+%F{8}╰─%f%(?.%F{6}.%F{1})%B❯%b%f "
+
+    local right="%(?..%F{1}%B✘ %?%b%f  )"
+    [[ -n $_AKIM_TOOK ]] && right+="%F{8}$_AKIM_TIMER $_AKIM_TOOK%f  "
+    right+="%F{8}%D{%H:%M}%f"
+    RPROMPT=$right
 }
 
-PROMPT2='%F{8}… %f'
-RPROMPT=''
+PROMPT2='%F{8}   … %f'
 
 autoload -Uz add-zsh-hook
 add-zsh-hook preexec _akim_preexec
