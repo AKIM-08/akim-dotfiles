@@ -222,7 +222,26 @@ class Overlay(Gtk.Window):
                 if i < len(self.tile_actions):
                     self.tile_actions[i]()
                 return True
-            return False                                  # FlowBox handles arrows and Enter
+            # Arrows and Enter handled here: the keyboard focus can't be relied on to be in the grid
+            n = len(self.tile_actions)
+            sel = self.flow.get_selected_children()
+            i = sel[0].get_index() if sel else 0
+            moves = {Gdk.KEY_Left: -1, Gdk.KEY_Right: 1, Gdk.KEY_Up: -self.tile_cols, Gdk.KEY_Down: self.tile_cols,
+                     Gdk.KEY_h: -1, Gdk.KEY_l: 1, Gdk.KEY_k: -self.tile_cols, Gdk.KEY_j: self.tile_cols,
+                     Gdk.KEY_Tab: 1, Gdk.KEY_ISO_Left_Tab: -1}
+            if k in moves:
+                j = i + moves[k]
+                if k in (Gdk.KEY_Tab, Gdk.KEY_ISO_Left_Tab):
+                    j %= n
+                if 0 <= j < n:
+                    child = self.flow.get_child_at_index(j)
+                    self.flow.select_child(child)
+                    child.grab_focus()
+                return True
+            if k in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_space):
+                self.tile_actions[i]()
+                return True
+            return False
         if k in (Gdk.KEY_Down, Gdk.KEY_Up, Gdk.KEY_Page_Down, Gdk.KEY_Page_Up):
             step = {Gdk.KEY_Down: 1, Gdk.KEY_Up: -1, Gdk.KEY_Page_Down: 6, Gdk.KEY_Page_Up: -6}[k]
             self.move(step)
@@ -491,6 +510,7 @@ class Overlay(Gtk.Window):
         self.flow.set_column_spacing(12)
         self.flow.set_activate_on_single_click(True)
         self.tile_actions = []
+        self.tile_cols = cols
         for i, t in enumerate(tiles):
             if widget:
                 child, action = widget(i, t), t[-1]

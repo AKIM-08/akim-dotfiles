@@ -342,6 +342,23 @@ class NetMenu(Gtk.Window):
             if not isinstance(self.get_focus(), Gtk.Entry):
                 self.switch("wifi" if self.view == "wifi-radar" else "bt")
                 return True
+        if self.view == "bt-cards" and hasattr(self, "cards"):
+            kids = self.cards.get_children()
+            if not kids:
+                return False
+            sel = self.cards.get_selected_children()
+            i = sel[0].get_index() if sel else 0
+            per_row = max(1, min(len(kids), 5))
+            moves = {Gdk.KEY_Left: -1, Gdk.KEY_Right: 1, Gdk.KEY_Up: -per_row, Gdk.KEY_Down: per_row}
+            if k in moves:
+                j = i + moves[k]
+                if 0 <= j < len(kids):
+                    self.cards.select_child(kids[j])
+                    kids[j].grab_focus()
+                return True
+            if k in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_space):
+                kids[i].action()
+                return True
         if self.view in ("wifi-radar", "bt-radar") and k in (Gdk.KEY_Left, Gdk.KEY_Right, Gdk.KEY_Return, Gdk.KEY_KP_Enter):
             if isinstance(self.get_focus(), Gtk.Entry):
                 return False
@@ -611,8 +628,8 @@ class NetMenu(Gtk.Window):
                 cr.set_source_rgba(*(a if it.get("active") else (1, 1, 1)), glow)
                 cr.arc(x, y, size, 0, 2 * math.pi)
                 cr.fill()
-            self.text(cr, it["label"], x, y + 36, 13, pill=True)
-            self.radar_hits.append((x, y, it))
+            lw = self.text(cr, it["label"], x, y + 36, 13, pill=True)
+            self.radar_hits.append((x, y, lw, it))
 
     def text(self, cr, s, x, y, size, pill=False, color=None, ink_rgb=False):
         cr.select_font_face("JetBrainsMono Nerd Font", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
@@ -635,10 +652,14 @@ class NetMenu(Gtk.Window):
             cr.set_source_rgba(1, 1, 1, 0.95)
         cr.move_to(tx, y)
         cr.show_text(s)
+        return e.width
 
     def radar_click(self, _w, e):
-        for x, y, it in self.radar_hits:
-            if (e.x - x) ** 2 + (e.y - y) ** 2 < 26 ** 2:
+        for x, y, lw, it in self.radar_hits:
+            on_dot = (e.x - x) ** 2 + (e.y - y) ** 2 < 26 ** 2
+            on_label = abs(e.x - x) < lw / 2 + 12 and y + 18 <= e.y <= y + 46
+            if on_dot or on_label:
+                self.radar_sel = self.radar_hits.index((x, y, lw, it))
                 self.radar_pick(it)
                 return True
         if self.radar_card.get_visible():
@@ -681,7 +702,11 @@ class NetMenu(Gtk.Window):
             self.radar_card.pack_start(lab(G["lock"], "glyph", "accent"), False, False, 0)
             self.radar_card.pack_start(entry, True, True, 0)
             self.radar_card.pack_start(pill("Join", lambda: self.wifi_connect(n["ssid"], entry.get_text()), accent=True), False, False, 0)
-            self.radar_card.show_all()
+            # The card is "no show all" (hidden until needed), so show_all() would skip it: show
+            # its children, then the card
+            for c in self.radar_card.get_children():
+                c.show_all()
+            self.radar_card.show()
             entry.grab_focus()
         else:
             self.wifi_connect(n["ssid"], None)
