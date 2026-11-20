@@ -177,10 +177,8 @@ APT_EXTRA_PKGS=(
     fd-find
     command-not-found
     cava
-    # Mouse pointers: Breeze, and the tools that build Capitaine / Oreo Spark / wallpaper accent
+    # Mouse pointer (scripts/cursors.py)
     breeze-cursor-theme
-    librsvg2-bin
-    x11-apps
 )
 
 # Hyprland packages (REQUIRED)

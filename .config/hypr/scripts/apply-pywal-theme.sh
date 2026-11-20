@@ -913,9 +913,6 @@ reload_ui() {
 background_tasks() {
     (
         exec 8>&- 9>&-   # release the apply/precache locks; nothing should wait on this
-        # Mouse pointer in the wallpaper's accent (only when that pointer theme is chosen).
-        # First, so it changes with the rest; instant when it was built in advance (precache).
-        python3 "$SCRIPT_DIR/cursors.py" accent
         command -v pywal-discord &>/dev/null && pywal-discord -t default
         timeout 3 python3 "$SCRIPT_DIR/apply-papirus-color.py"
 
@@ -947,9 +944,6 @@ precache() {
         echo "--> Caching palette for $(basename "$img")"
         build_palette "$img" "$PALETTE_ROOT/$key" || echo "WARNING: failed to build palette for $img" >&2
     done < <(list_wallpapers)
-
-    # Wallpaper-accent mouse pointers for those palettes (only if that pointer theme is chosen)
-    python3 "$SCRIPT_DIR/cursors.py" precache
 
     # Remove palettes that no longer match a wallpaper here and haven't been used in 30 days
     # (palettes for images picked from elsewhere via Waypaper survive while in use).

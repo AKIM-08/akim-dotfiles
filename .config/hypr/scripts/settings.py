@@ -681,7 +681,7 @@ class Settings(Gtk.Window):
              "tabs": [("Sound", self.page_sound, "Per-app volume is in the quick panel (Super + N).", "")]},
             {"id": "power", "icon": "\U000f0079", "name": "Power", "sub": "Battery, profile and sleep", "keywords": "battery caffeine profile performance",
              "tabs": [("Power", self.page_power, "Power saver makes the battery last longer; Caffeine keeps the screen awake.", "")]},
-            {"id": "input", "icon": "\U000f037d", "name": "Mouse & keyboard", "sub": "Pointer speed and theme", "keywords": "mouse touchpad sensitivity speed cursor pointer",
+            {"id": "input", "icon": "\U000f037d", "name": "Mouse & keyboard", "sub": "Pointer speed and size", "keywords": "mouse touchpad sensitivity speed cursor pointer",
              "tabs": [("Mouse", self.page_mouse, "Applies immediately and is kept in user-settings.hl.", "")]},
             {"id": "apps", "icon": "\U000f003b", "name": "Default apps", "sub": "Browser, terminal, file manager", "keywords": "browser terminal files default",
              "tabs": [("Apps", self.page_apps, "Only installed apps are listed. Terminal: Super + Return, file manager: Super + F.", "")]},
@@ -1146,24 +1146,14 @@ class Settings(Gtk.Window):
             set_block("mouse", f"input {{\n    sensitivity = {v}\n}}")
 
         parts = run(["python3", str(SCRIPTS / "cursors.py"), "get"]).split()
-        theme, size = (parts + ["capitaine", "28"])[:2]
-        choice = {"theme": theme, "size": size}
-
-        def set_pointer(key, v):
-            choice[key] = v
-            spawn(["python3", str(SCRIPTS / "cursors.py"), "set", choice["theme"], choice["size"]])
+        size = (parts + ["breeze", "28"])[1]
 
         return [group(row("Pointer speed", "-1 slowest · 0 default · 1 fastest",
                           slider(cur, -1.0, 1.0, lambda v: f"{v:+.2f}", apply, step=0.05, delay=300))),
-                section("Pointer"),
-                group(row("Theme", "Wallpaper: in each wallpaper's accent. Capitaine, Oreo Spark and Wallpaper are "
-                                   "built the first time (a notification says when); windows already open may keep "
-                                   "the old pointer until reopened",
-                          segmented([("capitaine", "Capitaine"), ("oreo-spark", "Oreo Spark"),
-                                     ("wallpaper", "Wallpaper"), ("breeze", "Breeze")], theme,
-                                    lambda v: set_pointer("theme", v))),
-                      row("Size", "", segmented([("24", "24"), ("28", "28"), ("32", "32"), ("40", "40")], size,
-                                                lambda v: set_pointer("size", v))))]
+                section("Pointer (Breeze)"),
+                group(row("Size", "Changes at once; a few apps that draw their own pointer follow when reopened",
+                          segmented([("24", "24"), ("28", "28"), ("32", "32"), ("40", "40"), ("48", "48")], size,
+                                    lambda v: spawn(["python3", str(SCRIPTS / "cursors.py"), "set", v]))))]
 
     # -------------------------------------------------------------- Default apps
     def page_apps(self):

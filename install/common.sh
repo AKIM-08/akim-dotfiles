@@ -256,9 +256,6 @@ chmod +x "$HOME/.config/hypr/scripts/wallfx/"* 2>/dev/null || true
 chmod +x "$HOME/.config/waybar/scripts/"*.sh 2>/dev/null || true
 chmod +x "$HOME/.config/waybar/scripts/"*.py 2>/dev/null || true
 
-echo "--> Building the Capitaine and Oreo Spark mouse pointers (about a minute)..."
-python3 "$HOME/.config/hypr/scripts/cursors.py" build     || warn "Mouse pointers not built — run: ~/.config/hypr/scripts/cursors.py build"
-
 # Build the live Waybar config from the chosen theme + position (kept across reinstalls)
 python3 "$HOME/.config/waybar/scripts/layout.py" \
     || warn "Waybar layout generation failed — run: ~/.config/waybar/scripts/layout.py"
