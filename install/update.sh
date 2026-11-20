@@ -5,6 +5,8 @@
 #   akim-update --check    only say whether an update is waiting (nothing is changed)
 #   akim-update --dry-run  list the files an update would copy (nothing is changed)
 #
+# It also updates kitty when it is the official build (install/kitty-latest.sh, kitty-update).
+#
 # Your settings are never overwritten (theme, bar, shortcuts, apps, lock screen...: the same list
 # the installer keeps), and a file removed from the repo is only deleted from ~/.config if you
 # never changed it. Packages are not installed here: when the installer itself changed, you are
@@ -38,6 +40,14 @@ link="$HOME/.local/bin/akim-update"
 if [ "$(readlink -f "$link" 2>/dev/null)" != "$SELF" ]; then
     mkdir -p "$HOME/.local/bin" && ln -sf "$SELF" "$link" 2>/dev/null
 fi
+[ -e "$HOME/.local/bin/kitty-update" ] || ln -sf "$REPO/install/kitty-latest.sh" "$HOME/.local/bin/kitty-update" 2>/dev/null
+
+# kitty's official build (install/kitty-latest.sh) isn't updated by apt: update it here too
+update_kitty() {
+    [ -x "$HOME/.local/kitty.app/bin/kitty" ] || return 0
+    [ -f "$REPO/install/kitty-latest.sh" ] || return 0
+    bash "$REPO/install/kitty-latest.sh" --update --quiet || warn "kitty update failed (try: kitty-update)"
+}
 
 # --------------------------------------------------------------------------- phase 1: pull
 if [ "${1:-}" != "--apply" ]; then
@@ -48,7 +58,8 @@ if [ "${1:-}" != "--apply" ]; then
     upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null) || upstream="origin/$branch"
     behind=$(git rev-list --count "HEAD..$upstream" 2>/dev/null || echo 0)
     if [ "$behind" -eq 0 ]; then
-        say "${G}Already up to date.${N}"
+        say "${G}Dotfiles already up to date.${N}"
+        [ "$mode" = "--check" ] || [ "$mode" = "--dry-run" ] || update_kitty
         exit 0
     fi
     say "$behind new change(s):"
@@ -188,4 +199,5 @@ changed .zshrc || changed omz-custom && say "Open a new terminal for the shell c
 changed scripts/settings.py && running "scripts/settings.py" && say "Close and reopen Settings to see its changes."
 $installer && warn "The installer changed too (new packages or system setup). When you have a moment:
     cd $REPO && ./install.sh"
+update_kitty
 say "${G}Done.${N}"

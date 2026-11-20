@@ -70,6 +70,11 @@ notifications, desktop widgets) and tells you if Hyprland finds a problem in its
 files it would copy. If the command isn't found yet, run it once as
 `bash ~/akim-dotfiles/install/update.sh`.
 
+Kitty is installed from its official build when Debian's is too old (Debian 13 has 0.41; the
+draggable scrollbar needs 0.43). apt doesn't update that one: `akim-update` does, or run
+`kitty-update` on its own. `bash ~/akim-dotfiles/install/kitty-latest.sh --remove` goes back to
+Debian's kitty.
+
 When the installer itself changed (new packages), `akim-update` tells you to run it again:
 
 ```bash
