@@ -18,6 +18,8 @@ SHORTCUTS=(
     "󰞷  SUPER + Return             󰄾  Open Terminal (Kitty)"
     "󰀻  SUPER + Q                  󰄾  Application Launcher (Rofi - Toggle)"
     "󰖟  SUPER + B                  󰄾  Open Web Browser (Firefox)"
+    "󰖩  SUPER + SHIFT + W          󰄾  Wi-Fi menu"
+    "󰂯  SUPER + SHIFT + B          󰄾  Bluetooth menu"
     "󰉋  SUPER + F                  󰄾  File Manager (Nautilus)"
     "󰙯  SUPER + D                  󰄾  Discord"
     "󰅌  SUPER + V                  󰄾  Clipboard History Manager (Rofi - Toggle)"

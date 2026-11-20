@@ -1,66 +1,92 @@
 #!/usr/bin/env python3
+"""record-border.py X Y W H - a red frame around the area being recorded, with a timer.
+
+Drawn on a click-through layer-shell overlay, just OUTSIDE the recorded area so it never shows
+in the video. A small "● REC 00:12" pill sits above the area (below it when there's no room).
+screenshot.sh starts it with the area from slurp and stops it with the recording.
 """
-record-border.py - Lightweight click-through red border overlay for screen recording in Hyprland
-"""
+import math
 import sys
+import time
 
-def run():
-    if len(sys.argv) < 5:
-        sys.exit(0)
+import gi
+gi.require_version("Gdk", "3.0")
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gdk, GLib, Gtk   # noqa: E402
+import cairo                                # noqa: E402
 
+try:
+    gi.require_version("GtkLayerShell", "0.1")
+    from gi.repository import GtkLayerShell  # noqa: E402
+except (ImportError, ValueError):
+    sys.exit(0)
+
+RED = (1.0, 0.2, 0.4)
+GAP = 3          # px between the recorded area and the frame
+LINE = 3
+
+
+def main():
     try:
-        from PyQt5.QtWidgets import QApplication, QWidget
-        from PyQt5.QtCore import Qt
-        from PyQt5.QtGui import QPainter, QPen, QColor
-        has_qt5 = True
-    except ImportError:
-        try:
-            from PyQt6.QtWidgets import QApplication, QWidget
-            from PyQt6.QtCore import Qt
-            from PyQt6.QtGui import QPainter, QPen, QColor
-            has_qt5 = False
-        except ImportError:
-            sys.exit(0)
+        x, y, w, h = (int(float(v)) for v in sys.argv[1:5])
+    except (ValueError, IndexError):
+        return 0
+    win = Gtk.Window()
+    win.set_app_paintable(True)
+    if win.get_screen().get_rgba_visual():
+        win.set_visual(win.get_screen().get_rgba_visual())
+    GtkLayerShell.init_for_window(win)
+    GtkLayerShell.set_namespace(win, "record-border")
+    GtkLayerShell.set_layer(win, GtkLayerShell.Layer.OVERLAY)
+    GtkLayerShell.set_keyboard_mode(win, GtkLayerShell.KeyboardMode.NONE)
+    GtkLayerShell.set_exclusive_zone(win, -1)
+    for e in (GtkLayerShell.Edge.TOP, GtkLayerShell.Edge.BOTTOM, GtkLayerShell.Edge.LEFT, GtkLayerShell.Edge.RIGHT):
+        GtkLayerShell.set_anchor(win, e, True)
+    started = time.monotonic()
 
-    class BorderOverlay(QWidget):
-        def __init__(self, x, y, w, h):
-            super().__init__()
-            self.setObjectName("record-border")
-            self.setWindowTitle("record-border")
-            self.setGeometry(x, y, w, h)
-            
-            flags = (
-                Qt.FramelessWindowHint |
-                Qt.WindowStaysOnTopHint |
-                Qt.Tool |
-                Qt.X11BypassWindowManagerHint
-            )
-            if hasattr(Qt, "WindowTransparentForInput"):
-                flags |= Qt.WindowTransparentForInput
-            self.setWindowFlags(flags)
-            
-            self.setAttribute(Qt.WA_TranslucentBackground, True)
-            self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-            self.setAttribute(Qt.WA_ShowWithoutActivating, True)
+    def draw(_w, cr):
+        cr.set_operator(cairo.OPERATOR_SOURCE)
+        cr.set_source_rgba(0, 0, 0, 0)
+        cr.paint()
+        cr.set_operator(cairo.OPERATOR_OVER)
+        o = GAP + LINE / 2
+        cr.set_source_rgba(*RED, 0.95)
+        cr.set_line_width(LINE)
+        cr.rectangle(x - o, y - o, w + 2 * o, h + 2 * o)
+        cr.stroke()
+        secs = int(time.monotonic() - started)
+        label = f"REC  {secs // 60:02d}:{secs % 60:02d}"
+        cr.select_font_face("JetBrainsMono Nerd Font", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        cr.set_font_size(13)
+        ext = cr.text_extents(label)
+        pw, ph = ext.width + 40, 26
+        px = x - o
+        py = y - o - ph - 6 if y - o - ph - 6 > 0 else y + h + o + 6
+        cr.set_source_rgba(0.06, 0.06, 0.08, 0.85)
+        r = ph / 2
+        cr.new_sub_path()
+        cr.arc(px + r, py + r, r, math.pi / 2, 3 * math.pi / 2)
+        cr.arc(px + pw - r, py + r, r, -math.pi / 2, math.pi / 2)
+        cr.close_path()
+        cr.fill()
+        blink = 0.45 + 0.55 * abs(math.sin(time.monotonic() * 2.5))
+        cr.set_source_rgba(*RED, blink)
+        cr.arc(px + 15, py + ph / 2, 5, 0, 2 * math.pi)
+        cr.fill()
+        cr.set_source_rgba(1, 1, 1, 0.95)
+        cr.move_to(px + 27, py + ph / 2 - ext.y_bearing - ext.height / 2)
+        cr.show_text(label)
+        return False
 
-        def paintEvent(self, event):
-            painter = QPainter(self)
-            painter.setRenderHint(QPainter.Antialiasing)
-            # 2.5px crisp red border (with glow outline)
-            pen = QPen(QColor(255, 51, 102, 235))
-            pen.setWidth(3)
-            painter.setPen(pen)
-            painter.drawRect(1, 1, self.width() - 2, self.height() - 2)
+    win.connect("draw", draw)
+    win.connect("destroy", Gtk.main_quit)
+    win.show_all()
+    # Click-through: the overlay takes no input at all
+    win.input_shape_combine_region(cairo.Region())
+    GLib.timeout_add(200, lambda: (win.queue_draw(), True)[1])
+    Gtk.main()
+    return 0
 
-    app = QApplication(sys.argv)
-    app.setApplicationName("record-border")
-    x = int(sys.argv[1])
-    y = int(sys.argv[2])
-    w = int(sys.argv[3])
-    h = int(sys.argv[4])
-    overlay = BorderOverlay(x, y, w, h)
-    overlay.show()
-    sys.exit(app.exec_() if has_qt5 else app.exec())
 
-if __name__ == '__main__':
-    run()
+if __name__ == "__main__":
+    sys.exit(main())

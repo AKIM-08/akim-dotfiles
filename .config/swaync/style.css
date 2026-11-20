@@ -248,14 +248,14 @@ notificationwindow list,
     border-radius: 16px;
     background: alpha(@background, 0.90);
     border: 1px solid alpha(@foreground, 0.08);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    box-shadow: none;
 }
 
 .floating-notifications .notification-row .notification-background .notification:hover,
 .floating-notifications .notification-group .notification-row .notification-background .notification:hover {
     background: alpha(@background, 0.95);
     border: 1px solid alpha(@foreground, 0.15);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+    box-shadow: none;
 }
 
 .notification-content {

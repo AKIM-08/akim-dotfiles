@@ -22,6 +22,7 @@ TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 FILE="$DIR/screenshot-${TIMESTAMP}.png"
 REC_FILE="$VID_DIR/recording-${TIMESTAMP}.mp4"
 LOOPBACK_FILE="/tmp/wf_loopback_module.id"
+MIC_VOL_FILE="/tmp/akimrec_mic_volume"
 
 # Slurp appearance: Dark dim outside, crisp white border, 100% transparent inside
 SLURP_ARGS=(-d -b "#00000055" -c "#ffffff" -s "#00000000" -w 2)
@@ -34,7 +35,8 @@ post_capture() {
         wl-copy < "$target_file"
     fi
     if command -v notify-send &>/dev/null; then
-        notify-send -a "Screenshot" "$label" "Saved to $(basename "$target_file") and copied to clipboard" -i "$target_file" -u normal
+        notify-send -a "Screenshot" -u low -t 2500 -h string:x-canonical-private-synchronous:screenshot \
+            -i "$target_file" "$label" "Saved to $(basename "$target_file") and copied to clipboard"
     fi
 }
 
@@ -133,26 +135,25 @@ REC_META="/tmp/wf_rec_active.info"
 
 # Helper: Unload any active loopback modules to prevent mic bleeding into desktop/speaker audio
 cleanup_loopback() {
-    if [ -f "$LOOPBACK_FILE" ]; then
-        local mod_id
-        mod_id=$(cat "$LOOPBACK_FILE" 2>/dev/null || true)
-        if [ -n "$mod_id" ] && command -v pactl &>/dev/null; then
-            pactl unload-module "$mod_id" 2>/dev/null || true
-        fi
-        rm -f "$LOOPBACK_FILE"
-    fi
+    # Our own audio modules only (the "Both" mix); never the user's other loopbacks
     if command -v pactl &>/dev/null; then
-        pactl list short modules 2>/dev/null | awk '/module-loopback/ {print $1}' | while read -r mid; do
-            [ -n "$mid" ] && pactl unload-module "$mid" 2>/dev/null || true
+        if [ -f "$LOOPBACK_FILE" ]; then
+            while read -r mod_id; do
+                [ -n "$mod_id" ] && pactl unload-module "$mod_id" 2>/dev/null || true
+            done < "$LOOPBACK_FILE"
+        fi
+        pactl list short modules 2>/dev/null | awk '/akimrec/ {print $1}' | while read -r mid; do
+            pactl unload-module "$mid" 2>/dev/null || true
         done
     fi
-    if command -v amixer &>/dev/null; then
-        amixer sset 'Loopback Mixing' 'Disabled' 2>/dev/null || true
-        amixer sset 'Loopback' 'Disabled' 2>/dev/null || true
+    rm -f "$LOOPBACK_FILE"
+    # The microphone volume lowered for the recording goes back to what it was
+    if [ -f "$MIC_VOL_FILE" ]; then
+        wpctl set-volume @DEFAULT_AUDIO_SOURCE@ "$(cat "$MIC_VOL_FILE")" 2>/dev/null || true
+        rm -f "$MIC_VOL_FILE"
     fi
 }
 
-# 6. Screen Recording Toggle with Audio Source and Persistent Red Border
 toggle_recording() {
     # If already running, STOP recording, filter noise, and clean up
     if pgrep -x wf-recorder &>/dev/null || pgrep -x wl-screenrec &>/dev/null; then
@@ -185,7 +186,8 @@ toggle_recording() {
         echo "[$(date)] Stop requested. File: $saved_file, Mode: $saved_mode" >> /tmp/screenrec.log
 
         if command -v notify-send &>/dev/null; then
-            notify-send -a "Screen Recorder" "Recording Stopped" "Video saved to $VID_DIR" -i video-x-generic -u normal
+            notify-send -a "Screen Recorder" -u low -t 4000 -h string:x-canonical-private-synchronous:screenrec \
+                -i video-x-generic "Recording saved" "$(basename "${saved_file:-recording}") in $VID_DIR"
         fi
         exit 0
     fi
@@ -371,6 +373,7 @@ print(f'{mon_target} {mic_target} {sink_name}')
                 local cur_vol
                 cur_vol=$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null | awk '{print $2}' || echo "0.60")
                 if awk "BEGIN {exit !($cur_vol > 0.70)}"; then
+                    echo "$cur_vol" > "$MIC_VOL_FILE"          # put back when the recording stops
                     wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 0.65 2>/dev/null || true
                 fi
             fi
@@ -392,14 +395,23 @@ print(f'{mon_target} {mic_target} {sink_name}')
             fi
             ;;
         *"Both"*)
-            if [ -n "$MIC_NAME" ] && [ -n "$SINK_NAME" ] && command -v pactl &>/dev/null; then
-                local mod_id
-                mod_id=$(pactl load-module module-loopback latency_msec=20 source="$MIC_NAME" sink="$SINK_NAME" 2>/dev/null || true)
-                if [ -n "$mod_id" ]; then
-                    echo "$mod_id" > "$LOOPBACK_FILE"
-                fi
+            # A silent "Recording mix" device that receives the system sound and the microphone;
+            # the recorder records that mix. Nothing is played back, so you don't hear yourself.
+            if [ -n "$MIC_NAME" ] && command -v pactl &>/dev/null; then
+                local ids=() id
+                id=$(pactl load-module module-null-sink sink_name=akimrec_mix \
+                    sink_properties=device.description=Recording-mix 2>/dev/null) && ids+=("$id")
+                id=$(pactl load-module module-loopback source="$MON_NAME" sink=akimrec_mix latency_msec=30 \
+                    source_dont_move=true sink_dont_move=true 2>/dev/null) && ids+=("$id")
+                id=$(pactl load-module module-loopback source="$MIC_NAME" sink=akimrec_mix latency_msec=30 \
+                    source_dont_move=true sink_dont_move=true 2>/dev/null) && ids+=("$id")
+                printf '%s\n' "${ids[@]}" > "$LOOPBACK_FILE"
+                # A new device must not become the default output
+                [ -n "$SINK_NAME" ] && pactl set-default-sink "$SINK_NAME" 2>/dev/null
+                AUDIO_TARGET="akimrec_mix.monitor"
+            else
+                AUDIO_TARGET="$MON_NAME"
             fi
-            AUDIO_TARGET="$MON_NAME"
             ;;
         *"No Audio"*)
             AUDIO_TARGET=""
@@ -420,7 +432,8 @@ print(f'{mon_target} {mic_target} {sink_name}')
 
     # 2. Select region or ESC for fullscreen
     if command -v notify-send &>/dev/null; then
-        notify-send -a "Screen Recorder" "Select recording area" "Draw an area or press ESC for fullscreen" -u low
+        notify-send -a "Screen Recorder" -u low -t 3000 -h string:x-canonical-private-synchronous:screenrec \
+            "Select the area to record" "Drag a box, or press Esc for the whole screen"
     fi
 
     local geom=""
@@ -436,15 +449,25 @@ print(f'{mon_target} {mic_target} {sink_name}')
         local gw=${dim%x*}
         local gh=${dim#*x}
 
-        python3 "$HOME/.config/hypr/scripts/record-border.py" "$gx" "$gy" "$gw" "$gh" &
+        python3 "$HOME/.config/hypr/scripts/record-border.py" "$gx" "$gy" "$gw" "$gh" >/dev/null 2>&1 &
     fi
 
-    # 4. Start recording process
+    # 4. Start recording process. wf-recorder encodes on the graphics chip (VA-API) when it can,
+    #    which keeps the CPU (and the fan) quiet; if that doesn't start, it encodes on the CPU.
     if [ "$RECORDER" = "wf-recorder" ]; then
-        if [ -n "$geom" ]; then
-            wf-recorder -g "$geom" -f "$REC_FILE" "${AUDIO_ARGS[@]}" &
-        else
-            wf-recorder -f "$REC_FILE" "${AUDIO_ARGS[@]}" &
+        local GEOM_ARGS=() VIDEO_ARGS=()
+        [ -n "$geom" ] && GEOM_ARGS=(-g "$geom")
+        if [ -e /dev/dri/renderD128 ] && ffmpeg -hide_banner -encoders 2>/dev/null | grep -q h264_vaapi; then
+            VIDEO_ARGS=(-c h264_vaapi -d /dev/dri/renderD128)
+        fi
+        wf-recorder "${GEOM_ARGS[@]}" -f "$REC_FILE" "${VIDEO_ARGS[@]}" "${AUDIO_ARGS[@]}" >>/tmp/screenrec.log 2>&1 &
+        if [ ${#VIDEO_ARGS[@]} -gt 0 ]; then
+            sleep 1.2
+            if ! pgrep -x wf-recorder >/dev/null; then
+                echo "[$(date)] VA-API encoding failed, using the CPU" >> /tmp/screenrec.log
+                rm -f "$REC_FILE"
+                wf-recorder "${GEOM_ARGS[@]}" -f "$REC_FILE" "${AUDIO_ARGS[@]}" >>/tmp/screenrec.log 2>&1 &
+            fi
         fi
     else
         if [ -n "$geom" ]; then
@@ -455,7 +478,8 @@ print(f'{mon_target} {mic_target} {sink_name}')
     fi
 
     if command -v notify-send &>/dev/null; then
-        notify-send -a "Screen Recorder" "Recording Started" "Press SUPER+SHIFT+P, SUPER+SHIFT+R, or Screenshot menu to stop" -i media-record -u critical
+        notify-send -a "Screen Recorder" -u low -t 3000 -h string:x-canonical-private-synchronous:screenrec -i media-record \
+            "Recording" "Stop with Super + Shift + R, or Super + P → Stop recording"
     fi
 }
 
