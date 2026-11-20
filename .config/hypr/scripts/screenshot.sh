@@ -23,6 +23,7 @@ FILE="$DIR/screenshot-${TIMESTAMP}.png"
 REC_FILE="$VID_DIR/recording-${TIMESTAMP}.mp4"
 LOOPBACK_FILE="/tmp/wf_loopback_module.id"
 MIC_VOL_FILE="/tmp/akimrec_mic_volume"
+SINK_SAVE_FILE="/tmp/akimrec_default_sink"
 
 # Slurp appearance: Dark dim outside, crisp white border, 100% transparent inside
 SLURP_ARGS=(-d -b "#00000055" -c "#ffffff" -s "#00000000" -w 2)
@@ -134,8 +135,56 @@ capture_swappy() {
 REC_META="/tmp/wf_rec_active.info"
 
 # Helper: Unload any active loopback modules to prevent mic bleeding into desktop/speaker audio
+# A real microphone: the default input, unless it's a "monitor" (what the speakers play)
+real_mic() {
+    local d
+    d=$(pactl get-default-source 2>/dev/null)
+    if [ -n "$d" ] && [[ "$d" != *.monitor ]]; then
+        echo "$d"
+        return
+    fi
+    pactl list short sources 2>/dev/null | awk '$2 !~ /\.monitor$/ { print $2; exit }'
+}
+
+# Echo cancellation for the microphone: the laptop's mic also hears its speakers. PipeWire's
+# echo canceller removes what the speakers play from the mic signal. While recording, sound is
+# played through it (it forwards to your real output), and the cleaned mic is recorded.
+# Sets MIC_CLEAN to the cleaned microphone, or leaves it empty when it can't be set up.
+setup_echo_cancel() {
+    MIC_CLEAN=""
+    local mic="$1" sink="$2" id
+    command -v pactl &>/dev/null || return
+    [ -n "$sink" ] || sink=$(pactl get-default-sink 2>/dev/null)
+    [ -n "$mic" ] && [ -n "$sink" ] || return
+    id=$(pactl load-module module-echo-cancel aec_method=webrtc \
+        source_master="$mic" sink_master="$sink" \
+        source_name=akimrec_ec_source sink_name=akimrec_ec_sink \
+        source_properties=device.description=Microphone-echo-cancelled \
+        sink_properties=device.description=Recording-echo-reference 2>/dev/null) || return
+    echo "$id" >> "$LOOPBACK_FILE"
+    pactl get-default-sink > "$SINK_SAVE_FILE" 2>/dev/null
+    pactl set-default-sink akimrec_ec_sink 2>/dev/null
+    # Move what is already playing, so the canceller hears it too
+    pactl list short sink-inputs 2>/dev/null | awk '{print $1}' | while read -r si; do
+        pactl move-sink-input "$si" akimrec_ec_sink 2>/dev/null || true
+    done
+    MIC_CLEAN="akimrec_ec_source"
+}
+
 cleanup_loopback() {
-    # Our own audio modules only (the "Both" mix); never the user's other loopbacks
+    # The default output goes back to the real one (playing streams follow it)
+    if [ -f "$SINK_SAVE_FILE" ] && command -v pactl &>/dev/null; then
+        local orig
+        orig=$(cat "$SINK_SAVE_FILE")
+        if [ -n "$orig" ]; then
+            pactl set-default-sink "$orig" 2>/dev/null
+            pactl list short sink-inputs 2>/dev/null | awk '{print $1}' | while read -r si; do
+                pactl move-sink-input "$si" "$orig" 2>/dev/null || true
+            done
+        fi
+        rm -f "$SINK_SAVE_FILE"
+    fi
+    # Our own audio modules only (mix, echo canceller); never the user's other loopbacks
     if command -v pactl &>/dev/null; then
         if [ -f "$LOOPBACK_FILE" ]; then
             while read -r mod_id; do
@@ -387,12 +436,10 @@ print(f'{mon_target} {mic_target} {sink_name}')
             AUDIO_TARGET="$MON_NAME"
             ;;
         *"Microphone"*)
-            AUDIO_TARGET="$MIC_NAME"
-            if [ -z "$AUDIO_TARGET" ] || [[ "$AUDIO_TARGET" == *".monitor"* ]] || [[ "$AUDIO_TARGET" == *"output"* ]]; then
-                if command -v pactl &>/dev/null; then
-                    AUDIO_TARGET=$(pactl get-default-source 2>/dev/null || true)
-                fi
-            fi
+            # Only your voice: a real microphone, with the speakers' sound cancelled out of it
+            MIC_NAME=$(real_mic)
+            setup_echo_cancel "$MIC_NAME" "$SINK_NAME"
+            AUDIO_TARGET="${MIC_CLEAN:-$MIC_NAME}"
             ;;
         *"Both"*)
             # A silent "Recording mix" device that receives the system sound and the microphone;
