@@ -321,56 +321,75 @@ class Overlay(Gtk.Window):
         threading.Thread(target=self.load_clipboard, daemon=True).start()
 
     def load_clipboard(self):
+        """cliphist's list, read as bytes: it shortens long entries and can cut a character in
+        half, so each line keeps its original bytes (for copying / deleting) next to a text
+        version for display. Any failure shows a message instead of an endless "Loading"."""
         try:
-            out = subprocess.run(["cliphist", "list"], capture_output=True, text=True, timeout=5).stdout
-        except (OSError, subprocess.TimeoutExpired):
-            out = ""
-        entries = [l for l in out.splitlines() if "\t" in l][:200]
-        GLib.idle_add(self.fill_clipboard, entries)
-        THUMBS.mkdir(parents=True, exist_ok=True)
-        for line in entries[:60]:                     # thumbnails for the recent images
-            ident, content = line.split("\t", 1)
-            if not content.startswith("[[ binary data"):
-                continue
-            thumb = THUMBS / f"{ident}.img"
-            if not thumb.exists():
-                try:
-                    with open(thumb, "wb") as f:
-                        subprocess.run(["cliphist", "decode"], input=line.encode(), stdout=f, timeout=5)
-                except (OSError, subprocess.TimeoutExpired):
+            try:
+                raw = subprocess.run(["cliphist", "list"], capture_output=True, timeout=5).stdout
+            except FileNotFoundError:
+                GLib.idle_add(self.fill_clipboard, [], "cliphist is not installed (sudo apt install cliphist)")
+                return
+            except subprocess.TimeoutExpired:
+                GLib.idle_add(self.fill_clipboard, [], "The clipboard history did not answer")
+                return
+            entries = []
+            for line in raw.split(b"\n"):
+                if b"\t" in line:
+                    entries.append((line, line.decode("utf-8", errors="replace")))
+                if len(entries) >= 200:
+                    break
+            GLib.idle_add(self.fill_clipboard, entries, None)
+            THUMBS.mkdir(parents=True, exist_ok=True)
+            for line, text in entries[:60]:           # thumbnails for the recent images
+                ident, content = text.split("\t", 1)
+                if not content.startswith("[[ binary data"):
                     continue
-            GLib.idle_add(self.set_thumb, ident, str(thumb))
+                thumb = THUMBS / f"{ident}.img"
+                if not thumb.exists():
+                    try:
+                        with open(thumb, "wb") as f:
+                            subprocess.run(["cliphist", "decode"], input=line, stdout=f, timeout=5)
+                    except (OSError, subprocess.TimeoutExpired):
+                        continue
+                GLib.idle_add(self.set_thumb, ident, str(thumb))
+        except Exception as e:
+            sys.stderr.write(f"overlay_menu: clipboard: {e!r}\n")
+            GLib.idle_add(self.fill_clipboard, [], f"Could not read the clipboard: {e}")
 
-    def fill_clipboard(self, entries):
+    def fill_clipboard(self, entries, error=None):
         self.thumb_widgets = {}
-        for line in entries:
-            ident, content = line.split("\t", 1)
-            image = content.startswith("[[ binary data")
-            text = content.strip()
-            link = text.startswith(("http://", "https://"))
-            row = Gtk.ListBoxRow()
-            row.line, row.ident = line, ident
-            row.search = ("image " if image else "") + text.lower()
-            box = Gtk.Box(spacing=12)
-            if image:
-                img = Gtk.Image.new_from_icon_name("image-x-generic", Gtk.IconSize.DND)
-                img.get_style_context().add_class("thumb")
-                self.thumb_widgets[ident] = img
-                box.pack_start(img, False, False, 0)
-                info = text.strip("[] ").replace("binary data", "").strip()
-                title, sub = "Image", info
-            else:
-                box.pack_start(lab("\U000f0337" if link else "\U000f09a8", "glyph", xalign=0.5), False, False, 0)
-                title, sub = " ".join(text.split())[:140], ("Link" if link else f"{len(text)} characters")
-            texts = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-            texts.set_valign(Gtk.Align.CENTER)
-            texts.pack_start(lab(title, ellipsize=True), False, False, 0)
-            texts.pack_start(lab(sub, "sub", ellipsize=True), False, False, 0)
-            box.pack_start(texts, True, True, 0)
-            row.add(box)
-            self.listbox.add(row)
+        for line, decoded in entries:
+            try:
+                ident, content = decoded.split("\t", 1)
+                image = content.startswith("[[ binary data")
+                text = content.strip()
+                link = text.startswith(("http://", "https://"))
+                row = Gtk.ListBoxRow()
+                row.line, row.ident = line, ident
+                row.search = ("image " if image else "") + text.lower()
+                box = Gtk.Box(spacing=12)
+                if image:
+                    img = Gtk.Image.new_from_icon_name("image-x-generic", Gtk.IconSize.DND)
+                    img.get_style_context().add_class("thumb")
+                    self.thumb_widgets[ident] = img
+                    box.pack_start(img, False, False, 0)
+                    info = text.strip("[] ").replace("binary data", "").strip()
+                    title, sub = "Image", info
+                else:
+                    box.pack_start(lab("\U000f0337" if link else "\U000f09a8", "glyph", xalign=0.5), False, False, 0)
+                    title, sub = " ".join(text.split())[:140], ("Link" if link else f"{len(text)} characters")
+                texts = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+                texts.set_valign(Gtk.Align.CENTER)
+                texts.pack_start(lab(title, ellipsize=True), False, False, 0)
+                texts.pack_start(lab(sub, "sub", ellipsize=True), False, False, 0)
+                box.pack_start(texts, True, True, 0)
+                row.add(box)
+                self.listbox.add(row)
+            except Exception as e:                    # one odd entry must not stop the list
+                sys.stderr.write(f"overlay_menu: entry skipped: {e!r}\n")
         self.listbox.show_all()
-        self.empty.set_text("The clipboard is empty")
+        self.empty.set_text(error or "The clipboard is empty")
         self.empty.set_visible(not entries)
         self.select_first()
         return False
@@ -389,7 +408,7 @@ class Overlay(Gtk.Window):
         row = self.listbox.get_selected_row()
         if not row:
             return
-        subprocess.run(["cliphist", "delete"], input=row.line.encode(), timeout=5)
+        subprocess.run(["cliphist", "delete"], input=row.line, timeout=5)
         rows = self.visible_rows()
         i = rows.index(row)
         self.listbox.remove(row)
@@ -453,7 +472,7 @@ class Overlay(Gtk.Window):
         elif self.mode == "clipboard":
             line = row.line
             Gtk.main_quit()
-            p = subprocess.run(["cliphist", "decode"], input=line.encode(), capture_output=True, timeout=5)
+            p = subprocess.run(["cliphist", "decode"], input=line, capture_output=True, timeout=5)
             if p.returncode == 0:
                 subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE, start_new_session=True).communicate(p.stdout)
 
