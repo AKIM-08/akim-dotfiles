@@ -120,15 +120,11 @@ while true; do
         loginctl lock-session 2>/dev/null || true
         sleep 1
 
-        if [ -f "$HOME/.config/wlogout/hibernate.sh" ]; then
-            bash "$HOME/.config/wlogout/hibernate.sh"
-        else
-            systemctl hibernate 2>/dev/null || {
-                # Fallback if hibernation fails (e.g. no swap partition configured)
-                notify-send -u critical "Power" "Hibernate failed (swap missing?). Suspending instead..." 2>/dev/null || true
-                systemctl suspend-then-hibernate 2>/dev/null || systemctl suspend 2>/dev/null || true
-            }
-        fi
+        systemctl hibernate 2>/dev/null || {
+            # Fallback if hibernation fails (e.g. no swap partition configured)
+            notify-send -u critical "Power" "Hibernate failed (swap missing?). Suspending instead..." 2>/dev/null || true
+            systemctl suspend-then-hibernate 2>/dev/null || systemctl suspend 2>/dev/null || true
+        }
         sleep 300
         LOW_NOTIFIED=false
     elif [ "$res" -eq 2 ]; then

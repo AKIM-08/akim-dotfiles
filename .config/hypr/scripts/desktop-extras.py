@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """desktop-extras.py - small desktop touches, in one light background program (started by Hyprland).
 
-    workspace indicator   switching workspace shows its number and its apps for a moment
+    volume & brightness   the volume, brightness and mic keys show a small pill with a level bar
+                          near the bottom instead of a notification (the island does its own)
     desktop widgets       a big clock, the date, the song playing and a calendar drawn on the
                           wallpaper, under the windows
     charging              plugging the charger in shows a ring filling to the battery level;
@@ -15,7 +16,6 @@ import json
 import math
 import os
 import re
-import socket
 import subprocess
 import sys
 import threading
@@ -25,7 +25,7 @@ from pathlib import Path
 import gi
 gi.require_version("Gdk", "3.0")
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk   # noqa: E402
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk   # noqa: E402
 import cairo                                                # noqa: E402
 
 try:
@@ -40,7 +40,8 @@ SCRIPTS = Path(__file__).resolve().parent
 CONFIG = HOME / ".config" / "hypr" / "desktop-extras.json"
 COLORS = HOME / ".cache" / "wal" / "colors.json"
 PID_FILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "desktop-extras.pid"
-DEFAULTS = {"workspace": True, "widgets": True, "charging": True}
+DEFAULTS = {"osd": True, "widgets": True, "charging": True}
+OSD_FIFO = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "desktop-osd.fifo"
 LOW, CRITICAL = 15, 5
 
 
@@ -82,59 +83,6 @@ def rgba(h, a):
 def ink(h):
     r, g, b = rgb(h)
     return "#101010" if 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.5 else "#ffffff"
-
-
-def hypr_socket(name):
-    sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
-    for base in (Path(os.environ.get("XDG_RUNTIME_DIR", "/run/user/%d" % os.getuid())) / "hypr", Path("/tmp/hypr")):
-        p = base / sig / name
-        if sig and p.exists():
-            return str(p)
-    return None
-
-
-def hypr(cmd):
-    path = hypr_socket(".socket.sock")
-    if not path:
-        return ""
-    try:
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-            s.settimeout(1)
-            s.connect(path)
-            s.sendall(cmd.encode())
-            out = b""
-            while True:
-                b = s.recv(65536)
-                if not b:
-                    break
-                out += b
-        return out.decode(errors="replace")
-    except OSError:
-        return ""
-
-
-def app_icon(cls, size=30):
-    """An app's icon from its window class (desktop file first, then the icon theme)."""
-    theme = Gtk.IconTheme.get_default()
-    names = [cls, cls.lower(), cls.lower().split(".")[-1]]
-    for n in names:
-        try:
-            info = Gio.DesktopAppInfo.new(n + ".desktop")
-        except TypeError:
-            info = None
-        if info and info.get_icon():
-            ic = theme.lookup_by_gicon(info.get_icon(), size, Gtk.IconLookupFlags.FORCE_SIZE)
-            if ic:
-                try:
-                    return ic.load_icon()
-                except Exception:
-                    pass
-        if theme.has_icon(n):
-            try:
-                return theme.load_icon(n, size, Gtk.IconLookupFlags.FORCE_SIZE)
-            except Exception:
-                pass
-    return None
 
 
 def battery():
@@ -346,6 +294,113 @@ class Widgets(Gtk.Window):
         return False
 
 
+# ------------------------------------------------------------------------------ volume & brightness
+class Osd(Gtk.Window):
+    """A pill near the bottom: icon, level bar, percent. Updates in place, fades after a second."""
+
+    ICONS = {"volume": "\U000f057e", "volume-low": "\U000f057f", "volume-mid": "\U000f0580",
+             "muted": "\U000f075f", "brightness": "\U000f00e0", "mic": "\U000f036c", "mic-off": "\U000f036d"}
+
+    def __init__(self, extras):
+        super().__init__()
+        self.extras = extras
+        layer(self, "desktop-osd", GtkLayerShell.Layer.OVERLAY, (GtkLayerShell.Edge.BOTTOM,))
+        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 90)
+        self.pill = Gtk.Box(spacing=14)
+        self.pill.get_style_context().add_class("osd")
+        self.icon = Gtk.Label()
+        self.icon.get_style_context().add_class("osd-icon")
+        self.bar = Gtk.DrawingArea()
+        self.bar.set_size_request(190, 8)
+        self.bar.set_valign(Gtk.Align.CENTER)
+        self.bar.connect("draw", self.draw_bar)
+        self.value = Gtk.Label(xalign=1)
+        self.value.set_width_chars(5)
+        self.value.get_style_context().add_class("osd-value")
+        for w in (self.icon, self.bar, self.value):
+            self.pill.pack_start(w, False, False, 0)
+        self.add(self.pill)
+        self.connect("size-allocate", lambda *_: click_through(self))
+        self.level = self.shown = 0.0
+        self.muted = False
+        self.hide_at = self.t0 = 0
+        self.tick = None
+
+    def draw_bar(self, w, cr):
+        W, H = w.get_allocated_width(), w.get_allocated_height()
+
+        def pill(width):
+            r = H / 2
+            cr.new_sub_path()
+            cr.arc(r, r, r, math.pi / 2, 3 * math.pi / 2)
+            cr.arc(max(r, width - r), r, r, -math.pi / 2, math.pi / 2)
+            cr.close_path()
+        fg = rgb(self.extras.pal["fg"])
+        cr.set_source_rgba(*fg, 0.16)
+        pill(W)
+        cr.fill()
+        if self.shown > 0.005:
+            if self.muted:
+                cr.set_source_rgba(*fg, 0.45)
+            else:
+                cr.set_source_rgba(*rgb(self.extras.pal["accent"]), 1)
+            pill(max(H, W * min(1.0, self.shown)))
+            cr.fill()
+        return False
+
+    def show_level(self, kind, value, muted=False):
+        if kind == "volume":
+            icon = "muted" if muted else ("volume-low" if value < 34 else "volume-mid" if value < 67 else "volume")
+            text = "Muted" if muted else f"{value}%"
+        elif kind == "mic":
+            icon, value, text = ("mic-off", 0, "Off") if muted else ("mic", 100, "On")
+        else:
+            icon, text = "brightness", f"{value}%"
+        self.icon.set_text(self.ICONS[icon])
+        self.value.set_text(text)
+        self.muted = muted
+        self.level = max(0, value) / 100
+        now = time.monotonic()
+        if not self.get_visible():
+            self.t0 = now
+            self.shown = self.level
+            self.pill.set_opacity(0)
+            self.show_all()
+        self.hide_at = now + 1.1
+        if self.tick is None:
+            self.tick = self.add_tick_callback(self.animate)
+
+    def animate(self, *_):
+        now = time.monotonic()
+        self.shown += (self.level - self.shown) * 0.3
+        a = min(1.0, (now - self.t0) / 0.12)
+        if now > self.hide_at:
+            a = max(0.0, 1 - (now - self.hide_at) / 0.3)
+        self.pill.set_opacity(a)
+        self.bar.queue_draw()
+        if now > self.hide_at + 0.3:
+            self.hide()
+            self.tick = None
+            return False
+        return True
+
+
+def osd_reader(on_line):
+    """Lines written to the FIFO by volume-control.sh / brightness-control.sh."""
+    try:
+        if OSD_FIFO.exists() and not OSD_FIFO.is_fifo():
+            OSD_FIFO.unlink()
+        if not OSD_FIFO.exists():
+            os.mkfifo(OSD_FIFO, 0o600)
+        fd = os.open(OSD_FIFO, os.O_RDWR)          # read+write: never sees end-of-file
+    except OSError as e:
+        sys.stderr.write(f"desktop-extras: no pop-up ({e})\n")
+        return
+    with os.fdopen(fd, "r", errors="replace") as f:
+        for line in f:
+            GLib.idle_add(on_line, line.split())
+
+
 # ------------------------------------------------------------------------------ the program
 class Extras:
     def __init__(self):
@@ -356,12 +411,13 @@ class Extras:
         self.provider = None
         self.css()
         self.flash = Flash(self)
+        self.osd = Osd(self)
         self.widgets = None
         self.last_bat = battery()
         self.warned = set()
         self.apply_config()
         GLib.timeout_add(2000, self.poll)
-        threading.Thread(target=self.watch_workspaces, daemon=True).start()
+        threading.Thread(target=osd_reader, args=(self.on_osd,), daemon=True).start()
 
     def css(self):
         a, b, f = self.pal["accent"], self.pal["bg"], self.pal["fg"]
@@ -369,8 +425,9 @@ class Extras:
         * {{ font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif; color: {f}; text-shadow: none; }}
         window {{ background: transparent; }}
         .flash {{ background: {rgba(b, .86)}; border: 1px solid {rgba(f, .14)}; border-radius: 26px; padding: 22px 34px; }}
-        .ws-num {{ font-size: 64px; font-weight: 800; color: {a}; }}
-        .ws-apps {{ font-size: 13px; color: {rgba(f, .65)}; }}
+        .osd {{ background: {rgba(b, .88)}; border: 1px solid {rgba(f, .12)}; border-radius: 999px; padding: 12px 22px; }}
+        .osd-icon {{ font-family: "JetBrainsMono Nerd Font"; font-size: 20px; color: {a}; }}
+        .osd-value {{ font-weight: 700; font-size: 14px; }}
         .big {{ font-size: 20px; font-weight: 800; }}
         .sub {{ font-size: 13px; color: {rgba(f, .65)}; }}
         .low .big {{ color: #ff6b6b; }}
@@ -397,6 +454,29 @@ class Extras:
         elif not self.cfg["widgets"] and self.widgets is not None:
             self.widgets.destroy()
             self.widgets = None
+        # The volume / brightness scripts only send here while the FIFO exists
+        try:
+            if self.cfg["osd"]:
+                if not OSD_FIFO.exists():
+                    os.mkfifo(OSD_FIFO, 0o600)
+            elif OSD_FIFO.is_fifo():
+                OSD_FIFO.unlink()
+        except OSError:
+            pass
+
+    def on_osd(self, words):
+        """volume <0-150> <0|1 muted> · brightness <0-100> · mic <0|1 muted>"""
+        try:
+            kind = words[0]
+            if kind == "volume":
+                self.osd.show_level("volume", int(words[1]), words[2:3] == ["1"])
+            elif kind == "brightness":
+                self.osd.show_level("brightness", int(words[1]))
+            elif kind == "mic":
+                self.osd.show_level("mic", 0, words[1:2] == ["1"])
+        except (IndexError, ValueError):
+            pass
+        return False
 
     def poll(self):
         """Every 2 s: settings, palette, battery (all cheap file reads)."""
@@ -420,57 +500,6 @@ class Extras:
                 self.widgets.calendar()
         self.check_battery()
         return True
-
-    # -------------------------------------------------------------- workspace indicator
-    def watch_workspaces(self):
-        while True:
-            path = hypr_socket(".socket2.sock")
-            if path:
-                try:
-                    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-                        s.connect(path)
-                        for line in s.makefile("r", errors="replace"):
-                            ev, _, data = line.strip().partition(">>")
-                            if ev == "workspacev2":
-                                ident, _, name = data.partition(",")
-                                if not name.startswith("special"):
-                                    GLib.idle_add(self.show_workspace, ident, name)
-                except OSError:
-                    pass
-            time.sleep(2)
-
-    def show_workspace(self, ident, name):
-        if not self.cfg["workspace"]:
-            return False
-        try:
-            clients = json.loads(hypr("j/clients") or "[]")
-        except ValueError:
-            clients = []
-        apps = []
-        for c in clients:
-            if str(c.get("workspace", {}).get("id")) == ident and c.get("class") and c["class"] not in [a for a in apps]:
-                apps.append(c["class"])
-        f = self.flash
-        f.clear()
-        f.card.get_style_context().remove_class("low")
-        num = Gtk.Label(label=name if not name.isdigit() else name)
-        num.get_style_context().add_class("ws-num")
-        f.card.pack_start(num, False, False, 0)
-        if apps:
-            icons = Gtk.Box(spacing=8)
-            icons.set_halign(Gtk.Align.CENTER)
-            for cls in apps[:6]:
-                pix = app_icon(cls)
-                icons.pack_start(Gtk.Image.new_from_pixbuf(pix) if pix else
-                                 Gtk.Image.new_from_icon_name("application-x-executable", Gtk.IconSize.LARGE_TOOLBAR), False, False, 0)
-            f.card.pack_start(icons, False, False, 0)
-            words = Gtk.Label(label=" · ".join(a.split(".")[-1].capitalize() for a in apps[:4]))
-        else:
-            words = Gtk.Label(label="Empty")
-        words.get_style_context().add_class("ws-apps")
-        f.card.pack_start(words, False, False, 0)
-        f.show_for(0.75)
-        return False
 
     # -------------------------------------------------------------- charging / low battery
     def check_battery(self):
@@ -561,6 +590,7 @@ def main():
         try:
             if PID_FILE.read_text().strip() == str(os.getpid()):
                 PID_FILE.unlink()
+                OSD_FIFO.unlink()
         except OSError:
             pass
 

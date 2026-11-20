@@ -1,0 +1,49 @@
+# Checks every push: a script with a syntax error never reaches anyone's laptop.
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell scripts parse (bash -n)
+        run: |
+          status=0
+          while IFS= read -r f; do
+            bash -n "$f" || { echo "::error file=$f::bash syntax error"; status=1; }
+          done < <(git ls-files '*.sh' install.sh)
+          exit $status
+
+      - name: Shell scripts have no serious mistakes (shellcheck, errors only)
+        run: |
+          sudo apt-get install -y -qq shellcheck >/dev/null
+          git ls-files '*.sh' install.sh | xargs shellcheck --severity=error --shell=bash
+
+      - name: Python scripts compile
+        run: |
+          git ls-files '*.py' | xargs python3 -m py_compile
+
+      - name: JSON files are valid
+        run: |
+          python3 - <<'EOF'
+          import json, re, subprocess, sys
+          bad = 0
+          files = subprocess.run(["git", "ls-files", "*.json", "*.jsonc", ".config/waybar/themes/*/config-*"],
+                                 capture_output=True, text=True).stdout.split()
+          for f in files:
+              text = open(f, encoding="utf-8").read()
+              # JSONC: drop // and /* */ comments (outside strings) and trailing commas
+              text = re.sub(r'("(?:\\.|[^"\\])*")|//[^\n]*|/\*.*?\*/', lambda m: m.group(1) or "", text, flags=re.S)
+              text = re.sub(r",(\s*[}\]])", r"\1", text)
+              try:
+                  json.loads(text)
+              except ValueError as e:
+                  print(f"::error file={f}::{e}")
+                  bad = 1
+          sys.exit(bad)
+          EOF

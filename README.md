@@ -61,13 +61,24 @@ What the installer does:
 ### Update
 
 ```bash
+akim-update
+```
+
+It pulls the latest version, copies only the files that changed, restarts what needs it (bar,
+notifications, desktop widgets) and tells you if Hyprland finds a problem in its config.
+`akim-update --check` only says whether an update is waiting; `akim-update --dry-run` lists the
+files it would copy. If the command isn't found yet, run it once as
+`bash ~/akim-dotfiles/install/update.sh`.
+
+When the installer itself changed (new packages), `akim-update` tells you to run it again:
+
+```bash
 cd akim-dotfiles
-git pull
 ./install.sh
 ```
 
-Re-running the installer **keeps your choices**: bar theme and position, lock screen, power menu
-style, wallpaper transition, night light, pointer size, shortcuts you changed, and your default
+Both **keep your choices**: bar theme and position, lock screen, power menu style, wallpaper
+transition, night light, pointer size, desktop widgets, shortcuts you changed, and your default
 apps.
 
 ### Undo

@@ -13,7 +13,6 @@ ARCH_PKGS=(
     waybar
     kitty
     rofi-wayland
-    wofi
     cliphist
     wl-clipboard
     grim

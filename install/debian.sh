@@ -80,8 +80,6 @@ sudo apt-get install -y \
     python3-numpy \
     python3-opengl \
     python3-venv \
-    python3-pyqt5 \
-    python3-pyqt6 \
     libnotify-bin \
     pkg-config \
     libglib2.0-bin \
@@ -99,7 +97,6 @@ APT_CORE_PKGS=(
     kitty
     waybar
     rofi
-    wofi
     cliphist
     wl-clipboard
     grim
@@ -266,19 +263,13 @@ fi
 
 ## 5d. Mouse pointer: Breeze, from APT (see APT_EXTRA_PKGS and scripts/cursors.py)
 
-## 5e. papirus-folders
-echo "--> Setting up papirus-folders for Catppuccin icon coloring..."
-if ! command -v papirus-folders &>/dev/null; then
-    mkdir -p /tmp/papirus-folders
-    git clone --depth 1 https://github.com/PapirusDevelopmentTeam/papirus-folders.git /tmp/papirus-folders 2>/dev/null \
-        && sudo cp /tmp/papirus-folders/papirus-folders /usr/local/bin/ \
-        && sudo chmod +x /usr/local/bin/papirus-folders \
-        && rm -rf /tmp/papirus-folders 2>/dev/null \
-        || warn "Could not install papirus-folders script"
-fi
-if command -v papirus-folders &>/dev/null; then
-    sudo chmod -R a+rw /usr/share/icons/Papirus* 2>/dev/null || true
-    papirus-folders -C blue --theme Papirus-Dark 2>/dev/null || true
+## 5e. Papirus folder colors
+# Recolored per wallpaper in a private theme (scripts/apply-papirus-color.py), so the system
+# icon folders stay read-only. Older versions of this installer made them writable for every
+# user and installed papirus-folders: undo that.
+if [ -d /usr/share/icons/Papirus ]; then
+    sudo chmod -R go-w /usr/share/icons/Papirus* 2>/dev/null || true
+    [ -x /usr/local/bin/papirus-folders ] && sudo papirus-folders -D --theme Papirus-Dark >/dev/null 2>&1 || true
 fi
 
 ## 5f. Rust tools: awww (animated wallpaper daemon) & snmenu (radial power menu)

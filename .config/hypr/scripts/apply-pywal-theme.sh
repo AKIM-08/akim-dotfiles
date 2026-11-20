@@ -918,11 +918,10 @@ background_tasks() {
     (
         exec 8>&- 9>&-   # release the apply/precache locks; nothing should wait on this
         command -v pywal-discord &>/dev/null && pywal-discord -t default
-        timeout 3 python3 "$SCRIPT_DIR/apply-papirus-color.py"
+        timeout 15 python3 "$SCRIPT_DIR/apply-papirus-color.py"   # also sets the icon theme
 
         # (gtk-theme is switched by apply_gtk3_theme)
         if command -v gsettings &>/dev/null; then
-            gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
             gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11'
         fi
     ) >/dev/null 2>&1 &

@@ -20,6 +20,7 @@ exec-once = udiskie --tray --notify
 exec-once = nice -n 19 ~/.config/hypr/scripts/apply-pywal-theme.sh --precache
 exec-once = ~/.config/hypr/scripts/nightlight.sh restore
 exec-once = python3 ~/.config/hypr/scripts/desktop-extras.py
+exec-once = nice -n 19 python3 ~/.config/hypr/scripts/apply-papirus-color.py
 # Wallpaper transition maps for new wallpapers (uses the character model if wallfx-setup.sh was run)
 exec-once = sh -c 'py=$HOME/.local/share/wallfx/venv/bin/python; [ -x "$py" ] || py=python3; nice -n 19 "$py" ~/.config/hypr/scripts/wallfx/wallfx-map.py precache'
 # pywal colors are NOT sourced here: Hyprland auto-reloads whenever a sourced file
@@ -64,7 +65,7 @@ source = ~/.config/hypr/user-apps.hl
 
 # exec-once = $terminal
 # exec-once = nm-applet &
-# exec-once = waybar & hyprpaper & firefox
+# exec-once = firefox
 
 
 #############################
@@ -472,6 +473,9 @@ layerrule = blur on, match:namespace desktop-extras
 layerrule = ignore_alpha 0.2, match:namespace desktop-extras
 layerrule = animation fade, match:namespace desktop-extras
 layerrule = animation fade, match:namespace desktop-widgets
+layerrule = blur on, match:namespace desktop-osd
+layerrule = ignore_alpha 0.2, match:namespace desktop-osd
+layerrule = animation fade, match:namespace desktop-osd
 
 # User custom settings (mouse speed, default apps, etc.) managed via Quick Settings (Super + H)
 source = ~/.config/hypr/user-settings.hl

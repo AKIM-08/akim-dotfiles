@@ -15,12 +15,6 @@ if pgrep -x snmenu >/dev/null 2>&1; then
     exit 0
 fi
 
-# If wlogout is already running, toggle it off
-if pgrep -x wlogout >/dev/null 2>&1; then
-    pkill -x wlogout
-    exit 0
-fi
-
 # Ensure ~/.config/snmenu has the layout and style from cpmenu
 mkdir -p "$HOME/.config/snmenu"
 if [ -d "$HOME/.config/cpmenu" ]; then
@@ -34,12 +28,7 @@ if [ -f "$HOME/.config/hypr/scripts/snmenu.py" ]; then
     exec python3 "$HOME/.config/hypr/scripts/snmenu.py" --style "$style"
 fi
 
-# 2. wlogout if installed
-if command -v wlogout &>/dev/null; then
-    exec wlogout -b 5
-fi
-
-# 4. Seamless Rofi power menu fallback using active wallpaper theme
+# 2. Seamless Rofi power menu fallback using active wallpaper theme
 chosen=$(printf "  Lock\n  Logout\n  Suspend\n  Hibernate\n  Reboot\n  Shutdown" | rofi -dmenu -i -p "Power Menu" -config "$HOME/.config/rofi/clipboard.rasi")
 case "$chosen" in
     *Lock*) hyprlock ;;

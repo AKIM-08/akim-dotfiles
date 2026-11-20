@@ -53,7 +53,7 @@ SHORTCUTS=(
     "󰸉  SUPER + W                  󰄾  Wallpaper Picker (Rofi)"
     "󰸉  SUPER + ALT + Right        󰄾  Next Wallpaper + Auto-Theme Update"
     "󰸉  SUPER + ALT + Left         󰄾  Previous Wallpaper + Auto-Theme Update"
-    "󱄄  SUPER + SHIFT + T          󰄾  Waybar Theme Selector (Wofi)"
+    "󱄄  SUPER + SHIFT + T          󰄾  Waybar Theme Selector"
     "󱊦  SUPER + X                  󰄾  Emoji & Character Picker"
     "󰕾  Fn + Volume Up / Down      󰄾  Volume Control (with OSD)"
     "󰃟  Fn + Brightness Up / Down  󰄾  Screen Brightness Control (with OSD)"

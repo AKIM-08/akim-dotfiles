@@ -223,7 +223,7 @@ cp -rp "$STATE_KEEP"/. "$HOME/.config/" 2>/dev/null && echo "--> Kept your setti
 rm -rf "$STATE_KEEP"
 
 # Configs that need a real folder path: point them at the user's Pictures folder
-for f in "$HOME/.config/waypaper/config.ini" "$HOME/.config/hypr/hyprpaper.conf" "$HOME/.config/swappy/config"; do
+for f in "$HOME/.config/waypaper/config.ini" "$HOME/.config/swappy/config"; do
     [ -f "$f" ] && sed -i -e "s|~/Pictures|$PICTURES_DIR|g" -e "s|\$HOME/Pictures|$PICTURES_DIR|g" "$f"
 done
 
@@ -298,6 +298,10 @@ sync_gtk_settings() {
 }
 sync_gtk_settings
 
+# Folder icons in the wallpaper's color: a private icon theme in ~/.local/share/icons
+# (Papirus-Akim); the system icon folders are never modified
+python3 "$HOME/.config/hypr/scripts/apply-papirus-color.py" --force 2>/dev/null || true
+
 # 7. Kvantum Theme for Qt
 echo "--> Setting up Kvantum theme for Qt applications..."
 if [ ! -d "$HOME/.config/Kvantum/catppuccin-mocha-blue" ]; then
@@ -357,6 +361,9 @@ setup_nautilus_kitty() {
     fi
 }
 setup_nautilus_kitty
+
+# akim-update: later updates in one command (pull + copy only what changed, settings kept)
+ln -sf "$REPO_ROOT/install/update.sh" "$HOME/.local/bin/akim-update" 2>/dev/null     && chmod +x "$REPO_ROOT/install/update.sh" && echo "--> Update later with: akim-update"
 
 echo "=========================================================================="
 echo " Common configuration deployment complete."

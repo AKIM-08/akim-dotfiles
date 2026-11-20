@@ -922,9 +922,9 @@ class Settings(Gtk.Window):
     def desktop_extras_rows(self):
         path = HYPR / "desktop-extras.json"
         try:
-            cfg = {"workspace": True, "widgets": True, "charging": True, **json.loads(path.read_text(encoding="utf-8"))}
+            cfg = {"osd": True, "widgets": True, "charging": True, **json.loads(path.read_text(encoding="utf-8"))}
         except (OSError, ValueError):
-            cfg = {"workspace": True, "widgets": True, "charging": True}
+            cfg = {"osd": True, "widgets": True, "charging": True}
 
         def setter(key):
             def apply(v):
@@ -934,8 +934,8 @@ class Settings(Gtk.Window):
         return [
             row("Desktop widgets", "Clock, date, the song playing and a calendar on the wallpaper",
                 switch(cfg["widgets"], setter("widgets"))),
-            row("Workspace indicator", "Shows the workspace number and its apps when you switch",
-                switch(cfg["workspace"], setter("workspace"))),
+            row("Volume & brightness pop-up", "A small level bar near the bottom instead of a notification",
+                switch(cfg["osd"], setter("osd"))),
             row("Charging animation", "A ring when the charger is plugged in, and a warning when the battery is low",
                 switch(cfg["charging"], setter("charging"))),
         ]
