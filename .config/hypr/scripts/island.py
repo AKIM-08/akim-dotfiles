@@ -188,6 +188,14 @@ def read_battery():
         try:
             cap = int((bat / "capacity").read_text().strip())
             charging = (bat / "status").read_text().strip() in ("Charging", "Full")
+            # the charger itself answers first: many laptops keep "Not charging" a while
+            for ps in Path("/sys/class/power_supply").iterdir():
+                try:
+                    if (ps / "type").read_text().strip() == "Mains":
+                        charging = (ps / "online").read_text().strip() == "1"
+                        break
+                except OSError:
+                    continue
             return cap, charging
         except (OSError, ValueError):
             return None
@@ -1009,7 +1017,7 @@ class Island(Gtk.Window):
         self.ticks += 1
         self.clock_l.set_text(time.strftime("%H\n%M" if self.vertical else "%H:%M"))
         self.date_l.set_text(time.strftime("%a %d"))
-        if self.ticks % 20 == 1:
+        if self.ticks % 2 == 1:
             bat = read_battery()
             if bat:
                 cap, charging = bat

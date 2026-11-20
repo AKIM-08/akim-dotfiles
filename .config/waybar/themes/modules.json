@@ -116,7 +116,7 @@
         "on-click-right": "blueman-manager"
     },
     "battery": {
-        "interval": 30,
+        "interval": 2,
         "states": {
             "good": 95,
             "warning": 30,
