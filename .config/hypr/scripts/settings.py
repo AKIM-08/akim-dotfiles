@@ -1095,6 +1095,51 @@ class Settings(Gtk.Window):
                   row("Open a terminal", "", button("Terminal", lambda: spawn(["kitty"])))),
         ]
 
+    # -------------------------------------------------------------- Transparency
+    def hypr_float(self, option, default):
+        m = re.search(r"float:\s*([0-9.]+)", run(["hyprctl", "getoption", option]))
+        return float(m.group(1)) if m else default
+
+    def opacity_section(self):
+        """Window opacity (Hyprland decoration), kept in user-settings.hl."""
+        cur = {"active": self.hypr_float("decoration:active_opacity", 0.86),
+               "inactive": self.hypr_float("decoration:inactive_opacity", 0.76)}
+
+        def apply(key, v):
+            cur[key] = round(v / 100, 2)
+            spawn(["hyprctl", "keyword", f"decoration:{key}_opacity", str(cur[key])])
+            set_block("opacity", f"decoration {{\n    active_opacity = {cur['active']}\n"
+                                 f"    inactive_opacity = {cur['inactive']}\n}}")
+        pct = lambda v: f"{int(v)}%"
+        return [
+            section("Transparency"),
+            group(
+                row("Focused window", "100% is solid; lower lets the wallpaper show through",
+                    slider(cur["active"] * 100, 40, 100, pct, lambda v: apply("active", v))),
+                row("Other windows", "The windows you are not using",
+                    slider(cur["inactive"] * 100, 30, 100, pct, lambda v: apply("inactive", v))),
+                row("Terminal background", "Kitty's own background, on top of the window setting",
+                    slider(self.kitty_opacity() * 100, 30, 100, pct, lambda v: self.set_kitty_opacity(v / 100))),
+            ),
+        ]
+
+    KITTY_OPACITY = HOME / ".config" / "kitty" / "opacity.conf"
+
+    def kitty_opacity(self):
+        for f in (self.KITTY_OPACITY, HOME / ".config" / "kitty" / "kitty.conf"):
+            try:
+                m = re.search(r"^background_opacity\s+([0-9.]+)", f.read_text(encoding="utf-8"), re.M)
+                if m:
+                    return float(m.group(1))
+            except OSError:
+                pass
+        return 0.65
+
+    def set_kitty_opacity(self, v):
+        self.KITTY_OPACITY.write_text(f"# Settings -> Display -> Transparency\nbackground_opacity {v:.2f}\n",
+                                      encoding="utf-8")
+        spawn(["pkill", "-USR1", "-x", "kitty"])          # open kitty windows reload their config
+
     # -------------------------------------------------------------- Display
     def page_display(self):
         bri = None
@@ -1124,7 +1169,7 @@ class Settings(Gtk.Window):
                                                       lambda v: spawn(["brightnessctl", "-q", "set", f"{int(v)}%"]))))
         rows += [row("Night light", "Warmer colors, easier on the eyes in the evening", switch(night_on, set_night)),
                  row("Warmth", "", segmented(temps, self._temp, set_temp))]
-        return [group(*rows)]
+        return [group(*rows)] + self.opacity_section()
 
     # -------------------------------------------------------------- Network
     def page_wifi(self):
