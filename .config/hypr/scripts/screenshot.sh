@@ -35,7 +35,7 @@ post_capture() {
         wl-copy < "$target_file"
     fi
     if command -v notify-send &>/dev/null; then
-        notify-send -a "Screenshot" -u low -t 2500 -h string:x-canonical-private-synchronous:screenshot \
+        notify-send -e -a "Screenshot" -u low -t 2500 -h string:x-canonical-private-synchronous:screenshot \
             -i "$target_file" "$label" "Saved to $(basename "$target_file") and copied to clipboard"
     fi
 }
@@ -126,7 +126,7 @@ capture_swappy() {
         grim -g "$geom" "$FILE"
         post_capture "$FILE" "Region Screenshot"
         if command -v notify-send &>/dev/null; then
-            notify-send -a "Screenshot" "Tip" "Install swappy to draw arrows/text on screenshots: sudo apt install swappy" -u low
+            notify-send -e -a "Screenshot" "Tip" "Install swappy to draw arrows/text on screenshots: sudo apt install swappy" -u low
         fi
     fi
 }
@@ -432,7 +432,7 @@ print(f'{mon_target} {mic_target} {sink_name}')
 
     # 2. Select region or ESC for fullscreen
     if command -v notify-send &>/dev/null; then
-        notify-send -a "Screen Recorder" -u low -t 3000 -h string:x-canonical-private-synchronous:screenrec \
+        notify-send -e -a "Screen Recorder" -u low -t 3000 -h string:x-canonical-private-synchronous:screenrec \
             "Select the area to record" "Drag a box, or press Esc for the whole screen"
     fi
 
@@ -478,7 +478,7 @@ print(f'{mon_target} {mic_target} {sink_name}')
     fi
 
     if command -v notify-send &>/dev/null; then
-        notify-send -a "Screen Recorder" -u low -t 3000 -h string:x-canonical-private-synchronous:screenrec -i media-record \
+        notify-send -e -a "Screen Recorder" -u low -t 3000 -h string:x-canonical-private-synchronous:screenrec -i media-record \
             "Recording" "Stop with Super + Shift + R, or Super + P → Stop recording"
     fi
 }
