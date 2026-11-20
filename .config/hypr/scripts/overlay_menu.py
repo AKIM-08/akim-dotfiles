@@ -123,7 +123,8 @@ class Overlay(Gtk.Window):
         self.connect("key-press-event", self.on_key)
         self.connect("destroy", Gtk.main_quit)
         {"shortcuts": self.build_shortcuts, "clipboard": self.build_clipboard, "screenshot": self.build_screenshot,
-         "power": self.build_power, "bartheme": self.build_bartheme, "audio": self.build_audio}[mode]()
+         "power": self.build_power, "bartheme": self.build_bartheme, "audio": self.build_audio,
+         "screens": self.build_screens}[mode]()
 
     def css(self):
         p = palette()
@@ -532,6 +533,34 @@ class Overlay(Gtk.Window):
         self.flow.select_child(chosen)
         GLib.idle_add(lambda: (chosen.grab_focus(), False)[1])
 
+    # -------------------------------------------------------------- Screens: tiles
+    def build_screens(self):
+        sys.path.insert(0, str(SCRIPTS))
+        import screens
+        mons = screens.monitors()
+        others = screens.externals(mons)
+        if not others:
+            self.tile_grid("Screens", [("\U000f0379", "Laptop only", "no other screen connected",
+                                        lambda: Gtk.main_quit())], 1, 0,
+                           "Plug in a screen (HDMI or USB-C), then open this again · Esc closes")
+            return
+        other = others[0]
+        name = other["name"]
+        current = screens.saved().get(name, "right")
+        choices = [("\U000f0379", "Laptop only", "the other screen off", "off"),
+                   ("\U000f1529", "Extend right", "more space on the right", "right"),
+                   ("\U000f152a", "Extend left", "more space on the left", "left"),
+                   ("\U000f0a95", "Same picture", "for presenting", "mirror"),
+                   ("\U000f0e2e", "Only the other one", "laptop screen off", "only")]
+
+        def choose(place):
+            Gtk.main_quit()
+            spawn_later(f"python3 {shlex.quote(str(SCRIPTS / 'screens.py'))} set {shlex.quote(name)} {place}", 0.05)
+        tiles = [(i, n, d + (" · now" if p == current else ""), lambda p=p: choose(p)) for i, n, d, p in choices]
+        sel = next((k for k, c in enumerate(choices) if c[3] == current), 1)
+        self.tile_grid(f"Screens · {screens.describe(other)}", tiles, 5, sel,
+                       "Arrows and Enter, a number, or a click · Esc closes · more in Settings → Display")
+
     # -------------------------------------------------------------- Power profile: tiles
     def build_power(self):
         current = subprocess.run([str(SCRIPTS / "power-mode.sh"), "get"], capture_output=True, text=True).stdout.strip()
@@ -675,7 +704,7 @@ class Overlay(Gtk.Window):
 
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "shortcuts"
-    if mode not in ("shortcuts", "clipboard", "screenshot", "power", "bartheme", "audio"):
+    if mode not in ("shortcuts", "clipboard", "screenshot", "power", "bartheme", "audio", "screens"):
         print(__doc__, file=sys.stderr)
         return 2
     # The same shortcut again closes it (any menu: one at a time)

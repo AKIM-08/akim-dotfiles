@@ -106,6 +106,7 @@ Puts back the configuration you had before the first install (the oldest backup 
 | `Super + F` | Files (Nautilus) |
 | `Super + B` | Web browser |
 | `Super + A` | Close the window |
+| `Alt + Tab` | Window overview: hold Alt, tap Tab to move, let go to jump; type to find a window |
 | `Super + W` | Wallpaper picker |
 | `Super + Alt + ←` / `→` | Previous / next wallpaper |
 | `Super + N` | Quick panel |
@@ -113,6 +114,7 @@ Puts back the configuration you had before the first install (the oldest backup 
 | `Super + H` | Settings |
 | `Super + Shift + H` | Quick settings (Rofi) |
 | `Super + Shift + T` | Bar style |
+| `Super + Shift + D` | Screens: extend, same picture or only one (HDMI, USB-C) |
 | `Super + G` | Shortcut list |
 | `Super + V` | Clipboard history |
 | `Super + P` | Screenshot menu |

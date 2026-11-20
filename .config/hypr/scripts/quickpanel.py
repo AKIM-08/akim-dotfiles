@@ -455,6 +455,7 @@ class QuickPanel(Gtk.Window):
             "night": Tile("\U000f0594", "Night light", lambda: self.act(f"{S}/nightlight.sh toggle")),
             "caffeine": Tile("\U000f0176", "Caffeine", lambda: self.act(f"bash {S}/caffeine-toggle.sh")),
             "shot": Tile("\U000f0100", "Screenshot", lambda: self.close_then(f"sleep 0.35; {S}/screenshot.sh region")),
+            "screens": Tile("\U000f0379", "Screens", lambda: self.close_then(f"python3 {S}/overlay_menu.py screens")),
         }
         for i, tile in enumerate(self.tiles.values()):
             grid.attach(tile, i % 2, i // 2, 1, 1)

@@ -358,6 +358,12 @@ bindl = , XF86AudioPrev, exec, playerctl previous
 # MY CUSTOM BINDS
 bind = $mainMod, SPACE, exec, ~/.config/hypr/scripts/toggle-float-center.sh
 bind = $mainMod, TAB, exec, ~/.config/hypr/scripts/toggle-float-center.sh
+# Window overview: Alt + Tab (hold Alt, Tab to move, let go to jump), Alt + Shift + Tab goes back
+bind = ALT, TAB, exec, ~/.config/hypr/scripts/overview.sh overview
+bind = ALT SHIFT, TAB, exec, ~/.config/hypr/scripts/overview.sh overview-back
+bindrt = ALT, ALT_L, exec, ~/.config/hypr/scripts/overview.sh overview-release
+# Screens menu: extend / same picture / only one (HDMI, USB-C)
+bind = $mainMod SHIFT, D, exec, python3 ~/.config/hypr/scripts/overlay_menu.py screens
 bind = $mainMod SHIFT, SPACE, centerwindow
 bind = $mainMod, T, exec, ~/.config/hypr/scripts/toggle-float-center.sh
 bind = $mainMod, D, exec, discord --enable-features=WebRTCPipeWireCapturer
@@ -476,6 +482,9 @@ layerrule = animation fade, match:namespace desktop-widgets
 layerrule = blur on, match:namespace desktop-osd
 layerrule = ignore_alpha 0.2, match:namespace desktop-osd
 layerrule = animation fade, match:namespace desktop-osd
+layerrule = blur on, match:namespace overview
+layerrule = ignore_alpha 0.2, match:namespace overview
+layerrule = animation fade, match:namespace overview
 
 # User custom settings (mouse speed, default apps, etc.) managed via Quick Settings (Super + H)
 source = ~/.config/hypr/user-settings.hl

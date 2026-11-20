@@ -5,6 +5,9 @@
                           near the bottom instead of a notification (the island does its own)
     desktop widgets       a big clock, the date, the song playing and a calendar drawn on the
                           wallpaper, under the windows
+    window overview       Alt + Tab: every window as a picture (overview.py, shown from here so
+                          it opens at once); a picture of each workspace is kept for it
+    screens               a screen plugged in or out gets its place back (screens.py restore)
     charging              plugging the charger in shows a ring filling to the battery level;
                           a red one warns when the battery gets low (click it for Power saver)
 
@@ -474,6 +477,12 @@ class Extras:
         GLib.timeout_add(2000, self.poll)
         GLib.timeout_add(700, self.check_battery)
         threading.Thread(target=osd_reader, args=(self.on_osd,), daemon=True).start()
+        threading.Thread(target=self.watch_hyprland, daemon=True).start()
+        # screens: put a connected screen where it was chosen (e.g. "only the other one")
+        subprocess.Popen(["python3", str(SCRIPTS / "screens.py"), "restore"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.overview = None
+        self.snap_timer = 0
 
     def css(self):
         a, b, f = self.pal["accent"], self.pal["bg"], self.pal["fg"]
@@ -537,8 +546,63 @@ class Extras:
                 self.show_ring(bat[0], False, f"{bat[0]}% · charging", "Preview")
             elif kind == "test-low":
                 self.show_ring(12, True, "Battery 12%", "Preview · click for Power saver")
+            elif kind in ("overview", "overview-back", "overview-release"):
+                self.on_overview(kind)
         except (IndexError, ValueError):
             pass
+        return False
+
+    # -------------------------------------------------------------- overview + screens
+    def on_overview(self, kind):
+        import overview
+        if self.overview is None:
+            self.overview = overview.Overview()
+        ov = self.overview
+        if kind == "overview":
+            ov.open()
+        elif kind == "overview-back" and ov.get_visible():
+            ov.move(-1)
+        elif kind == "overview-back":
+            ov.open()
+        elif kind == "overview-release" and ov.get_visible() and not ov.sticky \
+                and time.monotonic() - ov.opened < 2.5:
+            ov.jump()                       # Alt let go before the overview had the keyboard
+
+    def watch_hyprland(self):
+        """Hyprland events: workspace pictures for the overview, screens plugged in or out."""
+        import socket
+        sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+        path = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")) / "hypr" / sig / ".socket2.sock"
+        while True:
+            try:
+                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+                    s.connect(str(path))
+                    for line in s.makefile("r", errors="replace"):
+                        ev, _, data = line.strip().partition(">>")
+                        if ev == "workspacev2":
+                            ident = data.split(",", 1)[0]
+                            if ident.lstrip("-").isdigit() and int(ident) > 0:
+                                GLib.idle_add(self.schedule_snapshot, int(ident))
+                        elif ev in ("monitoraddedv2", "monitorremoved"):
+                            subprocess.Popen(["python3", str(SCRIPTS / "screens.py"), "restore"],
+                                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except OSError:
+                pass
+            time.sleep(2)
+
+    def schedule_snapshot(self, ws):
+        """A second after arriving on a workspace (windows settled), keep a small picture of it."""
+        if self.snap_timer:
+            GLib.source_remove(self.snap_timer)
+
+        def take():
+            self.snap_timer = 0
+            if self.overview is not None and self.overview.get_visible():
+                return False
+            import overview
+            threading.Thread(target=overview.snapshot_workspace, args=(ws,), daemon=True).start()
+            return False
+        self.snap_timer = GLib.timeout_add(1000, take)
         return False
 
     def poll(self):

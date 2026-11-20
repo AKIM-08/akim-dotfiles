@@ -1175,51 +1175,27 @@ class Settings(Gtk.Window):
         ]
 
     # -------------------------------------------------------------- Screens
-    SCREENS = HYPR / "screens.json"
-    PLACES = [("right", "Right"), ("left", "Left"), ("above", "Above"), ("mirror", "Same picture")]
-
     def screens_section(self):
-        """Other screens (HDMI...): where they sit next to the laptop, or showing the same picture.
-        Kept per screen in screens.json and as monitor lines in user-settings.hl, so a screen gets
-        its place back whenever it is plugged in."""
-        try:
-            mons = json.loads(run(["hyprctl", "-j", "monitors", "all"]) or "[]")
-        except ValueError:
-            mons = []
-        internal = next((m["name"] for m in mons if m.get("name", "").startswith(("eDP", "LVDS", "DSI"))), None)
-        try:
-            places = json.loads(self.SCREENS.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            places = {}
-
-        def line(name, place):
-            if place == "mirror" and internal:
-                return f"monitor = {name}, preferred, auto, 1, mirror, {internal}"
-            pos = {"right": "auto-right", "left": "auto-left", "above": "auto-up"}.get(place, "auto-right")
-            return f"monitor = {name}, preferred, {pos}, 1"
-
-        def set_place(name, place):
-            places[name] = place
-            self.SCREENS.write_text(json.dumps(places, indent=2) + "\n", encoding="utf-8")
-            set_block("screens", "\n".join(line(n, p) for n, p in places.items()))
-            spawn(["hyprctl", "keyword", "monitor", line(name, place).split("=", 1)[1].strip()])
-
+        """Other screens (HDMI...): next to the laptop, same picture, alone or off (scripts/screens.py)."""
+        import screens
+        mons = screens.monitors()
+        inside = screens.internal_name(mons)
+        places = screens.saved()
         rows = []
         for m in mons:
-            name = m.get("name", "?")
-            what = " ".join(x for x in (m.get("make"), m.get("model")) if x and x != "Unknown").strip() or name
             mode = f'{m.get("width")}×{m.get("height")} · {round(m.get("refreshRate") or 0)} Hz'
-            if name == internal:
-                rows.append(row("Laptop screen", f"{what} · {mode}"))
+            if m["name"] == inside:
+                rows.append(row("Laptop screen", f"{screens.describe(m)} · {mode}" + (" · off" if m.get("disabled") else "")))
             else:
-                state = "" if not m.get("disabled") else " · off"
-                rows.append(row(f"{what} ({name})", f"{mode}{state}",
-                                segmented(self.PLACES, places.get(name, "right"), lambda v, n=name: set_place(n, v))))
-        if not any(m.get("name") != internal for m in mons):
+                rows.append(row(f"{screens.describe(m)} ({m['name']})", mode,
+                                dropdown(screens.PLACES, places.get(m["name"], "right"),
+                                         lambda v, n=m["name"]: spawn(["python3", str(SCRIPTS / "screens.py"), "set", n, v]))))
+        if not screens.externals(mons):
             rows.append(row("No other screen connected",
                             "Plug one in (HDMI or USB-C): it extends the desktop to the right of the laptop. "
-                            "Then choose here where it sits, or Same picture to show what the laptop shows"))
-        rows.append(row("Check again", "After plugging or unplugging a screen", button("Refresh", self.refresh)))
+                            "Then choose here where it goes, or Same picture to show what the laptop shows"))
+        rows.append(row("Screens menu", "Super + Shift + D, or Screens in Quick Settings (Super + N)",
+                        button("Refresh", self.refresh)))
         return [section("Screens"), group(*rows)]
 
     # -------------------------------------------------------------- Transparency

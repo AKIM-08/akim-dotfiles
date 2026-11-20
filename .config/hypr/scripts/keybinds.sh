@@ -54,6 +54,8 @@ SHORTCUTS=(
     "󰸉  SUPER + ALT + Right        󰄾  Next Wallpaper + Auto-Theme Update"
     "󰸉  SUPER + ALT + Left         󰄾  Previous Wallpaper + Auto-Theme Update"
     "󱄄  SUPER + SHIFT + T          󰄾  Waybar Theme Selector"
+    "󰕰  ALT + TAB                  󰄾  Window Overview (hold Alt, Tab to move, let go to jump)"
+    "󰍹  SUPER + SHIFT + D          󰄾  Screens (extend / same picture / only one)"
     "󱊦  SUPER + X                  󰄾  Emoji & Character Picker"
     "󰕾  Fn + Volume Up / Down      󰄾  Volume Control (with OSD)"
     "󰃟  Fn + Brightness Up / Down  󰄾  Screen Brightness Control (with OSD)"
