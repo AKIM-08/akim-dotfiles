@@ -6,6 +6,9 @@
                                              Enter copies, Delete removes an entry
     overlay_menu.py screenshot   Super + P   tiles: region, screen, window, pick a window, draw,
                                              record / stop, color picker
+    overlay_menu.py power        Super + F12 tiles: performance / balanced / power saver
+    overlay_menu.py bartheme     Super + Shift + T  a picture of each bar style on your wallpaper
+    overlay_menu.py audio        (recording) pill bar to pick the sound; prints sys / mic / both / none
 
 Esc, a click outside, or the same shortcut again closes it. Colors follow the wallpaper.
 GTK 3 on a layer-shell overlay: no window, no border, Hyprland fades it in
@@ -119,8 +122,8 @@ class Overlay(Gtk.Window):
         self.add(backdrop)
         self.connect("key-press-event", self.on_key)
         self.connect("destroy", Gtk.main_quit)
-        {"shortcuts": self.build_shortcuts, "clipboard": self.build_clipboard,
-         "screenshot": self.build_screenshot}[mode]()
+        {"shortcuts": self.build_shortcuts, "clipboard": self.build_clipboard, "screenshot": self.build_screenshot,
+         "power": self.build_power, "bartheme": self.build_bartheme, "audio": self.build_audio}[mode]()
 
     def css(self):
         p = palette()
@@ -174,6 +177,24 @@ class Overlay(Gtk.Window):
         .tile-name {{ font-weight: 700; font-size: 13px; }}
         .tile-key {{ font-size: 11px; color: {rgba(f, .6)}; }}
         .hint {{ color: {rgba(f, .65)}; font-size: 12px; }}
+
+        /* Bar theme pictures */
+        .barcard {{ border-radius: 16px; padding: 6px; background: {rgba(b, .55)}; border: 1px solid {rgba(f, .10)}; }}
+        flowboxchild:selected .barcard {{ background: {rgba(a, .25)}; border: 2px solid {a}; }}
+        .barname {{ font-weight: 700; font-size: 13px; }}
+        flowboxchild:selected .barname {{ color: {a}; }}
+
+        /* Pill bar (recording sound) */
+        .pillbar {{ background: {rgba(b, .92)}; border: 1px solid {rgba(f, .14)}; border-radius: 99px; padding: 8px 8px 8px 18px; }}
+        .pillbar .glyph {{ color: #e5484d; font-size: 18px; }}
+        button {{ background: none; background-image: none; border: none; box-shadow: none; text-shadow: none; }}
+        .pill {{ background: {rgba(f, .10)}; border-radius: 99px; padding: 6px 14px; }}
+        .pill:hover {{ background: {rgba(f, .18)}; }}
+        .pill.on {{ background: {a}; }}
+        .pill.on label {{ color: {k}; }}
+        .recbtn {{ background: #e5484d; border-radius: 99px; min-width: 40px; min-height: 40px; padding: 0; margin-left: 4px; }}
+        .recbtn:hover {{ background: #ff6166; }}
+        .recbtn label {{ color: #ffffff; font-family: {NERD}; font-size: 16px; }}
         """
         prov = Gtk.CssProvider()
         prov.load_from_data(css.encode())
@@ -185,11 +206,21 @@ class Overlay(Gtk.Window):
         if k == Gdk.KEY_Escape:
             Gtk.main_quit()
             return True
-        if self.mode == "screenshot":
+        if self.mode == "audio":
+            if k in (Gdk.KEY_Left, Gdk.KEY_Right, Gdk.KEY_Tab, Gdk.KEY_ISO_Left_Tab):
+                step = -1 if k in (Gdk.KEY_Left, Gdk.KEY_ISO_Left_Tab) else 1
+                self.pick_audio((self.audio_sel + step) % len(self.audio_opts))
+            elif Gdk.KEY_1 <= k <= Gdk.KEY_4:
+                self.pick_audio(k - Gdk.KEY_1)
+                self.start_recording()
+            elif k in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_space):
+                self.start_recording()
+            return True
+        if self.mode in ("screenshot", "power", "bartheme"):
             if Gdk.KEY_1 <= k <= Gdk.KEY_9:
                 i = k - Gdk.KEY_1
-                if i < len(self.actions):
-                    self.run_action(self.actions[i])
+                if i < len(self.tile_actions):
+                    self.tile_actions[i]()
                 return True
             return False                                  # FlowBox handles arrows and Enter
         if k in (Gdk.KEY_Down, Gdk.KEY_Up, Gdk.KEY_Page_Down, Gdk.KEY_Page_Up):
@@ -436,36 +467,176 @@ class Overlay(Gtk.Window):
              "Super + Shift + R", "record"),
             ("\U000f0236", "Color picker", "copies the hex", "color"),
         ]
+        tiles = []
+        for icon, name, key, mode in self.actions:
+            tiles.append((icon, name, key, lambda m=mode: self.run_screenshot(m)))
+        self.tile_grid("Screenshot", tiles, 4, 0, "Arrows and Enter, a number, or a click · Esc closes")
+
+    def run_screenshot(self, mode):
+        Gtk.main_quit()
+        spawn_later(f"{shlex.quote(str(SCRIPTS / 'screenshot.sh'))} {mode}", 0.25)
+
+    def tile_grid(self, title, tiles, cols, selected, hint, widget=None):
+        """Big tiles (icon, name, small text, action) or custom widgets, arrows/Enter/number keys."""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18)
         box.set_halign(Gtk.Align.CENTER)
         box.set_valign(Gtk.Align.CENTER)
-        box.pack_start(lab("Screenshot", "big-title", xalign=0.5), False, False, 0)
+        box.pack_start(lab(title, "big-title", xalign=0.5), False, False, 0)
         self.flow = Gtk.FlowBox()
         self.flow.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        self.flow.set_min_children_per_line(4)
-        self.flow.set_max_children_per_line(4)
+        self.flow.set_min_children_per_line(cols)
+        self.flow.set_max_children_per_line(cols)
         self.flow.set_homogeneous(True)
         self.flow.set_row_spacing(12)
         self.flow.set_column_spacing(12)
         self.flow.set_activate_on_single_click(True)
-        for i, (icon, name, key, _mode) in enumerate(self.actions):
-            tile = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-            tile.get_style_context().add_class("tile")
-            tile.pack_start(lab(icon, "tile-icon", xalign=0.5), False, False, 0)
-            tile.pack_start(lab(name, "tile-name", xalign=0.5), False, False, 0)
-            tile.pack_start(lab(f"{i + 1} · {key}", "tile-key", xalign=0.5), False, False, 0)
-            self.flow.add(tile)
-        self.flow.connect("child-activated", lambda _f, c: self.run_action(self.actions[c.get_index()]))
+        self.tile_actions = []
+        for i, t in enumerate(tiles):
+            if widget:
+                child, action = widget(i, t), t[-1]
+            else:
+                icon, name, small, action = t
+                child = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+                child.get_style_context().add_class("tile")
+                child.pack_start(lab(icon, "tile-icon", xalign=0.5), False, False, 0)
+                child.pack_start(lab(name, "tile-name", xalign=0.5), False, False, 0)
+                child.pack_start(lab(f"{i + 1} · {small}", "tile-key", xalign=0.5), False, False, 0)
+            self.flow.add(child)
+            self.tile_actions.append(action)
+        self.flow.connect("child-activated", lambda _f, c: self.tile_actions[c.get_index()]())
         box.pack_start(self.flow, False, False, 0)
-        box.pack_start(lab("Arrows and Enter, a number, or a click · Esc closes", "hint", xalign=0.5), False, False, 0)
+        if hint:
+            box.pack_start(lab(hint, "hint", xalign=0.5), False, False, 0)
         self.content.add(box)
-        first = self.flow.get_child_at_index(0)
-        self.flow.select_child(first)
-        GLib.idle_add(lambda: (first.grab_focus(), False)[1])
+        chosen = self.flow.get_child_at_index(max(0, min(selected, len(tiles) - 1)))
+        self.flow.select_child(chosen)
+        GLib.idle_add(lambda: (chosen.grab_focus(), False)[1])
 
-    def run_action(self, action):
+    # -------------------------------------------------------------- Power profile: tiles
+    def build_power(self):
+        current = subprocess.run([str(SCRIPTS / "power-mode.sh"), "get"], capture_output=True, text=True).stdout.strip()
+        profiles = [("\U000f04c5", "Performance", "Fastest, more fan", "performance"),
+                    ("\U000f0f86", "Balanced", "The default", "balanced"),
+                    ("\U000f032a", "Power saver", "Longest battery", "power-saver")]
+
+        def choose(prof):
+            Gtk.main_quit()
+            spawn_later(f"{shlex.quote(str(SCRIPTS / 'power-mode.sh'))} {prof}", 0.05)
+        tiles = [(i, n, d + (" · now" if p == current else ""), lambda p=p: choose(p)) for i, n, d, p in profiles]
+        sel = next((k for k, t in enumerate(profiles) if t[3] == current), 1)
+        self.tile_grid("Power profile", tiles, 3, sel, self.battery_line())
+
+    @staticmethod
+    def battery_line():
+        for bat in sorted(Path("/sys/class/power_supply").glob("BAT*")):
+            try:
+                cap = int((bat / "capacity").read_text())
+                status = (bat / "status").read_text().strip().lower()
+            except (OSError, ValueError):
+                continue
+            text = f"Battery {cap}% · {status}"
+            try:
+                out = subprocess.run(["upower", "-i", f"/org/freedesktop/UPower/devices/battery_{bat.name}"],
+                                     capture_output=True, text=True, timeout=2).stdout
+                for line in out.splitlines():
+                    if "time to" in line:
+                        text += " · " + line.split(":", 1)[1].strip() + (" left" if "empty" in line else " to full")
+                        break
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            return text
+        return "Arrows and Enter, or 1-3 · Esc closes"
+
+    # -------------------------------------------------------------- Bar theme: pictures
+    def build_bartheme(self):
+        sys.path.insert(0, str(SCRIPTS))
+        import settings as st                         # its bar preview drawing
+        GLib.set_prgname("overlay-menu")
+        layout = HOME / ".config" / "waybar" / "scripts" / "layout.py"
+        parts = subprocess.run(["python3", str(layout), "--get"], capture_output=True, text=True).stdout.split()
+        current, pos = (parts + ["capsule", "top"])[:2]
+        themes = ["default", "line", "zen", "experimental", "capsule", "powerline", "dock", "island"]
+        try:                                          # one small copy of the wallpaper for all eight
+            pix = GdkPixbuf.Pixbuf.new_from_file_at_scale(os.path.realpath(st.WALLPAPERS / "current.jpg"), 480, 270, True)
+        except Exception:
+            pix = None
+        real = st.WALLPAPERS
+        st.WALLPAPERS = Path("/nonexistent")          # skip each preview's own (slow) load
+
+        def card(i, t):
+            theme = t[0]
+            v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            v.get_style_context().add_class("barcard")
+            area = st.Settings.bar_preview(None, "top" if theme == "island" else pos, theme)
+            area.pix = pix
+            area.set_size_request(236, 132)
+            v.pack_start(area, False, False, 0)
+            v.pack_start(lab(theme.capitalize() + ("  · now" if theme == current else ""), "barname", xalign=0.5), False, False, 4)
+            return v
+
+        def choose(theme):
+            Gtk.main_quit()
+            spawn_later(f"{shlex.quote(str(HOME / '.config/waybar/scripts/select.sh'))} {theme}", 0.05)
+        tiles = [(t, lambda t=t: choose(t)) for t in themes]
+        self.tile_grid("Bar theme", tiles, 4, themes.index(current) if current in themes else 0,
+                       "Position, size and gap: Settings → Appearance → Waybar", widget=card)
+        st.WALLPAPERS = real
+
+    # -------------------------------------------------------------- Recording sound: pill bar
+    AUDIO_CHOICE = HOME / ".cache" / "record-audio-choice"
+
+    def build_audio(self):
+        self.audio_opts = [("sys", "\U000f04c3", "System sound"), ("mic", "\U000f036c", "Microphone"),
+                           ("both", "\U000f04c3 \U000f036c", "Both"), ("none", "\U000f075f", "No sound")]
+        try:
+            last = self.AUDIO_CHOICE.read_text().strip()
+        except OSError:
+            last = "sys"
+        self.audio_sel = next((i for i, o in enumerate(self.audio_opts) if o[0] == last), 0)
+        bar = Gtk.Box(spacing=8)
+        bar.get_style_context().add_class("pillbar")
+        bar.set_halign(Gtk.Align.CENTER)
+        bar.set_valign(Gtk.Align.START)
+        screen = Gdk.Screen.get_default()
+        bar.set_margin_top(int(screen.get_height() * 0.08) if screen else 80)
+        bar.pack_start(lab("\U000f044a", "glyph"), False, False, 0)
+        bar.pack_start(lab("Sound", "tile-name"), False, False, 6)
+        self.pills = []
+        for i, (_k, icon, name) in enumerate(self.audio_opts):
+            b = Gtk.Button()
+            b.set_can_focus(False)
+            inner = Gtk.Box(spacing=6)
+            inner.pack_start(lab(icon, "glyph-plain"), False, False, 0)
+            inner.pack_start(lab(name), False, False, 0)
+            b.add(inner)
+            b.get_style_context().add_class("pill")
+            b.connect("clicked", lambda _b, i=i: self.pick_audio(i))
+            bar.pack_start(b, False, False, 0)
+            self.pills.append(b)
+        rec = Gtk.Button(label="\U000f044a")
+        rec.set_can_focus(False)
+        rec.set_tooltip_text("Start recording (Enter)")
+        rec.get_style_context().add_class("recbtn")
+        rec.connect("clicked", lambda *_: self.start_recording())
+        bar.pack_start(rec, False, False, 0)
+        self.content.add(bar)
+        self.pick_audio(self.audio_sel)
+
+    def pick_audio(self, i):
+        self.audio_sel = i
+        for k, b in enumerate(self.pills):
+            ctx = b.get_style_context()
+            (ctx.add_class if k == i else ctx.remove_class)("on")
+
+    def start_recording(self):
+        key = self.audio_opts[self.audio_sel][0]
+        try:
+            self.AUDIO_CHOICE.parent.mkdir(parents=True, exist_ok=True)
+            self.AUDIO_CHOICE.write_text(key + "\n")
+        except OSError:
+            pass
+        print(key, flush=True)
         Gtk.main_quit()
-        spawn_later(f"{shlex.quote(str(SCRIPTS / 'screenshot.sh'))} {action[3]}", 0.25)
 
     # -------------------------------------------------------------- activation
     def activate(self, row):
@@ -484,7 +655,7 @@ class Overlay(Gtk.Window):
 
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "shortcuts"
-    if mode not in ("shortcuts", "clipboard", "screenshot"):
+    if mode not in ("shortcuts", "clipboard", "screenshot", "power", "bartheme", "audio"):
         print(__doc__, file=sys.stderr)
         return 2
     # The same shortcut again closes it (any menu: one at a time)
@@ -500,7 +671,7 @@ def main():
         win = Overlay(mode)
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, lambda: (Gtk.main_quit(), False)[1])
         win.show_all()
-        if mode != "screenshot":
+        if mode in ("shortcuts", "clipboard"):
             win.entry.grab_focus()
         Gtk.main()
     finally:

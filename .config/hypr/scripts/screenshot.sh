@@ -211,9 +211,21 @@ toggle_recording() {
     local opt_both="󰓃󰍬 Both (System Audio + Microphone)"
     local opt_none="󰝟  No Audio (Muted Video)"
 
-    local audio_choice
-    audio_choice=$(printf "%s\n%s\n%s\n%s" "$opt_sys" "$opt_mic" "$opt_both" "$opt_none" | \
-        rofi -dmenu -i -p "󰍬 Audio Source" -theme "$HOME/.config/rofi/screenshot.rasi" || true)
+    local audio_choice key
+    # Pill bar overlay (remembers the last choice); the Rofi list when GTK layer-shell is missing
+    if python3 -c 'import gi; gi.require_version("GtkLayerShell", "0.1")' 2>/dev/null; then
+        key=$(python3 "$HOME/.config/hypr/scripts/overlay_menu.py" audio 2>/dev/null | tail -1)
+        case "$key" in
+            sys)  audio_choice="$opt_sys" ;;
+            mic)  audio_choice="$opt_mic" ;;
+            both) audio_choice="$opt_both" ;;
+            none) audio_choice="$opt_none" ;;
+            *)    audio_choice="" ;;
+        esac
+    else
+        audio_choice=$(printf "%s\n%s\n%s\n%s" "$opt_sys" "$opt_mic" "$opt_both" "$opt_none" | \
+            rofi -dmenu -i -p "󰍬 Audio Source" -theme "$HOME/.config/rofi/screenshot.rasi" || true)
+    fi
 
     if [ -z "$audio_choice" ]; then
         # User cancelled audio prompt

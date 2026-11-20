@@ -79,6 +79,10 @@ toggle_profile() {
 
 # Interactive Rofi Power Mode Menu
 show_menu() {
+    # Tiles overlay (same look as the screenshot menu); the Rofi list below when it can't run
+    if python3 -c 'import gi; gi.require_version("GtkLayerShell", "0.1")' 2>/dev/null; then
+        exec python3 "$HOME/.config/hypr/scripts/overlay_menu.py" power
+    fi
     if pgrep -x rofi >/dev/null; then
         pkill -x rofi
         exit 0

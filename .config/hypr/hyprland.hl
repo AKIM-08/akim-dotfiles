@@ -360,7 +360,7 @@ bind = $mainMod, D, exec, discord --enable-features=WebRTCPipeWireCapturer
 bind = $mainMod SHIFT, F, fullscreen
 bind = $mainMod, N, exec, python3 ~/.config/hypr/scripts/quickpanel.py
 bind = $mainMod SHIFT, N, exec, swaync-client -t -sw
-bind = $mainMod SHIFT, T, exec, ~/.config/waybar/scripts/select.sh
+bind = $mainMod SHIFT, T, exec, python3 ~/.config/hypr/scripts/overlay_menu.py bartheme
 
 # Wallpaper cycling (SUPER + ALT + Arrow keys & SUPER + W for Rofi picker)
 bind = $mainMod, W, exec, ~/.config/hypr/scripts/rofi-wallpaper.sh
