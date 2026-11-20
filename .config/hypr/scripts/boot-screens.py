@@ -10,6 +10,7 @@
     boot-screens.py auto-off stop following the wallpaper (removes that rule)
     boot-screens.py auto     run after each wallpaper change: when following, waits until the
                              wallpaper stays the same for a minute, then syncs at the lowest priority
+                             (--now: right away). What it did: ~/.cache/boot-screens.log
     add --sudo to use sudo in a terminal instead of the graphical password prompt (the installer)
 
 Boot menu: the wallpaper with a dark column on the left holding the entries (accent stripe on the
@@ -41,6 +42,17 @@ ROOT_SCRIPT = SCRIPTS / "boot-screens-root.sh"
 INSTALLED = "/usr/local/lib/akim-dotfiles/boot-screens-root.sh"     # root-owned copy (auto-on)
 AUTO_FLAG = HOME / ".config" / "hypr" / "boot-screens-auto"
 RUNTIME = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp"))
+LOG = HOME / ".cache" / "boot-screens.log"      # what the automatic updates did
+
+
+def log(msg):
+    try:
+        LOG.parent.mkdir(parents=True, exist_ok=True)
+        lines = LOG.read_text(encoding="utf-8").splitlines()[-200:] if LOG.exists() else []
+        lines.append(time.strftime("%Y-%m-%d %H:%M:%S ") + msg)
+        LOG.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except OSError:
+        pass
 
 
 # ------------------------------------------------------------------------------ inputs
@@ -372,8 +384,15 @@ def run_root(args, how):
         cmd = ["nice", "-n", "19", "ionice", "-c", "3", "sudo", "-n", "/bin/sh", INSTALLED] + args
     else:
         cmd = [how, "/bin/sh", str(ROOT_SCRIPT)] + args
-    return subprocess.run(cmd, stdout=subprocess.DEVNULL if how == "auto" else None,
-                          stderr=subprocess.DEVNULL if how == "auto" else None).returncode
+    if how != "auto":
+        return subprocess.run(cmd).returncode
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    for line in (r.stdout + r.stderr).strip().splitlines():
+        log("  " + line)
+    log(f"finished (exit {r.returncode})" + ("" if r.returncode == 0 else
+        " - the password-free rule didn't work: turn Follow the wallpaper off and on again in Settings"
+        if "password" in r.stderr.lower() else ""))
+    return r.returncode
 
 
 def sync(how):
@@ -385,23 +404,33 @@ def sync(how):
         shutil.rmtree(work, ignore_errors=True)
 
 
-def auto():
+def auto(now=False):
     """After a wallpaper change: sync once the wallpaper has stayed the same for a minute."""
-    if not AUTO_FLAG.exists() or not Path(INSTALLED).exists():
+    if not AUTO_FLAG.exists():
         return 0
-    stamp = RUNTIME / "boot-screens.pending"
-    token = f"{os.getpid()}-{time.time()}"
-    stamp.write_text(token)
-    time.sleep(60)
-    try:
-        if stamp.read_text() != token:          # another wallpaper came after this one
+    if not Path(INSTALLED).exists():
+        log("skipped: the password-free rule is missing - turn Follow the wallpaper off and on again")
+        return 1
+    if not now:
+        stamp = RUNTIME / "boot-screens.pending"
+        token = f"{os.getpid()}-{time.time()}"
+        stamp.write_text(token)
+        log("wallpaper changed: updating the boot screens in a minute")
+        time.sleep(60)
+        try:
+            if stamp.read_text() != token:          # another wallpaper came after this one
+                return 0
+        except OSError:
             return 0
-    except OSError:
-        return 0
     import fcntl
     with open(RUNTIME / "boot-screens.lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        return sync("auto")
+        log(f"updating the boot screens from {wallpaper()}")
+        try:
+            return sync("auto")
+        except Exception as e:                      # noqa: BLE001 - keep the reason in the log
+            log(f"failed: {e!r}")
+            return 1
 
 
 def main():
@@ -427,7 +456,7 @@ def main():
             AUTO_FLAG.unlink(missing_ok=True)
         sys.exit(r)
     if cmd == "auto":
-        sys.exit(auto())
+        sys.exit(auto(now="--now" in args))
     sys.exit(__doc__)
 
 
