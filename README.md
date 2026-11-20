@@ -158,6 +158,11 @@ next login) and the keyboard layout (immediately; two layouts switch with
 laptop sleeps after 20. Set each time separately on battery and plugged in (or *Never*) in
 Settings → Power → When idle. On battery it also hibernates before running empty (needs swap).
 
+**Boot screens.** The boot menu (GRUB) shows your wallpaper with the entries in a dark column, and
+the start-up animation (Plymouth) shows it blurred with a spinning ring and your name (the one set
+on your account). The installer sets them up; after changing wallpaper, Settings → Wallpaper →
+Boot screens → *Sync* updates them (asks for your password), *Reset* goes back to Debian's.
+
 **Updating.** `akim-update` updates the dotfiles and kitty; `kitty-update` updates only kitty.
 See [Update](#update).
 

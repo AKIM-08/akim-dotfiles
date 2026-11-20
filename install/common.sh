@@ -347,6 +347,14 @@ if [ -x "$HOME/.config/hypr/scripts/apply-pywal-theme.sh" ]; then
     nohup nice -n 19 "$HOME/.config/hypr/scripts/apply-pywal-theme.sh" --precache >/dev/null 2>&1 &
 fi
 
+# Boot menu (GRUB) and start-up animation (Plymouth) from the wallpaper and the user's name
+# (Settings -> Wallpaper -> Boot screens: Sync / Reset)
+if command -v update-grub &>/dev/null; then
+    echo "--> Boot menu and start-up animation..."
+    python3 "$HOME/.config/hypr/scripts/boot-screens.py" sync --sudo \
+        || warn "Boot screens not changed — Settings -> Wallpaper -> Boot screens -> Sync"
+fi
+
 # 11. Configure Nautilus 'Open in Kitty' extension with keyboard shortcut
 setup_nautilus_kitty() {
     echo "--> Configuring Nautilus 'Open in Kitty' extension with shortcut support..."

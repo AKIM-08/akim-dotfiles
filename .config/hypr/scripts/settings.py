@@ -917,7 +917,47 @@ class Settings(Gtk.Window):
             ),
             section("Desktop"),
             group(*self.desktop_extras_rows()),
+            section("Boot screens"),
+            self.boot_screens_group(),
         ]
+
+    def boot_screens_group(self):
+        """Boot menu + start-up animation from the current wallpaper (scripts/boot-screens.py)."""
+        status = label("", "dim", wrap=True)
+        busy = {"on": False}
+
+        def go(cmd, working):
+            if busy["on"]:
+                return
+            busy["on"] = True
+            status.set_text("Waiting for your password…")
+
+            def work():
+                GLib.idle_add(status.set_text, working)
+                return subprocess.run(["python3", str(SCRIPTS / "boot-screens.py"), cmd],
+                                      capture_output=True, text=True, timeout=900)
+
+            def done(r):
+                busy["on"] = False
+                if r is not None and r.returncode == 0:
+                    lines = r.stdout.strip().splitlines()
+                    status.set_text(lines[-1] if lines else "Done.")
+                elif r is not None and r.returncode in (126, 127):
+                    status.set_text("Cancelled.")
+                else:
+                    err = ((r.stderr or r.stdout).strip().splitlines() or ["unknown error"])[-1] if r is not None else "failed"
+                    status.set_text(f"Could not change the boot screens: {err}")
+            in_background(work, done)
+
+        buttons = Gtk.Box(spacing=8)
+        buttons.pack_start(button("Sync", lambda: go("sync", "Making the boot screens from your wallpaper… (about a minute)")), False, False, 0)
+        buttons.pack_start(button("Reset", lambda: go("reset", "Going back to Debian's boot screens… (about a minute)")), False, False, 0)
+        return group(
+            row("Boot menu and start-up animation",
+                "Use the current wallpaper, its colors and your name. Sync again after changing wallpaper. "
+                "Asks for your password", buttons),
+            row("", "", status),
+        )
 
     def desktop_extras_rows(self):
         path = HYPR / "desktop-extras.json"
