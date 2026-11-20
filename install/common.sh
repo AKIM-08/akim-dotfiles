@@ -199,7 +199,8 @@ cd "$REPO_ROOT" || die "Cannot change directory to $REPO_ROOT"
 # across a reinstall (the rest of each old folder still goes to the backup)
 USER_STATE=(
     hypr/user-settings.hl hypr/user-apps.hl hypr/user-binds.hl hypr/cursor-theme
-    hypr/power-menu-style hypr/wallpaper-transition hypr/nightlight hypr/hyprlock/active.conf
+    hypr/power-menu-style hypr/wallpaper-transition hypr/wallpaper-picker-style hypr/nightlight
+    hypr/hyprlock/active.conf
     waybar/layout.json
 )
 STATE_KEEP=$(mktemp -d)

@@ -2,8 +2,8 @@
 # rofi-wallpaper.sh - Interactive Rofi/Wofi Wallpaper Picker with preview icons & toggle support
 
 # Toggle: Si le sélecteur Rofi/Wofi/QML est déjà ouvert, appuyer à nouveau sur SUPER+W le ferme immédiatement
-if pgrep -f "wallpaper-picker\.py" >/dev/null || pgrep -x rofi >/dev/null || pgrep -x wofi >/dev/null; then
-    pkill -f "wallpaper-picker\.py" 2>/dev/null || true
+if pgrep -f "wallpicker\.py|wallpaper-picker\.py" >/dev/null || pgrep -x rofi >/dev/null || pgrep -x wofi >/dev/null; then
+    pkill -f "wallpicker\.py|wallpaper-picker\.py" 2>/dev/null || true
     pkill -x rofi 2>/dev/null || pkill -x wofi 2>/dev/null || true
     exit 0
 fi
@@ -35,8 +35,11 @@ done
 PICKER="$HOME/.config/hypr/scripts/wallpaper-picker.py"
 selected_file=""
 
-# Carousel picker (PyQt6); falls back to a Rofi/Wofi list when PyQt6 is missing
-if python3 -c 'import PyQt6.QtWidgets' 2>/dev/null; then
+# Overlay picker (carousel / filmstrip / fan, chosen in Settings); then the older PyQt6
+# carousel; then a Rofi / Wofi list
+if python3 -c 'import gi; gi.require_version("GtkLayerShell", "0.1")' 2>/dev/null; then
+    selected_file=$(python3 "$HOME/.config/hypr/scripts/wallpicker.py" 2>/dev/null | tail -1)
+elif python3 -c 'import PyQt6.QtWidgets' 2>/dev/null; then
     selected_file=$(python3 "$PICKER" 2>/dev/null | tail -1)
 elif command -v rofi &>/dev/null; then
     selected_name=$(echo -e -n "$options" | rofi -dmenu -i -theme "$HOME/.config/rofi/wallpaper.rasi")

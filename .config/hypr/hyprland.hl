@@ -234,18 +234,18 @@ $mainMod = SUPER
 
 bind = $mainMod, Return, exec, $terminal
 bind = $mainMod, Q, exec, ~/.config/hypr/scripts/rofi-toggle.sh
-bind = $mainMod, G, exec, ~/.config/hypr/scripts/keybinds.sh
+bind = $mainMod, G, exec, python3 ~/.config/hypr/scripts/overlay_menu.py shortcuts
 bind = $mainMod, H, exec, python3 ~/.config/hypr/scripts/settings.py
 bind = $mainMod SHIFT, H, exec, ~/.config/hypr/scripts/quick-settings.sh
 bind = $mainMod, L, exec, pidof hyprlock || hyprlock
 bind = $mainMod, A, killactive,
 bind = $mainMod, M, exit,
 bind = $mainMod, F, exec, $fileManager
-bind = $mainMod, V, exec, ~/.config/hypr/scripts/cliphist-toggle.sh
+bind = $mainMod, V, exec, python3 ~/.config/hypr/scripts/overlay_menu.py clipboard
 bind = $mainMod, B, exec, ~/.config/hypr/scripts/open-browser.sh
 bind = , Print, exec, ~/.config/hypr/scripts/screenshot.sh
 bind = $mainMod, Print, exec, ~/.config/hypr/scripts/screenshot.sh full
-bind = $mainMod, P, exec, ~/.config/hypr/scripts/screenshot.sh
+bind = $mainMod, P, exec, python3 ~/.config/hypr/scripts/overlay_menu.py screenshot
 bind = $mainMod SHIFT, P, exec, ~/.config/hypr/scripts/screenshot.sh region
 bind = $mainMod ALT, P, exec, ~/.config/hypr/scripts/screenshot.sh full
 bind = $mainMod SHIFT, R, exec, ~/.config/hypr/scripts/screenshot.sh record
@@ -455,6 +455,13 @@ layerrule = blur on, match:namespace quickpanel
 layerrule = ignore_alpha 0.3, match:namespace quickpanel
 layerrule = blur on, match:namespace snmenu
 layerrule = ignore_alpha 0.4, match:namespace snmenu
+# Menus (Super + G / V / P) and the wallpaper picker: blur behind, fade in
+layerrule = blur on, match:namespace overlay-menu
+layerrule = ignore_alpha 0.2, match:namespace overlay-menu
+layerrule = animation fade, match:namespace overlay-menu
+layerrule = blur on, match:namespace wallpicker
+layerrule = ignore_alpha 0.2, match:namespace wallpicker
+layerrule = animation fade, match:namespace wallpicker
 # Dock theme: the bar slides in from its edge when the pointer touches it
 layerrule = animation slide, match:namespace waybar
 

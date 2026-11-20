@@ -900,10 +900,17 @@ class Settings(Gtk.Window):
             status.pack_start(button("Remove", remove), False, False, 0)
         else:
             status = button("Set up", lambda: spawn(["kitty", "--class", "wallfx-setup", "--hold", "-e", "bash", setup]))
+        try:
+            picker_style = (HYPR / "wallpaper-picker-style").read_text(encoding="utf-8").strip()
+        except OSError:
+            picker_style = "carousel"
         return [
             section("Wallpaper"),
             group(
-                row("Pick a wallpaper", "Opens the carousel (Super + W)", button("Open", lambda: spawn([str(SCRIPTS / "rofi-wallpaper.sh")]))),
+                row("Pick a wallpaper", "Super + W", button("Open", lambda: spawn([str(SCRIPTS / "rofi-wallpaper.sh")]))),
+                row("Picker style", "Carousel: slanted cards · Filmstrip: try each one full screen · Fan: a hand of cards",
+                    segmented([("carousel", "Carousel"), ("filmstrip", "Filmstrip"), ("fan", "Fanned cards")], picker_style,
+                              lambda v: (HYPR / "wallpaper-picker-style").write_text(v + "\n", encoding="utf-8"))),
                 row("Transition", "How the next wallpaper appears",
                     segmented([("outline", "Outline / colonies"), ("classic", "Classic")], mode, set_mode)),
                 row("Character detection", "Lets the outline follow characters · about 400 MB", status),
