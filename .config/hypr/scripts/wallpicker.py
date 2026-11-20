@@ -194,12 +194,26 @@ class Picker(Gtk.Window):
         if i in self.big or self.style != "filmstrip":
             return
         self.big[i] = None
-        W, H = self.get_allocated_width() or 1920, self.get_allocated_height() or 1080
+        W, H = self.screen_size()
 
         def work():
             pix = load_fill(str(self.files[i]), W, H)
             GLib.idle_add(self.set_big, i, pix)
         threading.Thread(target=work, daemon=True).start()
+
+    def screen_size(self):
+        """Screen size in device pixels. Not the window's allocation: before the first layout it
+        is 1x1, and a wallpaper loaded at that size would be stretched over the whole screen."""
+        try:
+            display = Gdk.Display.get_default()
+            mon = display.get_monitor_at_window(self.get_window()) if self.get_window() else display.get_monitor(0)
+            g, sf = mon.get_geometry(), mon.get_scale_factor()
+            if g.width > 100:
+                return g.width * sf, g.height * sf
+        except Exception:
+            pass
+        W, H = self.get_allocated_width(), self.get_allocated_height()
+        return (W, H) if W > 100 else (1920, 1080)
 
     def set_big(self, i, pix):
         self.big[i] = pix

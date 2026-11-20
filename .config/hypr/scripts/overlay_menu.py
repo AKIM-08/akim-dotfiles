@@ -314,48 +314,52 @@ class Overlay(Gtk.Window):
         scroll.set_propagate_natural_height(True)
         scroll.add(self.listbox)
         self.results.pack_start(scroll, True, True, 0)
-        self.empty = lab("Loading…", "empty", xalign=0.5)
+        self.empty = lab("", "empty", xalign=0.5)
         self.results.pack_start(self.empty, False, False, 0)
         outer.pack_start(self.results, False, False, 0)
         self.content.add(outer)
-        threading.Thread(target=self.load_clipboard, daemon=True).start()
+        # The list itself takes milliseconds: read it now, so the menu opens already filled;
+        # only the image thumbnails come a moment later
+        entries, error = self.read_clipboard()
+        self.fill_clipboard(entries, error)
+        if entries:
+            threading.Thread(target=self.load_thumbs, args=(entries,), daemon=True).start()
 
-    def load_clipboard(self):
+    @staticmethod
+    def read_clipboard():
         """cliphist's list, read as bytes: it shortens long entries and can cut a character in
         half, so each line keeps its original bytes (for copying / deleting) next to a text
-        version for display. Any failure shows a message instead of an endless "Loading"."""
+        version for display. Returns (entries, error message or None)."""
         try:
+            raw = subprocess.run(["cliphist", "list"], capture_output=True, timeout=5).stdout
+        except FileNotFoundError:
+            return [], "cliphist is not installed (sudo apt install cliphist)"
+        except subprocess.TimeoutExpired:
+            return [], "The clipboard history did not answer"
+        except Exception as e:
+            return [], f"Could not read the clipboard: {e}"
+        entries = []
+        for line in raw.split(b"\n"):
+            if b"\t" in line:
+                entries.append((line, line.decode("utf-8", errors="replace")))
+            if len(entries) >= 200:
+                break
+        return entries, None
+
+    def load_thumbs(self, entries):
+        THUMBS.mkdir(parents=True, exist_ok=True)
+        for line, text in entries[:60]:               # thumbnails for the recent images
             try:
-                raw = subprocess.run(["cliphist", "list"], capture_output=True, timeout=5).stdout
-            except FileNotFoundError:
-                GLib.idle_add(self.fill_clipboard, [], "cliphist is not installed (sudo apt install cliphist)")
-                return
-            except subprocess.TimeoutExpired:
-                GLib.idle_add(self.fill_clipboard, [], "The clipboard history did not answer")
-                return
-            entries = []
-            for line in raw.split(b"\n"):
-                if b"\t" in line:
-                    entries.append((line, line.decode("utf-8", errors="replace")))
-                if len(entries) >= 200:
-                    break
-            GLib.idle_add(self.fill_clipboard, entries, None)
-            THUMBS.mkdir(parents=True, exist_ok=True)
-            for line, text in entries[:60]:           # thumbnails for the recent images
                 ident, content = text.split("\t", 1)
                 if not content.startswith("[[ binary data"):
                     continue
                 thumb = THUMBS / f"{ident}.img"
                 if not thumb.exists():
-                    try:
-                        with open(thumb, "wb") as f:
-                            subprocess.run(["cliphist", "decode"], input=line, stdout=f, timeout=5)
-                    except (OSError, subprocess.TimeoutExpired):
-                        continue
+                    with open(thumb, "wb") as f:
+                        subprocess.run(["cliphist", "decode"], input=line, stdout=f, timeout=5)
                 GLib.idle_add(self.set_thumb, ident, str(thumb))
-        except Exception as e:
-            sys.stderr.write(f"overlay_menu: clipboard: {e!r}\n")
-            GLib.idle_add(self.fill_clipboard, [], f"Could not read the clipboard: {e}")
+            except Exception as e:
+                sys.stderr.write(f"overlay_menu: thumbnail: {e!r}\n")
 
     def fill_clipboard(self, entries, error=None):
         self.thumb_widgets = {}
