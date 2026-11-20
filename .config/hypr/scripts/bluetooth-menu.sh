@@ -6,6 +6,11 @@
 ROFI_THEME="$HOME/.config/rofi/settings.rasi"
 SCAN_SECONDS=8
 
+
+# The overlay menu (popover, radar, cards); this Rofi menu stays as a fallback
+if [ -z "$NETMENU_FALLBACK" ] && python3 -c 'import gi; gi.require_version("GtkLayerShell", "0.1")' 2>/dev/null; then
+    exec python3 "$HOME/.config/hypr/scripts/netmenu.py" bt
+fi
 if pgrep -f "rofi.*-p Bluetooth" >/dev/null 2>&1; then
     pkill -f "rofi.*-p Bluetooth" 2>/dev/null || true
     exit 0

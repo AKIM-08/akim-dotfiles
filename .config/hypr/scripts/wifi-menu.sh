@@ -5,6 +5,11 @@
 
 ROFI_THEME="$HOME/.config/rofi/settings.rasi"
 
+
+# The overlay menu (popover, radar); this Rofi menu stays as a fallback
+if [ -z "$NETMENU_FALLBACK" ] && python3 -c 'import gi; gi.require_version("GtkLayerShell", "0.1")' 2>/dev/null; then
+    exec python3 "$HOME/.config/hypr/scripts/netmenu.py" wifi
+fi
 # Toggle: clicking the module again closes the menu
 if pgrep -f "rofi.*-p Wi-Fi" >/dev/null 2>&1; then
     pkill -f "rofi.*-p Wi-Fi" 2>/dev/null || true
