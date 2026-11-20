@@ -61,7 +61,7 @@ def have(cmd):
 
 
 def notify(title, body):
-    subprocess.Popen(["notify-send", "-a", title, "-u", "low", "-h", f"string:x-canonical-private-synchronous:{title}",
+    subprocess.Popen(["notify-send", "-e", "-a", title, "-u", "low", "-h", f"string:x-canonical-private-synchronous:{title}",
                       title, body], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 

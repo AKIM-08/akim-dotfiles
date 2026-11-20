@@ -15,4 +15,4 @@ esac
 # Get current brightness percentage
 percent=$(brightnessctl -m 2>/dev/null | cut -d, -f4 | tr -d '%' || echo 50)
 
-notify-send -h string:x-canonical-private-synchronous:sys-notify -h int:value:"$percent" -u low "Brightness" "${percent}% 󰃟"
+notify-send -e -h string:x-canonical-private-synchronous:sys-notify -h int:value:"$percent" -u low "Brightness" "${percent}% 󰃟"

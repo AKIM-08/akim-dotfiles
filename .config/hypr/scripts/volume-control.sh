@@ -55,15 +55,15 @@ fi
 if [ "$action" = "mic-mute" ]; then
     mic_status=$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null || true)
     if [[ "$mic_status" =~ \[MUTED\] ]]; then
-        notify-send -h string:x-canonical-private-synchronous:sys-notify -u low "Microphone" "Muted 󰍭"
+        notify-send -e -h string:x-canonical-private-synchronous:sys-notify -u low "Microphone" "Muted 󰍭"
     else
-        notify-send -h string:x-canonical-private-synchronous:sys-notify -u low "Microphone" "Active 󰍬"
+        notify-send -e -h string:x-canonical-private-synchronous:sys-notify -u low "Microphone" "Active 󰍬"
     fi
     exit 0
 fi
 
 if [ "$is_muted" = "true" ]; then
-    notify-send -h string:x-canonical-private-synchronous:sys-notify -h int:value:0 -u low "Volume" "Muted 󰝟"
+    notify-send -e -h string:x-canonical-private-synchronous:sys-notify -h int:value:0 -u low "Volume" "Muted 󰝟"
 else
-    notify-send -h string:x-canonical-private-synchronous:sys-notify -h int:value:"$vol" -u low "Volume" "${vol}% 󰕾"
+    notify-send -e -h string:x-canonical-private-synchronous:sys-notify -h int:value:"$vol" -u low "Volume" "${vol}% 󰕾"
 fi

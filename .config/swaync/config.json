@@ -23,7 +23,8 @@
     "notification-body-image-height": 180,
     "notification-body-image-width": 180,
     "notification-visibility": {
-        "screenshots": { "app-name": "Screenshot", "state": "transient" }
+        "screenshots": { "app-name": "Screenshot", "state": "transient" },
+        "volume-brightness": { "summary": "^(Volume|Brightness|Microphone)$", "state": "transient" }
     },
     "timeout": 12,
     "timeout-low": 6,

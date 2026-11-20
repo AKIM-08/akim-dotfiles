@@ -226,14 +226,14 @@ notificationwindow list,
     border-radius: 14px;
     background: @bg-card;
     border: 1px solid @border-card;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: none;
     transition: all 0.2s ease;
 }
 
 .control-center .notification-row .notification-background .notification:hover {
     background: alpha(@foreground, 0.10);
     border-color: @border-glow;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    box-shadow: none;
 }
 
 .control-center .control-center-list-placeholder,
@@ -441,14 +441,14 @@ notificationwindow list,
     border-radius: 14px;
     background: @bg-card;
     border: 1px solid @border-card;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: none;
     transition: all 0.2s ease;
 }
 
 .notification-group .notification-row .notification-background .notification:hover {
     background: alpha(@foreground, 0.10);
     border-color: @border-glow;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    box-shadow: none;
 }
 
 .notification-action {
