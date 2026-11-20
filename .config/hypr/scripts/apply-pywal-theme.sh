@@ -16,7 +16,7 @@ WAL_CACHE="$HOME/.cache/wal"
 PALETTE_ROOT="$WAL_CACHE/palettes"
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 # Bump to invalidate every cached palette after changing how palettes are built.
-CACHE_VERSION=7
+CACHE_VERSION=8
 
 # Cache key: wallpaper identity + anything that changes the generated files
 # (pywal templates, the fallback extractor and this script's GTK CSS).
@@ -217,7 +217,7 @@ data = json.loads((d / "colors.json").read_text())
 s, c = data["special"], data["colors"]
 ST = "\033\\"
 out = "".join(f"\033]4;{i};{c[f'color{i}']}{ST}" for i in range(16) if f"color{i}" in c)
-out += f"\033]10;{s['foreground']}{ST}\033]11;{s['background']}{ST}\033]12;{s.get('cursor', s['foreground'])}{ST}"
+out += f"\033]10;{s['foreground']}{ST}\033]11;{s['background']}{ST}\033]12;{c['color1']}{ST}"   # cursor in the accent
 (d / "sequences").write_text(out)
 PY
 }
