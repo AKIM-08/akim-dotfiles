@@ -371,11 +371,14 @@ Restart=always
 RestartSec=2
 EOF
 
-# Ensure GDM greeter uses X11 for maximum hardware compatibility on cold boot (sessions like Hyprland still run Wayland)
+# GDM must keep Wayland on: with WaylandEnable=false it hides every Wayland session from the
+# session menu, Hyprland included. Older versions of this installer set it (to work around a
+# cold-boot black screen, now handled by the delay + restart above), which made Hyprland vanish
+# from the login screen after each install: undo that.
 for gdm_conf in /etc/gdm3/daemon.conf /etc/gdm3/custom.conf; do
-    if [ -f "$gdm_conf" ]; then
-        sudo sed -i 's/^#WaylandEnable=false/WaylandEnable=false/' "$gdm_conf" 2>/dev/null || true
-        sudo sed -i 's/^WaylandEnable=true/WaylandEnable=false/' "$gdm_conf" 2>/dev/null || true
+    if [ -f "$gdm_conf" ] && grep -q '^WaylandEnable=false' "$gdm_conf"; then
+        sudo sed -i 's/^WaylandEnable=false/#WaylandEnable=false/' "$gdm_conf" 2>/dev/null || true
+        echo "    Turned Wayland back on in $gdm_conf (Hyprland shows in the session menu again)"
     fi
 done
 
