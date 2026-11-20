@@ -431,11 +431,6 @@ def auto(now=False):
         except Exception as e:                      # noqa: BLE001 - keep the reason in the log
             log(f"failed: {e!r}")
             r = 1
-        # say when it's done, so you know the next start shows the new wallpaper
-        msg = ("Boot screens updated", "The next start shows this wallpaper") if r == 0 else \
-              ("Boot screens not updated", "See ~/.cache/boot-screens.log")
-        subprocess.run(["notify-send", "-e", "-u", "low", "-a", "Boot screens", *msg],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return r
 
 
