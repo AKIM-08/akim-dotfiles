@@ -30,11 +30,27 @@ except (ImportError, ValueError) as e:
 
 GLib.set_prgname("dotfiles-settings")          # Wayland app id, used by the Hyprland window rule
 
+
+def xdg_dir(name: str, fallback: str) -> Path:
+    """A user folder in the user's language (xdg-user-dirs): PICTURES is ~/Images in French,
+    ~/Bilder in German... Falls back to ~/<fallback> when it isn't set."""
+    home = Path.home()
+    try:
+        for line in (home / ".config" / "user-dirs.dirs").read_text(encoding="utf-8").splitlines():
+            if line.startswith(f"XDG_{name}_DIR="):
+                value = line.split("=", 1)[1].strip().strip('"').replace("$HOME", str(home))
+                if value.rstrip("/") != str(home):
+                    return Path(value)
+    except OSError:
+        pass
+    return home / fallback
+
+
 HOME = Path.home()
 HYPR = HOME / ".config" / "hypr"
 SCRIPTS = HYPR / "scripts"
 WAYBAR = HOME / ".config" / "waybar" / "scripts"
-WALLPAPERS = HOME / "Pictures" / "wallpapers"
+WALLPAPERS = xdg_dir("PICTURES", "Pictures") / "wallpapers"
 USER_SETTINGS = HYPR / "user-settings.hl"
 USER_APPS = HYPR / "user-apps.hl"
 PID_FILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "dotfiles-settings.pid"
@@ -683,6 +699,9 @@ class Settings(Gtk.Window):
              "tabs": [("Power", self.page_power, "Power saver makes the battery last longer; Caffeine keeps the screen awake.", "")]},
             {"id": "input", "icon": "\U000f037d", "name": "Mouse & keyboard", "sub": "Pointer speed and size", "keywords": "mouse touchpad sensitivity speed cursor pointer",
              "tabs": [("Mouse", self.page_mouse, "Applies immediately and is kept in user-settings.hl.", "")]},
+            {"id": "language", "icon": "\U000f05ca", "name": "Language & region", "sub": "System language and keyboard layout",
+             "keywords": "language locale langue translation keyboard layout azerty qwerty",
+             "tabs": [("Language", self.page_language, "The language needs your password and applies after logging out and back in; the keyboard layout changes at once.", "")]},
             {"id": "apps", "icon": "\U000f003b", "name": "Default apps", "sub": "Browser, terminal, file manager", "keywords": "browser terminal files default",
              "tabs": [("Apps", self.page_apps, "Only installed apps are listed. Terminal: Super + Return, file manager: Super + F.", "")]},
             {"id": "shortcuts", "icon": "\U000f030c", "name": "Shortcuts", "sub": "Keyboard shortcuts", "keywords": "keys keybinds hotkeys",
@@ -698,7 +717,7 @@ class Settings(Gtk.Window):
 
     def page_waybar(self):
         theme, pos, size = self.layout_state()
-        preview = self.bar_preview(pos)
+        preview = self.bar_preview(pos, theme)
         sel = str(WAYBAR / "select.sh")
 
         def apply(*args):
@@ -739,52 +758,123 @@ class Settings(Gtk.Window):
         except (OSError, ValueError, TypeError):
             return 12
 
-    def bar_preview(self, pos):
+    def bar_preview(self, pos, theme="capsule"):
+        """The wallpaper with the bar drawn where it goes, in the theme's shape."""
         area = add_class(Gtk.DrawingArea(), "preview")
         area.set_size_request(-1, 150)
-        area.pos = pos
-        wall = os.path.realpath(WALLPAPERS / "current.jpg")
+        area.pos, area.theme = pos, theme
         area.pix = None
         try:
-            area.pix = GdkPixbuf.Pixbuf.new_from_file_at_scale(wall, 900, 300, True)
+            area.pix = GdkPixbuf.Pixbuf.new_from_file_at_scale(os.path.realpath(WALLPAPERS / "current.jpg"), 900, 300, True)
         except Exception:
             pass
+        area.palette = []
+        try:
+            cols = json.loads((HOME / ".cache" / "wal" / "colors.json").read_text(encoding="utf-8"))["colors"]
+            area.palette = [cols[f"color{i}"] for i in (9, 10, 11, 12, 13, 14, 1)]
+        except (OSError, ValueError, KeyError):
+            area.palette = ["#e07a5f", "#8fb39a", "#f2cc8f", "#5d7fb5", "#c58fb8", "#9cc9d6", "#e07a5f"]
+
+        def rgb(h):
+            h = h.lstrip("#")
+            return tuple(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+
+        def rounded(cr, x, y, w, h, r):
+            r = max(0, min(r, w / 2, h / 2))
+            cr.new_sub_path()
+            cr.arc(x + w - r, y + r, r, -1.5708, 0); cr.arc(x + w - r, y + h - r, r, 0, 1.5708)
+            cr.arc(x + r, y + h - r, r, 1.5708, 3.1416); cr.arc(x + r, y + r, r, 3.1416, 4.7124)
+            cr.close_path()
+
+        def strip(edge, W, H, frac, thick, margin, offset=0.5):
+            """A bar along an edge: frac of its length, centered at offset."""
+            if edge in ("top", "bottom"):
+                L = W * frac
+                x = (W - L) * offset
+                return x, (margin if edge == "top" else H - margin - thick), L, thick
+            L = H * frac
+            y = (H - L) * offset
+            return (margin if edge == "left" else W - margin - thick), y, thick, L
 
         def draw(w, cr):
             W, H = w.get_allocated_width(), w.get_allocated_height()
             cr.save()
-            r = 14
-            cr.new_sub_path()
-            cr.arc(W - r, r, r, -1.5708, 0); cr.arc(W - r, H - r, r, 0, 1.5708)
-            cr.arc(r, H - r, r, 1.5708, 3.1416); cr.arc(r, r, r, 3.1416, 4.7124)
-            cr.close_path()
+            rounded(cr, 0, 0, W, H, 14)
             cr.clip()
             if w.pix:
                 pw, ph = w.pix.get_width(), w.pix.get_height()
-                s = max(W / pw, H / ph)
-                cr.scale(s, s)
-                Gdk.cairo_set_source_pixbuf(cr, w.pix, (W / s - pw) / 2, (H / s - ph) / 2)
+                k = max(W / pw, H / ph)
+                cr.save()                       # scale only for the picture
+                cr.scale(k, k)
+                Gdk.cairo_set_source_pixbuf(cr, w.pix, (W / k - pw) / 2, (H / k - ph) / 2)
                 cr.paint()
-                cr.identity_matrix()
+                cr.restore()
             else:
                 cr.set_source_rgb(0.2, 0.22, 0.3)
                 cr.paint()
-            cr.set_source_rgba(0.08, 0.08, 0.12, 0.72)
-            t = 18
-            boxes = {"top": (W * 0.06, 8, W * 0.88, t), "bottom": (W * 0.06, H - 8 - t, W * 0.88, t),
-                     "left": (8, H * 0.1, t, H * 0.8), "right": (W - 8 - t, H * 0.1, t, H * 0.8)}
-            x, y, bw, bh = boxes.get(w.pos, boxes["top"])
-            rr = 7
-            cr.new_sub_path()
-            cr.arc(x + bw - rr, y + rr, rr, -1.5708, 0); cr.arc(x + bw - rr, y + bh - rr, rr, 0, 1.5708)
-            cr.arc(x + rr, y + bh - rr, rr, 1.5708, 3.1416); cr.arc(x + rr, y + rr, rr, 3.1416, 4.7124)
-            cr.close_path()
-            cr.fill()
-            cr.set_source_rgba(1, 1, 1, 0.9)
+
+            edge, th = w.pos, w.theme
+            dark = (0.07, 0.07, 0.11, 0.78)
+            if th == "island":
+                nw, nh, e = W * 0.34, 18, 8
+                x = (W - nw) / 2
+                cr.move_to(x - e, 0); cr.arc(x - e, e, e, -1.5708, 0)
+                cr.line_to(x, nh - 9); cr.arc_negative(x + 9, nh - 9, 9, 3.1416, 1.5708)
+                cr.line_to(x + nw - 9, nh); cr.arc_negative(x + nw - 9, nh - 9, 9, 1.5708, 0)
+                cr.line_to(x + nw, e); cr.arc(x + nw + e, e, e, 3.1416, 4.7124)
+                cr.close_path()
+                cr.set_source_rgb(0, 0, 0); cr.fill()
+                for i in range(5):                # workspace dots
+                    cr.set_source_rgba(*(rgb(w.palette[6]) if i == 1 else (1, 1, 1)), 1 if i == 1 else 0.5)
+                    rounded(cr, x + 14 + i * 9, 7, 12 if i == 1 else 5, 5, 2.5); cr.fill()
+            elif th == "dock":
+                horiz = edge in ("top", "bottom")
+                x, y, bw, bh = strip(edge, W, H, 0.42 if horiz else 0.86, 30, 8)
+                cr.set_source_rgba(*dark); rounded(cr, x, y, bw, bh, 12); cr.fill()
+                n = 6 if horiz else 4
+                for i in range(n):              # app icons
+                    c = rgb(w.palette[i % 6])
+                    cr.set_source_rgba(*c, 0.95)
+                    if horiz:
+                        cx = x + bw * (i + 1) / (n + 1) - 8
+                        rounded(cr, cx, y + 7, 16, 16, 5)
+                    else:
+                        cy = y + bh * (i + 1) / (n + 1) - 8
+                        rounded(cr, x + 7, cy, 16, 16, 5)
+                    cr.fill()
+            elif th == "powerline":
+                x, y, bw, bh = strip(edge, W, H, 1.0, 18, 0)
+                cr.set_source_rgba(*dark); cr.rectangle(x, y, bw, bh); cr.fill()
+                horiz = edge in ("top", "bottom")
+                segs = [(0.0, 0.07), (0.07, 0.2), (0.75, 0.83), (0.83, 0.9), (0.9, 1.0)]
+                for i, (a0, a1) in enumerate(segs):
+                    cr.set_source_rgb(*rgb(w.palette[i]))
+                    if horiz:
+                        cr.rectangle(x + bw * a0, y, bw * (a1 - a0) - 1, bh)
+                    else:
+                        cr.rectangle(x, y + bh * a0, bw, bh * (a1 - a0) - 1)
+                    cr.fill()
+            elif th == "line":
+                x, y, bw, bh = strip(edge, W, H, 1.0, 12, 0)
+                cr.set_source_rgba(*dark); cr.rectangle(x, y, bw, bh); cr.fill()
+            elif th == "zen":
+                x, y, bw, bh = strip(edge, W, H, 0.34, 18, 8)
+                cr.set_source_rgba(*dark); rounded(cr, x, y, bw, bh, 9); cr.fill()
+            elif th == "capsule":
+                for frac, off in ((0.24, 0.02), (0.2, 0.5), (0.24, 0.98)):
+                    x, y, bw, bh = strip(edge, W, H, frac, 18, 8, off)
+                    cr.set_source_rgba(*dark); rounded(cr, x, y, bw, bh, 9); cr.fill()
+            else:                                 # default, experimental: floating bar
+                x, y, bw, bh = strip(edge, W, H, 0.88, 18, 8)
+                cr.set_source_rgba(*dark); rounded(cr, x, y, bw, bh, 7); cr.fill()
+
+            label = "Preview · changes apply immediately"
             cr.select_font_face("sans")
             cr.set_font_size(12)
-            cr.move_to(40 if w.pos == "left" else 14, H - 14 if w.pos != "bottom" else 24)
-            cr.show_text("Preview · changes apply immediately")
+            tx = 44 if edge == "left" and th != "island" else 14
+            ty = 26 if edge == "bottom" and th != "island" else H - 14
+            cr.set_source_rgba(0, 0, 0, 0.55); cr.move_to(tx + 1, ty + 1); cr.show_text(label)
+            cr.set_source_rgba(1, 1, 1, 0.92); cr.move_to(tx, ty); cr.show_text(label)
             cr.restore()
 
         area.connect("draw", draw)
@@ -1154,6 +1244,94 @@ class Settings(Gtk.Window):
                 group(row("Size", "Changes at once; a few apps that draw their own pointer follow when reopened",
                           segmented([("24", "24"), ("28", "28"), ("32", "32"), ("40", "40"), ("48", "48")], size,
                                     lambda v: spawn(["python3", str(SCRIPTS / "cursors.py"), "set", v]))))]
+
+    # -------------------------------------------------------------- Language & region
+    LANGUAGES = [
+        ("en_US.UTF-8", "English (United States)"), ("en_GB.UTF-8", "English (United Kingdom)"),
+        ("fr_FR.UTF-8", "Français (France)"), ("fr_BE.UTF-8", "Français (Belgique)"), ("fr_CA.UTF-8", "Français (Canada)"),
+        ("fr_CH.UTF-8", "Français (Suisse)"), ("de_DE.UTF-8", "Deutsch"), ("es_ES.UTF-8", "Español (España)"),
+        ("es_MX.UTF-8", "Español (México)"), ("pt_PT.UTF-8", "Português (Portugal)"), ("pt_BR.UTF-8", "Português (Brasil)"),
+        ("it_IT.UTF-8", "Italiano"), ("nl_NL.UTF-8", "Nederlands"), ("pl_PL.UTF-8", "Polski"), ("tr_TR.UTF-8", "Türkçe"),
+        ("ru_RU.UTF-8", "Русский"), ("uk_UA.UTF-8", "Українська"), ("ar_MA.UTF-8", "العربية (المغرب)"),
+        ("ar_SA.UTF-8", "العربية"), ("ja_JP.UTF-8", "日本語"), ("ko_KR.UTF-8", "한국어"), ("zh_CN.UTF-8", "中文 (简体)"),
+    ]
+    LAYOUTS = [
+        ("fr", "French (AZERTY)"), ("be", "Belgian (AZERTY)"), ("us", "English (US, QWERTY)"), ("gb", "English (UK)"),
+        ("ch", "Swiss"), ("ca", "Canadian French"), ("de", "German (QWERTZ)"), ("es", "Spanish"), ("latam", "Latin American"),
+        ("pt", "Portuguese"), ("br", "Brazilian"), ("it", "Italian"), ("nl", "Dutch"), ("pl", "Polish"), ("tr", "Turkish"),
+        ("ru,us", "Russian + US"), ("ua,us", "Ukrainian + US"), ("ara,fr", "Arabic + French"), ("ara,us", "Arabic + US"),
+        ("jp", "Japanese"), ("kr", "Korean"),
+    ]
+
+    @staticmethod
+    def system_language():
+        """The default language of new logins (/etc/default/locale), else this session's."""
+        try:
+            for line in Path("/etc/default/locale").read_text(encoding="utf-8", errors="replace").splitlines():
+                if line.startswith("LANG="):
+                    return line.split("=", 1)[1].strip().strip('"')
+        except OSError:
+            pass
+        return os.environ.get("LANG", "en_US.UTF-8")
+
+    def page_language(self):
+        current = self.system_language()
+        langs = list(self.LANGUAGES)
+        if current not in dict(langs):
+            langs.insert(0, (current, current))
+        status = label("", "dim", wrap=True)
+
+        def set_language(loc):
+            if loc == self.system_language():
+                return
+            status.set_text("Waiting for your password…")
+
+            def work():
+                r = subprocess.run(["pkexec", "/bin/sh", str(SCRIPTS / "set-locale.sh"), loc],
+                                   capture_output=True, text=True, timeout=600)
+                if r.returncode == 0:
+                    # GDM starts sessions in the language stored for the user: keep it in step
+                    uid = os.getuid()
+                    run(["busctl", "call", "org.freedesktop.Accounts", f"/org/freedesktop/Accounts/User{uid}",
+                         "org.freedesktop.Accounts.User", "SetLanguage", "s", loc], timeout=10)
+                return r
+
+            def done(r):
+                if r is not None and r.returncode == 0:
+                    status.set_text("Done. Log out and back in to use the new language. Folder names "
+                                    "(Pictures, Downloads…) keep their current names.")
+                    notify("Language changed: log out and back in to apply it")
+                elif r is not None and r.returncode in (126, 127):
+                    status.set_text("Cancelled.")
+                else:
+                    err = (r.stderr.strip().splitlines() or ["unknown error"])[-1] if r is not None else "pkexec not found"
+                    status.set_text(f"Could not change the language: {err}")
+            in_background(work, done)
+
+        raw = run(["hyprctl", "getoption", "input:kb_layout"])
+        m = re.search(r"str:\s*(\S+)", raw)
+        layout = m.group(1) if m else "fr"
+        layouts = list(self.LAYOUTS)
+        if layout not in dict(layouts):
+            layouts.insert(0, (layout, layout))
+
+        def set_layout(v):
+            spawn(["hyprctl", "keyword", "input:kb_layout", v])
+            spawn(["hyprctl", "keyword", "input:kb_variant", ""])
+            # Two layouts: Alt + Shift switches between them
+            opts = "grp:alt_shift_toggle" if "," in v else ""
+            spawn(["hyprctl", "keyword", "input:kb_options", opts])
+            set_block("keyboard", f"input {{\n    kb_layout = {v}\n    kb_variant =\n    kb_options = {opts}\n}}")
+
+        return [
+            section("Language"),
+            group(row("System language", "Menus and apps in this language after the next login",
+                      dropdown(langs, current, set_language)),
+                  row("", "", status)),
+            section("Keyboard"),
+            group(row("Layout", "Changes at once. Two layouts: Alt + Shift switches between them",
+                      dropdown(layouts, layout, set_layout))),
+        ]
 
     # -------------------------------------------------------------- Default apps
     def page_apps(self):

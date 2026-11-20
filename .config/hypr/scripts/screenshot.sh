@@ -8,8 +8,14 @@
 
 set -euo pipefail
 
-DIR="${XDG_SCREENSHOTS_DIR:-$HOME/Pictures/Screenshots}"
-VID_DIR="${XDG_VIDEOS_DIR:-$HOME/Videos/Recordings}"
+# Pictures folder in the user's language (~/Images in French, ~/Bilder in German...), from
+# xdg-user-dirs; ~/Pictures when it isn't set
+PICTURES_DIR=$(xdg-user-dir PICTURES 2>/dev/null)
+{ [ -n "$PICTURES_DIR" ] && [ "$PICTURES_DIR" != "$HOME" ]; } || PICTURES_DIR="$HOME/Pictures"
+VIDEOS_DIR=$(xdg-user-dir VIDEOS 2>/dev/null)
+{ [ -n "$VIDEOS_DIR" ] && [ "$VIDEOS_DIR" != "$HOME" ]; } || VIDEOS_DIR="$HOME/Videos"
+DIR="${XDG_SCREENSHOTS_DIR:-$PICTURES_DIR/Screenshots}"
+VID_DIR="$VIDEOS_DIR/Recordings"
 mkdir -p "$DIR" "$VID_DIR"
 
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)

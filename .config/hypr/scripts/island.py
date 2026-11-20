@@ -49,9 +49,25 @@ if not qp.HAS_LAYER_SHELL:
     sys.exit(1)
 from quickpanel import GtkLayerShell                           # noqa: E402
 
+
+def xdg_dir(name: str, fallback: str) -> Path:
+    """A user folder in the user's language (xdg-user-dirs): PICTURES is ~/Images in French,
+    ~/Bilder in German... Falls back to ~/<fallback> when it isn't set."""
+    home = Path.home()
+    try:
+        for line in (home / ".config" / "user-dirs.dirs").read_text(encoding="utf-8").splitlines():
+            if line.startswith(f"XDG_{name}_DIR="):
+                value = line.split("=", 1)[1].strip().strip('"').replace("$HOME", str(home))
+                if value.rstrip("/") != str(home):
+                    return Path(value)
+    except OSError:
+        pass
+    return home / fallback
+
+
 HOME = Path.home()
 SCRIPTS = qp.SCRIPTS
-WALLPAPERS = HOME / "Pictures" / "wallpapers"
+WALLPAPERS = xdg_dir("PICTURES", "Pictures") / "wallpapers"
 THUMBS = HOME / ".cache" / "island" / "thumbs"
 LAYOUT = HOME / ".config" / "waybar" / "layout.json"
 COLORS = HOME / ".cache" / "wal" / "colors.json"

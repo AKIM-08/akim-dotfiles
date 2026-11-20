@@ -1,315 +1,193 @@
 # akim-dotfiles
 
-Configuration Hyprland optimisée exclusivement pour **Debian** (13 Trixie, Testing, Sid ou Bookworm backports), pour laptop avec écran unique et clavier **AZERTY**, avec thème dynamique généré depuis le fond d'écran via **pywal16**.
+A Hyprland desktop for **Debian 13 (Trixie)** where everything takes its colors from the wallpaper.
+Change the wallpaper and the bar, terminal, menus, notifications, lock screen, GTK and Qt apps,
+and even `btop`, `cava` and the terminal prompt follow, in about a second, without reloading
+anything.
 
-## Stack
+Built on a 14" laptop with a French AZERTY keyboard; it works on any single-screen Debian machine
+and in any language.
 
-| Composant | Outil |
-|-----------|-------|
-| OS | Debian GNU/Linux (13 Trixie / Testing / Sid ou Bookworm backports) |
-| Écran de connexion | GDM / LightDM (coexistence GNOME & session Wayland préservées) |
-| Compositrice | Hyprland |
-| Terminal | Kitty |
-| Barre d'état | Waybar (4 thèmes) |
-| Lanceur | Rofi (+ Wofi pour certains menus) |
-| Menu d'alimentation | snmenu (radial CS:GO) / wlogout |
-| Notifications | SwayNC |
-| Fond d'écran | awww (transitions animées) / hyprpaper / waypaper |
-| Verrouillage / veille | hyprlock + hypridle |
-| Infos système (terminal) | fastfetch |
-| Thème GTK | Catppuccin Mocha + accents **pywal16** (`gtk.css`) |
-| Couleurs UI | **pywal16** — extraites du fond d'écran actif |
-| Curseur | Nordzy |
-| Shell | Zsh + Oh My Zsh (thème `fishy`) |
+## What you get
 
-## Structure du dépôt
+| | |
+|---|---|
+| **Theme from the wallpaper** | pywal16 palettes, cached per wallpaper so switching is instant. Applied live to Waybar, kitty (and everything open in it), Rofi, SwayNC, GTK 3/4, Qt, hyprlock, Hyprland borders, btop, cava, Papirus folder icons and Discord (pywal-discord). |
+| **Wallpaper transitions** | *Outline*: characters are drawn first, then the scene fills in around them (optional AI model, see below). *Classic*: awww wipes and waves. |
+| **8 bar styles** | Default, Line, Zen, Experimental, Capsule, Powerline, Dock (hides until you touch the screen edge) and Island (an iOS-style dynamic island at the top). Any edge, three sizes, adjustable gap. |
+| **Settings app** (`Super + H`) | Bar, wallpaper transition, lock screen, menus, terminal prompt, display, night light, Wi-Fi, Bluetooth, sound, power, mouse, language and keyboard, default apps, and every keyboard shortcut (rebindable). |
+| **Quick panel** (`Super + N`) | Live music card, Wi-Fi, Bluetooth, mute, mic, do-not-disturb, night light, caffeine, screenshot, volume and brightness sliders. |
+| **Launcher** (`Super + Q`) | Apps and files in one window; `Tab` switches between them, `Ctrl + Enter` opens a folder. |
+| **Lock screen** | Four designs (Classic, Clock, Card, Minimal), picked in Settings. |
+| **Power menu** (`Super + Esc`) | Radial or cards, asks again before shutdown, reboot and log out. |
+| **Terminal** | kitty with a thin cursor that leaves a short trail, three zsh prompts (`prompt-style blocks / frame / right`), fzf, zoxide, eza, a fastfetch dashboard with usage meters, btop and cava in the wallpaper colors. |
+| **Laptop care** | Power profiles, caffeine, night light, dim / lock / suspend on idle, hibernate before the battery runs out. |
 
-```
-akim-dotfiles/
-├── install.sh              # Script d'installation automatisé pour Debian
-├── install/
-│   ├── debian.sh           # Couche paquets Debian (APT, backports, pipx, thèmes)
-│   ├── common.sh           # Déploiement configs, pywal, scripts, sauvegardes
-│   └── rollback.sh         # Script de restauration / annulation des modifications
-├── .gitignore
-├── README.md
-├── .zshrc                  # Configuration Zsh (chargement des plugins Debian)
-├── omz-custom/             # Thème fishy (copié vers ~/.oh-my-zsh/themes/ à l'install)
-│   └── themes/fishy.zsh-theme
-├── assets/
-│   └── akim-avatar.png     # Avatar hyprlock (copié vers ~/Pictures/)
-├── wallpapers/             # Fonds d'écran source (supporte n'importe quel nom de fichier, JPG/PNG/WebP)
-└── .config/
-    ├── hypr/               # Hyprland, hyprpaper, hyprlock, hypridle + scripts
-    ├── waybar/             # Barre + thèmes + scripts
-    ├── cpmenu/             # Menu d'alimentation snmenu
-    ├── kitty/              # Terminal
-    ├── rofi/               # Lanceur + presse-papier (clipboard.rasi)
-    ├── wofi/               # Menus (sélecteur de thème Waybar)
-    ├── swaync/             # Centre de notifications
-    ├── waypaper/           # Gestionnaire de fonds d'écran (GUI)
-    ├── wal/                # Templates pywal16 (Hyprland, GTK, Qt)
-    ├── gtk-3.0/            # Thème GTK de base (Catppuccin Mocha)
-    ├── gtk-4.0/            # Thème GTK 4 / libadwaita
-    ├── qt5ct/              # Configuration Qt5
-    └── qt6ct/              # Configuration Qt6
-```
+## Requirements
 
-> `current.jpg` n'est **pas** dans le dépôt : c'est un **symlink** vers une image dans `~/Pictures/wallpapers/` (ex. `image1.jpg`), créé à l'installation. Cela évite de recopier le JPEG et de perdre en qualité.
+- **Debian 13 (Trixie)**, Testing or Sid. Bookworm works with backports, with older Hyprland.
+- A user with `sudo`, and an internet connection during the install.
+- Intel or AMD graphics. **NVIDIA**: see [NVIDIA](#nvidia) below.
 
-## Prérequis
+GNOME and GDM stay installed and working: Hyprland is added as another session on the login screen.
 
-- Debian GNU/Linux (Debian 13 Trixie / Sid / Testing recommandé, ou Bookworm avec backports)
-- Accès `sudo`
-- Connexion internet
-- Laptop avec un seul écran (config moniteur auto-détectée)
-- GPU Intel/AMD par défaut — **utilisateurs NVIDIA** : décommenter les 2 lignes `env` dans `hyprland.conf` (voir ci-dessous)
-
-## Installation
-
-### Automatique (Recommandé)
+## Install
 
 ```bash
-git clone <url-du-repo> akim-dotfiles
+git clone https://github.com/AKIM-08/akim-dotfiles.git
 cd akim-dotfiles
-chmod +x install.sh install/*.sh
 ./install.sh
 ```
 
-Options disponibles :
+Run it as your normal user, not with `sudo`; it asks for your password when it needs it. It takes
+a while the first time (it builds `awww` from source). Everything it prints is also saved to
+`~/.cache/akim-dotfiles-install.log`.
+
+Then log out, choose **Hyprland** in the login screen's session menu (the gear icon), and log in.
+`Super + H` opens Settings, `Super + G` lists every shortcut.
+
+What the installer does:
+
+- Installs the packages (APT, plus `pywal16` and `waypaper` with pipx), the JetBrainsMono Nerd
+  Font, the Catppuccin GTK and Kvantum themes and Papirus icons.
+- Copies the configs into `~/.config`. **Every folder it replaces is backed up first**
+  (`<folder>.backup-before-akim-dotfiles-<date>`), and so is `~/.zshrc`.
+- Puts the wallpapers in `wallpapers/` inside **your** Pictures folder: the one your system
+  language uses (`~/Pictures`, `~/Images` in French, `~/Bilder` in German...). Screenshots go to
+  `<Pictures>/Screenshots`, screen recordings to `<Videos>/Recordings`.
+- Registers the Hyprland session and sets up PAM so hyprlock accepts your password.
+- Makes zsh your shell with Oh My Zsh.
+
+### Update
+
 ```bash
-./install.sh             # Installation standard Debian
-./install.sh --rollback  # Restaurer les configurations précédentes
-./install.sh --help      # Afficher l'aide
-```
-
-### Ce qui est configuré sur Debian :
-- **Coexistence GNOME & GDM :** GDM et votre environnement de bureau par défaut restent intacts. La session `Hyprland` est enregistrée dans `/usr/share/wayland-sessions/hyprland.desktop` et disponible depuis le menu de session de GDM (icône engrenage).
-- **Sécurité des configurations :** Chaque dossier dans `~/.config/` et `~/.zshrc` est automatiquement sauvegardé (`.backup-before-akim-dotfiles-...`) avant remplacement.
-- **Thèmes & Polices :** Les polices JetBrainsMono Nerd Font, le thème GTK Catppuccin Mocha et les curseurs Nordzy sont automatiquement configurés.
-- **Outils compilés / pipx :** `pywal16`, `waypaper`, `awww`, et `snmenu` sont installés via pipx et binaires optimisés pour Debian.
-- **Authentification PAM :** Configuration `/etc/pam.d/hyprlock` pour le déverrouillage hyprlock avec les identifiants Debian.
-
-### Mise à jour après `git pull`
-
-Sur un PC qui a déjà cloné le dépôt et installé les dotfiles :
-
-```bash
-cd ~/akim-dotfiles          # adapter le chemin si besoin
+cd akim-dotfiles
 git pull
-
-# Déployer les configs
-cp -r .config/* ~/.config/
-cp .zshrc ~/.zshrc 2>/dev/null || true
-
-# Rendre les scripts exécutables
-chmod +x ~/.config/hypr/scripts/*.sh
-chmod +x ~/.config/hypr/scripts/pywal-fallback.py
-chmod +x ~/.config/waybar/scripts/*.sh
-chmod +x ~/.config/swaync/refresh.sh
-chmod +x ~/.config/waypaper/wallpaper_script.sh
-chmod +x ~/.config/wlogout/hibernate.sh
-
-# Mettre à jour les paquets Debian si nécessaire
-sudo apt update && sudo apt upgrade -y
-
-# Régénérer le thème pywal + GTK
-~/.config/hypr/scripts/apply-pywal-theme.sh ~/Pictures/wallpapers/current.jpg
-
-# Recharger la session Hyprland
-hyprctl reload
-pkill waybar; waybar &
-swaync-client --reload-css 2>/dev/null || (pkill swaync; swaync &)
+./install.sh
 ```
 
-> **Option rapide** : relancer `./install.sh` depuis le repo permet d'appliquer rapidement toute mise à jour.
+Re-running the installer **keeps your choices**: bar theme and position, lock screen, power menu
+style, wallpaper transition, night light, pointer size, shortcuts you changed, and your default
+apps.
 
-### Connexion et verrouillage
-
-- **GDM / LightDM** = connexion initiale au boot (sélectionnez la session *Hyprland* sur l'écran de login)
-- **hyprlock** = verrouillage *pendant* la session (déclenché par hypridle ou le raccourci)
-
-Avatar (utilisé par hyprlock) :
-```bash
-cp ~/Pictures/akim-avatar.png ~/.face
-cp ~/Pictures/akim-avatar.png ~/.face.icon
-```
-
-### Installation manuelle (partielle)
+### Undo
 
 ```bash
-cp -r .config/* ~/.config/
-cp .zshrc ~/.zshrc
-cp wallpapers/image*.* ~/Pictures/wallpapers/ 2>/dev/null || true
-cp assets/akim-avatar.png ~/Pictures/akim-avatar.png 2>/dev/null || true
-ln -sf ~/Pictures/wallpapers/image1.jpg ~/Pictures/wallpapers/current.jpg
-chmod +x ~/.config/hypr/scripts/*.sh ~/.config/hypr/scripts/pywal-fallback.py
-chmod +x ~/.config/waybar/scripts/*.sh ~/.config/waypaper/wallpaper_script.sh
-chmod +x ~/.config/wlogout/hibernate.sh
-~/.config/hypr/scripts/apply-pywal-theme.sh ~/Pictures/wallpapers/current.jpg
+./install.sh --rollback
 ```
 
-### Shell (Zsh + Oh My Zsh)
+Puts back the configuration you had before the first install (the oldest backup of each folder).
 
-- **Oh My Zsh** s'installe dans `~/.oh-my-zsh` via `install.sh` (non versionné dans le dépôt).
-- **`omz-custom/`** contient le thème `fishy` copié à l'installation.
-- **Plugins** : `git` (via OMZ) + `zsh-autosuggestions` + `zsh-syntax-highlighting` (paquets APT Debian, chargés dans l'ordre correct).
-- Si OMZ est absent, `.zshrc` affiche un prompt minimal.
+## Shortcuts
 
-## Utilisation
+`Super` is the Windows key. Workspaces use the number row: on AZERTY that is
+`Super + & é " ' ( - è _ ç à`.
 
-### Raccourcis clavier principaux (AZERTY)
+| Keys | Action |
+|---|---|
+| `Super + Return` | Terminal (kitty) |
+| `Super + Q` | Launcher (apps and files) |
+| `Super + F` | Files (Nautilus) |
+| `Super + B` | Web browser |
+| `Super + A` | Close the window |
+| `Super + W` | Wallpaper picker |
+| `Super + Alt + ←` / `→` | Previous / next wallpaper |
+| `Super + N` | Quick panel |
+| `Super + Shift + N` | Notifications |
+| `Super + H` | Settings |
+| `Super + Shift + H` | Quick settings (Rofi) |
+| `Super + Shift + T` | Bar style |
+| `Super + G` | Shortcut list |
+| `Super + V` | Clipboard history |
+| `Super + P` | Screenshot menu |
+| `Super + Shift + P` / `Super + Alt + P` | Screenshot of a region / the whole screen |
+| `Super + Shift + R` | Record the screen |
+| `Super + L` | Lock |
+| `Super + Esc` | Power menu |
+| `Super + T` / `Super + Tab` | Float the window, centered |
+| `Super + Shift + F` | Fullscreen |
+| `Super + S` / `Super + Shift + S` | Show the scratchpad / send the window to it |
+| `Super + C` | Caffeine (stay awake) |
+| `Super + F12` | Power profile |
+| `Super + M` | Log out of Hyprland |
 
-| Raccourci | Action |
-|-----------|--------|
-| `Super + Entrée` | Ouvrir le terminal (Kitty) |
-| `Super + Q` | Lanceur d'applications (Rofi) — **toggle** (ouvre / ferme) |
-| `Super + G` | Aide & documentation des raccourcis (**Cheatsheet Rofi**, toggle) |
-| `Super + A` | Fermer la fenêtre active |
-| `Super + H` | Paramètres rapides (**Quick Settings** : vitesse souris, applications par défaut, profils...) |
-| `Super + L` | Verrouiller l'écran (**hyprlock**, comme sous Windows) |
-| `Super + F` | Gestionnaire de fichiers (Nautilus) |
-| `Super + B` | Navigateur web (Firefox, Brave ou Chromium) |
-| `Super + V` | Historique du presse-papier — **toggle** |
-| `Super + P` | Menu capture d'écran / enregistrement (**Rofi**) |
-| `Super + Shift + P` | Capture d'écran **zone** → `~/Pictures/Screenshots/` + presse-papier |
-| `Super + Alt + P` | Capture d'écran **plein écran** |
-| `Super + Shift + R` | Enregistrement vidéo (**wf-recorder**) |
-| `Super + Escape` | Menu d'alimentation (**snmenu**) |
-| `Super + N` | Centre de notifications (SwayNC) |
-| `Super + D` | Discord |
-| `Super + Shift + T` | Sélecteur de thème Waybar (**toggle**) |
-| `Super + Tab` | Basculer flottant / tuilé |
-| `Super + T` | Flottant **centré** (toggle) |
-| `Super + S` | Afficher / cacher le **scratchpad** |
-| `Super + Shift + S` | Envoyer / retirer la fenêtre du **scratchpad** (toggle) |
-| `Super + Alt + →` | Fond d'écran suivant + nouveau thème |
-| `Super + Alt + ←` | Fond d'écran précédent + nouveau thème |
-| `Super + C` | Mode caféine (**Caffeine toggle**, empêche la veille) |
-| `Super + F12` | Menu profil d'alimentation (**Performance / Équilibré / Économie d'énergie**) |
+Change any of them in **Settings → Shortcuts**: click *Change* and press the new keys. Your changes
+live in `~/.config/hypr/user-binds.hl` and survive updates.
 
-Les workspaces `Super + &`, `Super + é`, `Super + "`, etc. correspondent aux touches **1–10** sur un clavier AZERTY.
+## Everyday use
 
-### Centre de notifications (SwayNC)
+**Wallpapers.** Drop images (`.jpg`, `.png`, `.webp`, any name) into `<Pictures>/wallpapers`.
+They get a cached palette in the background, so switching to them is instant. Use images at least
+as large as your screen.
 
-Widgets : média, notifications, **volume**, **luminosité**, grille de raccourcis :
+**Outline transition.** For the transition that draws people and characters first, install the
+detection models once:
 
-| Bouton | Action |
-|--------|--------|
-| Mute sortie | `wpctl` — mute haut-parleurs |
-| Mute micro | `wpctl` — mute micro |
-| Wi‑Fi | `nmtui` (dans Kitty) |
-| Bluetooth | Active BT + ouvre Blueman |
-| Lune | Ne pas déranger (toggle) |
-| Graphique | `btop` (dans Kitty) |
+```bash
+~/.config/hypr/scripts/wallfx/wallfx-setup.sh
+```
 
-`Super + N` ou l'icône cloche dans Waybar ouvre / ferme le centre.
+(a few hundred MB in `~/.local/share/wallfx`; `--remove` uninstalls it). Pick *Outline* or *Classic* in
+Settings → Appearance → Wallpaper.
 
-### Verrouillage automatique (hypridle)
+**Terminal prompt.** `prompt-style blocks`, `prompt-style frame` or `prompt-style right`, or
+Settings → Appearance → Terminal. `fastfetch` shows the system dashboard.
 
-| Délai | Action |
-|-------|--------|
-| 10 min | Luminosité écran réduite |
-| 15 min | Verrouillage (**hyprlock** + avatar AKIM) + écran éteint |
-| 20 min | Mise en veille (suspend) |
+**Language.** Settings → Language & region changes the system language (asks for your password,
+applies at the next login) and the keyboard layout (immediately; two layouts switch with
+`Alt + Shift`).
 
-**Hibernation automatique** (~5 minutes restantes avant extinction ou batterie ≤ 4 % sur batterie) : script `battery-hibernate-watch.sh` (désactive le mode caféine si actif, verrouille impérativement l'écran avec **hyprlock** avant d'hiberner afin que le mot de passe soit obligatoirement exigé au rallumage, et bascule en veille si pas de swap configuré).
+**Idle.** After 10 minutes the screen dims, after 15 it locks and turns off, after 20 the laptop
+sleeps. On battery it hibernates before running empty (needs swap). Times are in
+`~/.config/hypr/hypridle.conf`.
 
-### Menu d'alimentation (snmenu)
+## Customising
 
-`Super + Escape` ouvre le menu circulaire **snmenu** : **Logout**, **Shutdown**, **Hibernate**, **Reboot**, **Suspend**, **Lock**.
+Your own changes are safest in these files, which updates never replace:
 
-> **Hibernation** : vérifie la présence d'une partition/fichier **swap** actif (`swapon --show`). Sans swap, une notification s'affiche et l'action est annulée.
+| File | For |
+|---|---|
+| `~/.config/hypr/user-settings.hl` | Any Hyprland setting (Settings writes here too) |
+| `~/.config/hypr/user-binds.hl` | Your shortcuts |
+| `~/.config/hypr/user-apps.hl` | Default terminal and file manager |
 
-### Thème dynamique (pywal16)
+Everything else is in the repo:
 
-Les couleurs de l'interface sont **extraites automatiquement** depuis `~/Pictures/wallpapers/current.jpg` via pywal16.
+```
+.config/
+├── hypr/            Hyprland, hyprlock (4 designs), hypridle, and the scripts:
+│   └── scripts/     settings.py, quickpanel.py, island.py, apply-pywal-theme.sh, wallfx/ ...
+├── waybar/          bar themes (themes/<name>/), layout.py builds the live config
+├── rofi/            launcher and menus
+├── kitty/  swaync/  fastfetch/  btop/  wal/ (pywal templates)  gtk-3.0/  gtk-4.0/  qt5ct/  qt6ct/
+omz-custom/themes/   the three zsh prompts
+wallpapers/          the wallpapers copied on install
+install/             debian.sh (packages), common.sh (configs), rollback.sh
+```
 
-Script central : `~/.config/hypr/scripts/apply-pywal-theme.sh`
+## NVIDIA
 
-- Appelé à l'installation, au changement de fond (`Super + Alt + ←/→`), et par Waypaper
-- Si pywal16 échoue, `pywal-fallback.py` extrait quand même une palette depuis l'image (Pillow)
-- **GTK** : `~/.config/gtk-3.0/gtk.css` et `gtk-4.0/gtk.css` mis à jour depuis pywal (relancer les apps GTK pour voir l'effet)
-- **Hyprland** : bordures et styles de fenêtres synchronisés
+Uncomment these two lines near the top of `~/.config/hypr/hyprland.hl`, then log out and back in:
 
-Composants mis à jour :
-
-- **Hyprland** — bordures et opacité des fenêtres
-- **Kitty** — couleurs du terminal
-- **Rofi** — lanceur (icônes Papirus, largeur compacte)
-- **Hyprlock** — écran de verrouillage
-- **Waybar / SwayNC / wlogout** — via `colors-waybar.css`
-- **Cava** — visualiseur audio
-
-`Super + Alt + ←/→` change le fond d'écran et régénère le thème complet.
-
-### Thèmes Waybar
-
-Cinq styles : **default**, **line**, **zen**, **experimental**, **capsule** (placés en haut de l'écran).
-
-- Raccourci : `Super + Shift + T`
-- Ou : `~/.config/waybar/scripts/select.sh`
-
-L'horloge affiche les **secondes** et se met à jour chaque seconde (`interval: 1`).
-
-### Gestionnaire de fonds d'écran (Waypaper)
-
-GUI installée via pipx (`waypaper`). Lancez `waypaper` depuis un terminal ou ajoutez un raccourci. Pointe vers `~/Pictures/wallpapers/` ; chaque changement exécute `wallpaper_script.sh` → `apply-pywal-theme.sh`.
-
-### Ajouter des fonds d'écran
-
-Déposez simplement vos images dans `wallpapers/` du dépôt ou dans `~/Pictures/wallpapers/` avec **n'importe quel nom de fichier** (aucun renommage nécessaire, que vous ayez 5 ou 100+ images : `.jpg`, `.jpeg`, `.png`, `.webp` sont reconnus automatiquement).
-
-- Parcourir séquentiellement : `Super + Alt + ←/→`
-- Ouvrir le sélecteur visuel avec vignettes : `Super + W`
-- Ou utiliser Waypaper (GUI)
-
-### Qualité des fonds d'écran (éviter le flou)
-
-- Utilisez des images **au moins aussi grandes que votre écran** (ex. 1920×1080 ou plus pour un laptop FHD).
-- `current.jpg` est un **symlink** vers le fichier source (pas de recompression).
-- Le mode d'affichage est **`cover`** (remplit l'écran sans étirer).
-- Vérifiez l'échelle du moniteur : `hyprctl monitors` — un scale > 1 demande des images plus grandes.
-- Les fenêtres **transparentes** floutent le fond derrière elles (effet Hyprland) : ce n'est pas le wallpaper qui est flou.
-- **hyprlock** applique volontairement un flou sur l'écran de verrouillage uniquement.
-
-## GPU NVIDIA (optionnel)
-
-Par défaut, les variables NVIDIA sont **commentées** pour Intel/AMD. Si vous avez un GPU NVIDIA, ouvrez `.config/hypr/hyprland.hl` et décommentez :
-
-```conf
+```
 env = LIBVA_DRIVER_NAME,nvidia
 env = __GLX_VENDOR_LIBRARY_NAME,nvidia
 ```
 
-Puis rechargez Hyprland : `hyprctl reload`.
+## Troubleshooting
 
-## Personnalisation
+| Problem | Try |
+|---|---|
+| The install stopped with an error | Read `~/.cache/akim-dotfiles-install.log`, fix the reported step, run `./install.sh` again |
+| No bar | `~/.config/waybar/scripts/launch.sh` |
+| Colors didn't follow the wallpaper | `~/.config/hypr/scripts/apply-pywal-theme.sh` |
+| A red error banner at the top | A line in `~/.config/hypr/user-settings.hl` or `user-binds.hl` is not valid for your Hyprland version |
+| Outline transition does nothing | Run `wallfx-setup.sh` (above); the last run is logged in `~/.cache/wallfx/last.log` |
+| Bluetooth missing | `sudo systemctl enable --now bluetooth` |
+| Language didn't change | Log out and back in; the new language applies at login |
 
-| Fichier | À adapter |
-|---------|-----------|
-| `.config/hypr/hyprland.hl` | Raccourcis, opacité, règles fenêtres |
-| `.config/hypr/hypridle.conf` | Délais de verrouillage / veille |
-| `.config/gtk-3.0/settings.ini` | Thème GTK Catppuccin Mocha et curseur |
-| `.config/gtk-4.0/settings.ini` | Thème GTK 4 pour apps libadwaita |
-| `wallpapers/` | Vos propres images |
+## Credits
 
-Le moniteur est configuré en `monitor=,preferred,auto,1` (auto-détection laptop). Pour un écran externe, voir la [doc Hyprland Monitors](https://wiki.hyprland.org/Configuring/Monitors/).
-
-## Dépannage rapide
-
-| Symptôme | Cause probable | Action |
-|----------|----------------|--------|
-| `misc:vfr does not exist` | Hyprland trop ancien | `git pull` puis recopier `hyprland.hl` |
-| Wi‑Fi Waybar `span color=""` | Icône réseau + couleur vide | `git pull`, recopier `waybar/config` + `style.css` |
-| Erreur mise à jour Waybar | APT / Dépôts en cours d'actualisation | Cliquer sur le module ou exécuter `sudo apt update` |
-| Boutons SwayNC violet clair | GTK par défaut | `apply-pywal-theme.sh` + `swaync-client --reload-css` |
-| Erreur session Wayland GDM | Paquet de session manquant | Vérifier `/usr/share/wayland-sessions/hyprland.desktop` |
-
-## Notes
-
-- Ne supprimez pas `current.jpg` : symlink vers le fond actif pour awww et pywal16.
-- Les scripts dans `.config/*/scripts/` doivent être exécutables (`chmod +x`).
-- Police unique : **JetBrains Mono Nerd Font** (Kitty, hyprlock, Waybar).
-- **Bluetooth** : service `bluetooth` requis (`sudo systemctl enable --now bluetooth`).
-- **fastfetch** : lancez `fastfetch` dans Kitty pour les infos système.
+Hyprland, Waybar, Rofi, SwayNC, kitty, hyprlock / hypridle, awww, pywal16, waypaper, Catppuccin,
+Papirus, Breeze cursors, JetBrainsMono Nerd Font, Oh My Zsh, fastfetch, btop, cava, and the
+`isnet` segmentation models used by the outline transition.

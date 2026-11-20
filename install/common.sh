@@ -44,8 +44,47 @@ mkdir -p "$HOME/.local/bin"
 mkdir -p "$HOME/.local/share/themes"
 mkdir -p "$HOME/.local/share/icons"
 mkdir -p "$HOME/.local/share/fonts"
-mkdir -p "$HOME/Pictures/wallpapers"
-mkdir -p "$HOME/Pictures/Screenshots"
+
+# User folders in the user's language: ~/Images and ~/Vidéos in French, ~/Bilder in German...
+# (xdg-user-dirs). Everything uses these, never a hard-coded ~/Pictures or ~/Videos, so a French
+# system doesn't end up with both "Images" and "Pictures".
+command -v xdg-user-dirs-update &>/dev/null && xdg-user-dirs-update 2>/dev/null
+xdg_folder() {   # xdg_folder PICTURES Pictures
+    local d
+    d=$(xdg-user-dir "$1" 2>/dev/null)
+    if [ -n "$d" ] && [ "$d" != "$HOME" ]; then echo "$d"; else echo "$HOME/$2"; fi
+}
+PICTURES_DIR=$(xdg_folder PICTURES Pictures)
+VIDEOS_DIR=$(xdg_folder VIDEOS Videos)
+echo "--> Pictures folder: $PICTURES_DIR"
+
+# Earlier versions always used ~/Pictures and ~/Videos: move what they put there into the
+# user's real folders, then remove the English folder if nothing else is in it.
+migrate_item() {   # migrate_item <old parent> <new parent> <name>
+    local old="$1/$3" new="$2/$3"
+    [ "$1" = "$2" ] && return 0
+    [ -e "$old" ] || [ -L "$old" ] || return 0
+    mkdir -p "$2"
+    if [ -d "$old" ] && [ -d "$new" ]; then
+        cp -rn "$old"/. "$new"/ && rm -rf "$old"
+    elif [ ! -e "$new" ]; then
+        mv "$old" "$new"
+    fi
+    echo "--> Moved $old to $new"
+}
+for name in wallpapers Screenshots akim-avatar.png; do migrate_item "$HOME/Pictures" "$PICTURES_DIR" "$name"; done
+migrate_item "$HOME/Videos" "$VIDEOS_DIR" Recordings
+for old in "$HOME/Pictures" "$HOME/Videos"; do
+    [ "$old" != "$PICTURES_DIR" ] && [ "$old" != "$VIDEOS_DIR" ] && [ -d "$old" ] && rmdir "$old" 2>/dev/null \
+        && echo "--> Removed the empty $old"
+done
+# current.jpg is a link to a wallpaper: after a move it must point into the new folder
+if [ -L "$PICTURES_DIR/wallpapers/current.jpg" ] && [ ! -e "$PICTURES_DIR/wallpapers/current.jpg" ]; then
+    ln -sf "$PICTURES_DIR/wallpapers/$(basename "$(readlink "$PICTURES_DIR/wallpapers/current.jpg")")" \
+        "$PICTURES_DIR/wallpapers/current.jpg"
+fi
+
+mkdir -p "$PICTURES_DIR/wallpapers" "$PICTURES_DIR/Screenshots"
 
 # 1b. JetBrainsMono Nerd Font check & installation (prevents broken icons/squares)
 setup_nerd_fonts() {
@@ -96,7 +135,7 @@ ln -sf "$HOME/.cache/wal/colors-cava" "$HOME/.config/cava/config"
 
 # 3. Wallpapers & Avatar
 REPO_WALLPAPERS_DIR="$REPO_ROOT/wallpapers"
-TARGET_WALLPAPERS_DIR="$HOME/Pictures/wallpapers"
+TARGET_WALLPAPERS_DIR="$PICTURES_DIR/wallpapers"
 TARGET_WALLPAPER="$TARGET_WALLPAPERS_DIR/current.jpg"
 
 if [ -d "$REPO_WALLPAPERS_DIR" ]; then
@@ -104,9 +143,10 @@ if [ -d "$REPO_WALLPAPERS_DIR" ]; then
     find "$REPO_WALLPAPERS_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -exec cp {} "$TARGET_WALLPAPERS_DIR/" \;
 fi
 
-if [ -f "$REPO_ROOT/assets/akim-avatar.png" ]; then
-    echo "--> Installing hyprlock avatar..."
-    cp "$REPO_ROOT/assets/akim-avatar.png" "$HOME/Pictures/akim-avatar.png"
+# Lock screen picture: ~/.face (the usual place, also shown by GDM); never replace the user's own
+if [ -f "$REPO_ROOT/assets/akim-avatar.png" ] && [ ! -e "$HOME/.face" ]; then
+    echo "--> Installing the lock screen picture (~/.face)..."
+    cp "$REPO_ROOT/assets/akim-avatar.png" "$HOME/.face"
 fi
 
 # Pick the first available wallpaper as default current.jpg (supports any filename, 1 to 100+ images)
@@ -155,12 +195,35 @@ fi
 echo "--> Deploying .config files (with automatic backups)..."
 cd "$REPO_ROOT" || die "Cannot change directory to $REPO_ROOT"
 
+# Choices made in Settings and the shortcut / app overrides live inside these folders: keep them
+# across a reinstall (the rest of each old folder still goes to the backup)
+USER_STATE=(
+    hypr/user-settings.hl hypr/user-apps.hl hypr/user-binds.hl hypr/cursor-theme
+    hypr/power-menu-style hypr/wallpaper-transition hypr/nightlight hypr/hyprlock/active.conf
+    waybar/layout.json
+)
+STATE_KEEP=$(mktemp -d)
+for f in "${USER_STATE[@]}"; do
+    if [ -e "$HOME/.config/$f" ]; then
+        mkdir -p "$STATE_KEEP/$(dirname "$f")"
+        cp -rp "$HOME/.config/$f" "$STATE_KEEP/$f"
+    fi
+done
+
 for item in .config/*; do
     [ -e "$item" ] || continue
     base_name=$(basename "$item")
     target_dir="$HOME/.config/$base_name"
     backup_item "$target_dir"
     cp -r "$item" "$HOME/.config/" || die "Failed to copy $item"
+done
+
+cp -rp "$STATE_KEEP"/. "$HOME/.config/" 2>/dev/null && echo "--> Kept your settings (theme, bar, shortcuts, lock screen...)"
+rm -rf "$STATE_KEEP"
+
+# Configs that need a real folder path: point them at the user's Pictures folder
+for f in "$HOME/.config/waypaper/config.ini" "$HOME/.config/hypr/hyprpaper.conf" "$HOME/.config/swappy/config"; do
+    [ -f "$f" ] && sed -i -e "s|~/Pictures|$PICTURES_DIR|g" -e "s|\$HOME/Pictures|$PICTURES_DIR|g" "$f"
 done
 
 # Ensure user-settings.hl / user-apps.hl exist so Hyprland never errors on startup

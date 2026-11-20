@@ -15,7 +15,8 @@ fi
 # Art panel: a small crop of the wallpaper, rebuilt only when the wallpaper changed
 ART="$HOME/.cache/wal/launcher-art.jpg"
 ART_VERSION=2      # bump when launcher-art.py changes the crop
-wall=$(readlink -f "$HOME/Pictures/wallpapers/current.jpg" 2>/dev/null)
+pics=$(xdg-user-dir PICTURES 2>/dev/null); { [ -n "$pics" ] && [ "$pics" != "$HOME" ]; } || pics="$HOME/Pictures"
+wall=$(readlink -f "$pics/wallpapers/current.jpg" 2>/dev/null)
 if [ -f "$wall" ] && { [ ! -f "$ART" ] || [ "$(cat "$ART.src" 2>/dev/null)" != "$ART_VERSION $wall" ] || [ "$wall" -nt "$ART" ]; }; then
     mkdir -p "$(dirname "$ART")"
     python3 "$HOME/.config/hypr/scripts/launcher-art.py" "$wall" "$ART" 2>/dev/null && echo "$ART_VERSION $wall" > "$ART.src"

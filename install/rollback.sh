@@ -1,45 +1,48 @@
 #!/bin/bash
-# install/rollback.sh - Revert configuration changes made by akim-dotfiles
+# install/rollback.sh - put back the configuration you had before akim-dotfiles
+#
+# The installer moves each replaced folder of ~/.config (and ~/.zshrc) to
+# "<name>.backup-before-akim-dotfiles-<date>". After several installs there are several
+# backups of the same folder: the OLDEST one is what you had before akim-dotfiles, so that is the
+# one restored. Newer backups (earlier akim-dotfiles versions) are left where they are.
 
-set -eo pipefail
+set -o pipefail
 
 echo "=========================================================================="
-echo " akim-dotfiles Configuration Rollback Utility"
+echo " akim-dotfiles rollback"
 echo "=========================================================================="
 
-backups=($(find "$HOME/.config" -maxdepth 1 -name "*.backup-before-akim-dotfiles-*" 2>/dev/null))
-zsh_backup=$(find "$HOME" -maxdepth 1 -name ".zshrc.backup-before-akim-dotfiles-*" 2>/dev/null | tail -1)
+declare -A oldest
+while IFS= read -r b; do
+    original="${b%%.backup-before-akim-dotfiles-*}"
+    # Names end with a sortable date (YYYYmmdd_HHMMSS): keep the smallest per original
+    if [ -z "${oldest[$original]}" ] || [[ "$b" < "${oldest[$original]}" ]]; then
+        oldest[$original]="$b"
+    fi
+done < <(find "$HOME/.config" "$HOME" -maxdepth 1 -name "*.backup-before-akim-dotfiles-*" 2>/dev/null | sort -u)
 
-if [ ${#backups[@]} -eq 0 ] && [ -z "$zsh_backup" ]; then
-    echo "No akim-dotfiles backup directories found in ~/.config or ~/"
+if [ ${#oldest[@]} -eq 0 ]; then
+    echo "No akim-dotfiles backups found in ~/.config or ~/"
     exit 0
 fi
 
-echo "Found the following backups to restore:"
-for b in "${backups[@]}"; do
-    echo "  - $b"
+echo "These will be restored (the oldest backup of each):"
+for original in "${!oldest[@]}"; do
+    echo "  ${oldest[$original]}  ->  $original"
 done
-[ -n "$zsh_backup" ] && echo "  - $zsh_backup"
-
 echo ""
-read -p "Do you want to restore these backups and revert your current config? (y/N): " choice
+read -r -p "Replace your current configuration with them? (y/N): " choice
 case "$choice" in
-    [yY][eE][sS]|[yY])
-        for b in "${backups[@]}"; do
-            original="${b%%.backup-before-akim-dotfiles-*}"
-            echo "--> Restoring $original..."
+    [yY]|[yY][eE][sS])
+        for original in "${!oldest[@]}"; do
+            echo "--> Restoring $original"
             rm -rf "$original"
-            mv "$b" "$original"
+            mv "${oldest[$original]}" "$original"
         done
-        if [ -n "$zsh_backup" ]; then
-            original="$HOME/.zshrc"
-            echo "--> Restoring $original..."
-            rm -f "$original"
-            mv "$zsh_backup" "$original"
-        fi
-        echo "Rollback complete! Your previous configuration has been restored."
+        echo ""
+        echo "Done. Log out and back in. Newer backups (if any) were left in place."
         ;;
     *)
-        echo "Rollback cancelled."
+        echo "Cancelled, nothing changed."
         ;;
 esac

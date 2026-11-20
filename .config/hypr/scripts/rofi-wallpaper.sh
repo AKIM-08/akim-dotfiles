@@ -8,7 +8,11 @@ if pgrep -f "wallpaper-picker\.py" >/dev/null || pgrep -x rofi >/dev/null || pgr
     exit 0
 fi
 
-WALLPAPER_DIR="$HOME/Pictures/wallpapers"
+# Pictures folder in the user's language (~/Images in French, ~/Bilder in German...), from
+# xdg-user-dirs; ~/Pictures when it isn't set
+PICTURES_DIR=$(xdg-user-dir PICTURES 2>/dev/null)
+{ [ -n "$PICTURES_DIR" ] && [ "$PICTURES_DIR" != "$HOME" ]; } || PICTURES_DIR="$HOME/Pictures"
+WALLPAPER_DIR="$PICTURES_DIR/wallpapers"
 CURRENT="$WALLPAPER_DIR/current.jpg"
 STATE_FILE="$HOME/.cache/wal/current_index"
 APPLY_THEME="$HOME/.config/hypr/scripts/apply-pywal-theme.sh"

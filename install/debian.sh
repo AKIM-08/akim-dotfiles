@@ -138,6 +138,14 @@ APT_CORE_PKGS=(
     udisks2
     gvfs-backends
     gvfs-fuse
+    xdg-user-dirs
+    # GTK 3 + layer-shell for the Python apps (Settings, quick panel, island, power menu...)
+    python3-gi
+    gir1.2-gtk-3.0
+    python3-cairo
+    python3-gi-cairo
+    gir1.2-gtklayershell-0.1
+    dbus-bin
     libmtp-runtime
     bolt
     usbutils
@@ -256,18 +264,7 @@ if [ ! -d "$HOME/.local/share/themes/catppuccin-mocha-blue-standard+default" ] &
     rm -rf /tmp/catppuccin-gtk
 fi
 
-## 5d. Nordzy Cursors
-echo "--> Installing Nordzy Cursors..."
-mkdir -p "$HOME/.local/share/icons"
-if [ ! -d "$HOME/.local/share/icons/Nordzy-cursors" ] && [ ! -d "/usr/share/icons/Nordzy-cursors" ]; then
-    echo "    Downloading Nordzy Cursors..."
-    mkdir -p /tmp/nordzy
-    wget -q -O /tmp/nordzy/Nordzy-cursors.tar.gz \
-        https://github.com/alvatip/Nordzy-cursors/releases/latest/download/Nordzy-cursors.tar.gz 2>/dev/null \
-        && tar -xzf /tmp/nordzy/Nordzy-cursors.tar.gz -C "$HOME/.local/share/icons/" 2>/dev/null \
-        && rm -rf /tmp/nordzy \
-        || warn "Could not download Nordzy cursors archive"
-fi
+## 5d. Mouse pointer: Breeze, from APT (see APT_EXTRA_PKGS and scripts/cursors.py)
 
 ## 5e. papirus-folders
 echo "--> Setting up papirus-folders for Catppuccin icon coloring..."
@@ -357,7 +354,10 @@ sudo usermod -aG input,video "$USER" 2>/dev/null || true
 
 # 10. Ensure GDM is enabled and active as default display manager
 echo "--> Ensuring GDM (GNOME Display Manager) is active..."
-sudo systemctl disable sddm 2>/dev/null || true
+# Only replace SDDM when GDM is there to take over (otherwise the machine would boot to a text screen)
+if command -v gdm3 &>/dev/null || [ -f /lib/systemd/system/gdm3.service ] || [ -f /lib/systemd/system/gdm.service ]; then
+    sudo systemctl disable sddm 2>/dev/null || true
+fi
 
 # Explicitly unmask, enable, and link GDM3 service as display-manager
 if command -v gdm3 &>/dev/null || [ -f /lib/systemd/system/gdm3.service ] || [ -f /etc/systemd/system/gdm3.service ]; then

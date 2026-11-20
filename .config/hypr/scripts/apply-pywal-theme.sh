@@ -14,7 +14,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_PATH="$SCRIPT_DIR/$(basename "${BASH_SOURCE[0]}")"
 WAL_CACHE="$HOME/.cache/wal"
 PALETTE_ROOT="$WAL_CACHE/palettes"
-WALLPAPER_DIR="$HOME/Pictures/wallpapers"
+# Pictures folder in the user's language (~/Images in French, ~/Bilder in German...), from
+# xdg-user-dirs; ~/Pictures when it isn't set
+PICTURES_DIR=$(xdg-user-dir PICTURES 2>/dev/null)
+{ [ -n "$PICTURES_DIR" ] && [ "$PICTURES_DIR" != "$HOME" ]; } || PICTURES_DIR="$HOME/Pictures"
+WALLPAPER_DIR="$PICTURES_DIR/wallpapers"
 # Bump to invalidate every cached palette after changing how palettes are built.
 CACHE_VERSION=8
 

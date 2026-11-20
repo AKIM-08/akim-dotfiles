@@ -16,7 +16,7 @@ Commands:
                                     cheap colonies map if needed and, when the model is
                                     installed, starts the subject map in the background)
     wallfx-map.py build <image>     build the best map now (slow with the model)
-    wallfx-map.py precache          build maps for every wallpaper in ~/Pictures/wallpapers
+    wallfx-map.py precache          build maps for every wallpaper in <Pictures>/wallpapers
     wallfx-map.py status            show which transition each wallpaper gets, and why
     wallfx-map.py force <image>     use the character outline even if detection was unsure
 
@@ -32,6 +32,22 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+
+def xdg_dir(name: str, fallback: str) -> Path:
+    """A user folder in the user's language (xdg-user-dirs): PICTURES is ~/Images in French,
+    ~/Bilder in German... Falls back to ~/<fallback> when it isn't set."""
+    home = Path.home()
+    try:
+        for line in (home / ".config" / "user-dirs.dirs").read_text(encoding="utf-8").splitlines():
+            if line.startswith(f"XDG_{name}_DIR="):
+                value = line.split("=", 1)[1].strip().strip('"').replace("$HOME", str(home))
+                if value.rstrip("/") != str(home):
+                    return Path(value)
+    except OSError:
+        pass
+    return home / fallback
+
+
 MAP_VERSION = 2          # bump to rebuild every cached map
 MAP_W, MAP_H = 960, 540
 HOME = Path.home()
@@ -42,7 +58,7 @@ MODEL = DATA / "isnet-anime.onnx"
 # 3D art). Same family/input as the anime model, different normalization mean.
 GENERAL_MODEL = DATA / "isnet-general-use.onnx"
 MODEL_MEANS = {"anime": (0.485, 0.456, 0.406), "general": (0.5, 0.5, 0.5)}
-WALL_DIR = HOME / "Pictures" / "wallpapers"
+WALL_DIR = xdg_dir("PICTURES", "Pictures") / "wallpapers"
 EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
 # A "character" covers a sensible share of the picture (close-up portraits can fill most of

@@ -22,7 +22,23 @@ from PyQt6.QtGui import (QColor, QFont, QImage, QImageReader, QPainter, QPainter
                          QPen, QPolygonF)
 from PyQt6.QtWidgets import QApplication, QWidget
 
-WALL_DIR = Path.home() / "Pictures" / "wallpapers"
+
+def xdg_dir(name: str, fallback: str) -> Path:
+    """A user folder in the user's language (xdg-user-dirs): PICTURES is ~/Images in French,
+    ~/Bilder in German... Falls back to ~/<fallback> when it isn't set."""
+    home = Path.home()
+    try:
+        for line in (home / ".config" / "user-dirs.dirs").read_text(encoding="utf-8").splitlines():
+            if line.startswith(f"XDG_{name}_DIR="):
+                value = line.split("=", 1)[1].strip().strip('"').replace("$HOME", str(home))
+                if value.rstrip("/") != str(home):
+                    return Path(value)
+    except OSError:
+        pass
+    return home / fallback
+
+
+WALL_DIR = xdg_dir("PICTURES", "Pictures") / "wallpapers"
 CACHE_DIR = Path.home() / ".cache" / "wallpaper-picker"
 EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 THUMB_WIDTH = 760          # cached thumbnail width (px)
