@@ -915,6 +915,29 @@ class Settings(Gtk.Window):
                     segmented([("outline", "Outline / colonies"), ("classic", "Classic")], mode, set_mode)),
                 row("Character detection", "Lets the outline follow characters · about 400 MB", status),
             ),
+            section("Desktop"),
+            group(*self.desktop_extras_rows()),
+        ]
+
+    def desktop_extras_rows(self):
+        path = HYPR / "desktop-extras.json"
+        try:
+            cfg = {"workspace": True, "widgets": True, "charging": True, **json.loads(path.read_text(encoding="utf-8"))}
+        except (OSError, ValueError):
+            cfg = {"workspace": True, "widgets": True, "charging": True}
+
+        def setter(key):
+            def apply(v):
+                cfg[key] = bool(v)
+                path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+            return apply
+        return [
+            row("Desktop widgets", "Clock, date, the song playing and a calendar on the wallpaper",
+                switch(cfg["widgets"], setter("widgets"))),
+            row("Workspace indicator", "Shows the workspace number and its apps when you switch",
+                switch(cfg["workspace"], setter("workspace"))),
+            row("Charging animation", "A ring when the charger is plugged in, and a warning when the battery is low",
+                switch(cfg["charging"], setter("charging"))),
         ]
 
     def page_lock(self):

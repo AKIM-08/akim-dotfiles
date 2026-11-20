@@ -19,6 +19,7 @@ exec-once = ~/.config/hypr/scripts/sync-app-icons.sh
 exec-once = udiskie --tray --notify
 exec-once = nice -n 19 ~/.config/hypr/scripts/apply-pywal-theme.sh --precache
 exec-once = ~/.config/hypr/scripts/nightlight.sh restore
+exec-once = python3 ~/.config/hypr/scripts/desktop-extras.py
 # Wallpaper transition maps for new wallpapers (uses the character model if wallfx-setup.sh was run)
 exec-once = sh -c 'py=$HOME/.local/share/wallfx/venv/bin/python; [ -x "$py" ] || py=python3; nice -n 19 "$py" ~/.config/hypr/scripts/wallfx/wallfx-map.py precache'
 # pywal colors are NOT sourced here: Hyprland auto-reloads whenever a sourced file
@@ -467,6 +468,10 @@ layerrule = ignore_alpha 0.2, match:namespace wallpicker
 layerrule = animation fade, match:namespace wallpicker
 # Dock theme: the bar slides in from its edge when the pointer touches it
 layerrule = animation slide, match:namespace waybar
+layerrule = blur on, match:namespace desktop-extras
+layerrule = ignore_alpha 0.2, match:namespace desktop-extras
+layerrule = animation fade, match:namespace desktop-extras
+layerrule = animation fade, match:namespace desktop-widgets
 
 # User custom settings (mouse speed, default apps, etc.) managed via Quick Settings (Super + H)
 source = ~/.config/hypr/user-settings.hl
