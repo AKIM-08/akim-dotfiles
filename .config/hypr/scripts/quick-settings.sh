@@ -41,7 +41,7 @@ set_block() {   # set_block <name> <content>
 # Set a variable in user-apps.hl (and drop old, ineffective copies from user-settings.hl)
 set_app_var() {   # set_app_var <name> <command>
     local name="$1" value="$2"
-    sed -i "/^[[:space:]]*\\\$$name[[:space:]]*=/d" "$USER_APPS" "$USER_SETTINGS" 2>/dev/null
+    sed -i "/^[[:space:]]*\\\$${name}[[:space:]]*=/d" "$USER_APPS" "$USER_SETTINGS" 2>/dev/null
     echo "\$$name = $value" >> "$USER_APPS"
 }
 
