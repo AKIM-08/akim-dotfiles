@@ -26,6 +26,7 @@ SHORTCUTS=(
     "󰄀  SUPER + P                  󰄾  Screenshot & Recording Menu (Rofi)"
     "󰄀  SUPER + SHIFT + P          󰄾  Screenshot Region (Draw Box)"
     "󰍹  SUPER + ALT + P            󰄾  Screenshot Full Screen"
+    "󰏫  SUPER + CTRL + P           󰄾  Screenshot: Region + Draw"
     "󰑋  SUPER + SHIFT + R          󰄾  Screen Recording (Start / Stop Toggle)"
     "󰄀  Print                      󰄾  Quick Screenshot"
     "󰆍  SUPER + S                  󰄾  Scratchpad Workspace (Show / Hide)"

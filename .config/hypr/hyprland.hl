@@ -248,6 +248,7 @@ bind = $mainMod, Print, exec, ~/.config/hypr/scripts/screenshot.sh full
 bind = $mainMod, P, exec, python3 ~/.config/hypr/scripts/overlay_menu.py screenshot
 bind = $mainMod SHIFT, P, exec, ~/.config/hypr/scripts/screenshot.sh region
 bind = $mainMod ALT, P, exec, ~/.config/hypr/scripts/screenshot.sh full
+bind = $mainMod CTRL, P, exec, ~/.config/hypr/scripts/screenshot.sh swappy
 bind = $mainMod SHIFT, R, exec, ~/.config/hypr/scripts/screenshot.sh record
 bind = $mainMod, escape, exec, ~/.config/hypr/scripts/snmenu-toggle.sh
 bind = $mainMod, X, exec, gnome-characters || flatpak run org.gnome.Characters

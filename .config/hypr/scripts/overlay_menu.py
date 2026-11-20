@@ -431,7 +431,7 @@ class Overlay(Gtk.Window):
             ("\U000f0379", "Screen", "Super + Alt + P", "full"),
             ("\U000f05b0", "Window", "the active one", "window"),
             ("\U000f0489", "Pick a window", "click it", "window-select"),
-            ("\U000f03eb", "Draw", "region + annotate", "swappy"),
+            ("\U000f03eb", "Draw", "Super + Ctrl + P", "swappy"),
             ("\U000f04db" if recording else "\U000f044a", "Stop recording" if recording else "Record",
              "Super + Shift + R", "record"),
             ("\U000f0236", "Color picker", "copies the hex", "color"),
