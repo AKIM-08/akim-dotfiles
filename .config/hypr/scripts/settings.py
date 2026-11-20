@@ -329,6 +329,7 @@ def css_for(c: dict) -> str:
     .section {{ color: {rgba(fg, 0.6)}; font-weight: 600; font-size: 12px; margin: 10px 2px 2px 2px; }}
     .group {{ background: {rgba(fg, 0.04)}; border: 1px solid {rgba(fg, 0.08)}; border-radius: 14px; }}
     .row {{ padding: 11px 14px; min-height: 30px; }}
+    .row.found {{ background: {rgba(acc, 0.16)}; border-radius: 10px; }}
     .row-sep {{ border-top: 1px solid {rgba(fg, 0.08)}; }}
     .row-title {{ font-weight: 600; }}
     .seg {{ border: 1px solid {rgba(fg, 0.10)}; border-radius: 10px; }}
@@ -478,6 +479,32 @@ def placeholder(text="Loading…"):
 
 
 # ------------------------------------------------------------------------------ the window
+def page_index():
+    """{method name: searchable text} from this file's source: the titles and descriptions of
+    rows, sections, buttons and options each page shows, including helper methods it calls.
+    Read once; nothing is built or run."""
+    try:
+        src = Path(__file__).read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    bodies = {m.group(1): m.group(2) for m in re.finditer(
+        r"^    def (\w+)\(self[^)]*\):\n(.*?)(?=^    def |^class |^def |\Z)", src, re.M | re.S)}
+    patterns = [
+        r'(?:row|section|label|button)\(\s*f?"([^"{}]{2,})"',          # titles
+        r'row\(\s*f?"[^"]*",\s*f?"([^"{}]{3,})"',                       # row descriptions
+        r'\(\s*"[\w.-]+",\s*"([^"{}]{2,})"\s*\)',                       # option labels
+    ]
+    own = {name: " ".join(t for pat in patterns for t in re.findall(pat, body)) for name, body in bodies.items()}
+
+    def gather(name, seen):
+        if name in seen or name not in bodies:
+            return ""
+        seen.add(name)
+        calls = re.findall(r"self\.(\w+)\(", bodies[name])
+        return " ".join([own.get(name, "")] + [gather(c, seen) for c in calls])
+    return {name: gather(name, set()).lower() for name in bodies if name.startswith("page_")}
+
+
 class Settings(Gtk.Window):
     def __init__(self):
         super().__init__(title="Settings")
@@ -495,6 +522,8 @@ class Settings(Gtk.Window):
         GLib.timeout_add(1500, self.reload_colors)
 
         self.categories = self.define()
+        self.index = page_index()
+        self.find = ""
         self.current = None
         self.tab = None
 
@@ -545,7 +574,7 @@ class Settings(Gtk.Window):
         self.tabs = add_class(Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8), "tabs")
         main.pack_start(self.tabs, False, False, 0)
 
-        scroller = Gtk.ScrolledWindow()
+        scroller = self.scroller = Gtk.ScrolledWindow()
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.content = add_class(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8), "content")
         scroller.add(self.content)
@@ -600,24 +629,72 @@ class Settings(Gtk.Window):
             return True
         return False
 
+    def tab_text(self, tab):
+        """Everything a search can find on one tab: its name, keywords, help and every setting."""
+        kw = tab[3] if len(tab) > 3 else ""
+        return " ".join([tab[0], kw, tab[2], self.index.get(tab[1].__name__, "")]).lower()
+
     def on_search(self, entry):
         term = entry.get_text().strip().lower()
+        words = term.split()
+        self.find = term
         first = None
         for r in self.nav.get_children():
             cat = r.cat
-            hay = " ".join([cat["name"], cat["sub"], cat["keywords"], *[t[0] for t in cat["tabs"]]]).lower()
-            visible = not term or all(w in hay for w in term.split())
+            hay = " ".join([cat["name"], cat["sub"], cat["keywords"]] + [self.tab_text(t) for t in cat["tabs"]]).lower()
+            visible = not term or all(w in hay for w in words)
             r.set_visible(visible)
             if visible and first is None:
                 first = r
         if term and first is not None:
-            self.nav.select_row(first)
-            # jump to the tab whose name or keywords match
-            for tab in first.cat["tabs"]:
-                name, kw = tab[0], tab[3] if len(tab) > 3 else ""
-                if any(w in (name + " " + kw).lower() for w in term.split()):
-                    self.show_tab(name)
+            target = next((t[0] for t in first.cat["tabs"] if all(w in self.tab_text(t) for w in words)), None)
+            if self.nav.get_selected_row() is first and target == self.tab:
+                self.highlight_later()
+            else:
+                self.nav.select_row(first)
+                if target and target != self.tab:
+                    self.show_tab(target)
+
+    def highlight_later(self):
+        GLib.timeout_add(80, self.highlight_match)
+
+    def highlight_match(self):
+        """Scroll to the first setting whose title or description matches the search, and tint it."""
+        words = self.find.split()
+
+        def labels(w):
+            if isinstance(w, Gtk.Label):
+                yield w
+            if isinstance(w, Gtk.Container):
+                for c in w.get_children():
+                    yield from labels(c)
+        found = None
+        for lab in labels(self.content):
+            text = (lab.get_text() or "").lower()
+            if words and all(w in text for w in words):
+                found = lab
+                break
+        if found is None and words:
+            for lab in labels(self.content):
+                if any(w in (lab.get_text() or "").lower() for w in words):
+                    found = lab
                     break
+        for old in getattr(self, "found_rows", []):
+            old.get_style_context().remove_class("found")
+        self.found_rows = []
+        if found is None:
+            return False
+        row_w = found
+        while row_w is not None and not row_w.get_style_context().has_class("row"):
+            row_w = row_w.get_parent()
+        target = row_w or found
+        target.get_style_context().add_class("found")
+        self.found_rows = [target]
+        pos = target.translate_coordinates(self.content, 0, 0)
+        if pos:
+            adj = self.scroller.get_vadjustment()
+            adj.set_value(max(0, min(pos[1] - 24, adj.get_upper() - adj.get_page_size())))
+        return False
 
     def on_search_enter(self, _entry):
         self.nav.grab_focus()
@@ -668,6 +745,8 @@ class Settings(Gtk.Window):
         except Exception as e:
             self.content.pack_start(group(row("Could not load this page", str(e))), False, False, 0)
         self.content.show_all()
+        if self.find:
+            self.highlight_later()
 
     def refresh(self):
         """Rebuild the current tab (after a change that alters what it shows)."""
@@ -686,8 +765,8 @@ class Settings(Gtk.Window):
                  ("Menus", self.page_menus, "Radial: ring around the center. Cards: a row of glass cards. Both ask again before Shutdown, Reboot and Logout.", "power menu animations"),
                  ("Terminal", self.page_terminal, "The zsh prompt, in the wallpaper's colors. New terminals use it; in an open one, type prompt-style to switch.", "zsh prompt shell kitty"),
              ]},
-            {"id": "display", "icon": "\U000f0379", "name": "Display", "sub": "Brightness and night light",
-             "keywords": "screen brightness night light warm blue",
+            {"id": "display", "icon": "\U000f0379", "name": "Display", "sub": "Screens, brightness, night light, transparency",
+             "keywords": "screen brightness night light warm blue transparency opacity transparent monitor hdmi external second mirror projector",
              "tabs": [("Display", self.page_display, "Night light warms the screen colors and comes back after a reboot.", "")]},
             {"id": "network", "icon": "\U000f0928", "name": "Network", "sub": "Wi-Fi", "keywords": "wifi wireless internet",
              "tabs": [("Wi-Fi", self.page_wifi, "Click Connect on a network; secured networks ask for their password once.", "")]},
@@ -695,13 +774,13 @@ class Settings(Gtk.Window):
              "tabs": [("Devices", self.page_bluetooth, "Connected devices show their battery when they report it. Scan looks for new devices for 8 seconds.", "")]},
             {"id": "sound", "icon": "\U000f057e", "name": "Sound", "sub": "Output, input and volume", "keywords": "audio volume speakers microphone",
              "tabs": [("Sound", self.page_sound, "Per-app volume is in the quick panel (Super + N).", "")]},
-            {"id": "power", "icon": "\U000f0079", "name": "Power", "sub": "Battery, profile and sleep", "keywords": "battery caffeine profile performance",
+            {"id": "power", "icon": "\U000f0079", "name": "Power", "sub": "Battery, profile and sleep", "keywords": "battery caffeine profile performance idle standby suspend",
              "tabs": [("Power", self.page_power, "Power saver makes the battery last longer; Caffeine keeps the screen awake.", "")]},
             {"id": "input", "icon": "\U000f037d", "name": "Mouse & keyboard", "sub": "Pointer speed and size", "keywords": "mouse touchpad sensitivity speed cursor pointer",
              "tabs": [("Mouse", self.page_mouse, "Applies immediately and is kept in user-settings.hl.", "")]},
             {"id": "language", "icon": "\U000f05ca", "name": "Language & region", "sub": "System language and keyboard layout",
              "keywords": "language locale langue translation keyboard layout azerty qwerty",
-             "tabs": [("Language", self.page_language, "The language needs your password and applies after logging out and back in; the keyboard layout changes at once.", "")]},
+             "tabs": [("Language", self.page_language, "The language needs your password; apps you open afterwards use it, open ones once reopened. The keyboard layout changes at once.", "")]},
             {"id": "apps", "icon": "\U000f003b", "name": "Default apps", "sub": "Browser, terminal, file manager", "keywords": "browser terminal files default",
              "tabs": [("Apps", self.page_apps, "Only installed apps are listed. Terminal: Super + Return, file manager: Super + F.", "")]},
             {"id": "shortcuts", "icon": "\U000f030c", "name": "Shortcuts", "sub": "Keyboard shortcuts", "keywords": "keys keybinds hotkeys",
@@ -1095,6 +1174,54 @@ class Settings(Gtk.Window):
                   row("Open a terminal", "", button("Terminal", lambda: spawn(["kitty"])))),
         ]
 
+    # -------------------------------------------------------------- Screens
+    SCREENS = HYPR / "screens.json"
+    PLACES = [("right", "Right"), ("left", "Left"), ("above", "Above"), ("mirror", "Same picture")]
+
+    def screens_section(self):
+        """Other screens (HDMI...): where they sit next to the laptop, or showing the same picture.
+        Kept per screen in screens.json and as monitor lines in user-settings.hl, so a screen gets
+        its place back whenever it is plugged in."""
+        try:
+            mons = json.loads(run(["hyprctl", "-j", "monitors", "all"]) or "[]")
+        except ValueError:
+            mons = []
+        internal = next((m["name"] for m in mons if m.get("name", "").startswith(("eDP", "LVDS", "DSI"))), None)
+        try:
+            places = json.loads(self.SCREENS.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            places = {}
+
+        def line(name, place):
+            if place == "mirror" and internal:
+                return f"monitor = {name}, preferred, auto, 1, mirror, {internal}"
+            pos = {"right": "auto-right", "left": "auto-left", "above": "auto-up"}.get(place, "auto-right")
+            return f"monitor = {name}, preferred, {pos}, 1"
+
+        def set_place(name, place):
+            places[name] = place
+            self.SCREENS.write_text(json.dumps(places, indent=2) + "\n", encoding="utf-8")
+            set_block("screens", "\n".join(line(n, p) for n, p in places.items()))
+            spawn(["hyprctl", "keyword", "monitor", line(name, place).split("=", 1)[1].strip()])
+
+        rows = []
+        for m in mons:
+            name = m.get("name", "?")
+            what = " ".join(x for x in (m.get("make"), m.get("model")) if x and x != "Unknown").strip() or name
+            mode = f'{m.get("width")}×{m.get("height")} · {round(m.get("refreshRate") or 0)} Hz'
+            if name == internal:
+                rows.append(row("Laptop screen", f"{what} · {mode}"))
+            else:
+                state = "" if not m.get("disabled") else " · off"
+                rows.append(row(f"{what} ({name})", f"{mode}{state}",
+                                segmented(self.PLACES, places.get(name, "right"), lambda v, n=name: set_place(n, v))))
+        if not any(m.get("name") != internal for m in mons):
+            rows.append(row("No other screen connected",
+                            "Plug one in (HDMI or USB-C): it extends the desktop to the right of the laptop. "
+                            "Then choose here where it sits, or Same picture to show what the laptop shows"))
+        rows.append(row("Check again", "After plugging or unplugging a screen", button("Refresh", self.refresh)))
+        return [section("Screens"), group(*rows)]
+
     # -------------------------------------------------------------- Transparency
     def hypr_float(self, option, default):
         m = re.search(r"float:\s*([0-9.]+)", run(["hyprctl", "getoption", option]))
@@ -1169,7 +1296,7 @@ class Settings(Gtk.Window):
                                                       lambda v: spawn(["brightnessctl", "-q", "set", f"{int(v)}%"]))))
         rows += [row("Night light", "Warmer colors, easier on the eyes in the evening", switch(night_on, set_night)),
                  row("Warmth", "", segmented(temps, self._temp, set_temp))]
-        return [group(*rows)] + self.opacity_section()
+        return [group(*rows)] + self.screens_section() + self.opacity_section()
 
     # -------------------------------------------------------------- Network
     def page_wifi(self):
