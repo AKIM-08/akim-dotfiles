@@ -915,6 +915,8 @@ background_tasks() {
         exec 8>&- 9>&-   # release the apply/precache locks; nothing should wait on this
         command -v pywal-discord &>/dev/null && pywal-discord -t default
         timeout 3 python3 "$SCRIPT_DIR/apply-papirus-color.py"
+        # Mouse pointer in the wallpaper's accent (only when that pointer theme is chosen)
+        nice -n 10 python3 "$SCRIPT_DIR/cursors.py" accent
 
         # (gtk-theme is switched by apply_gtk3_theme)
         if command -v gsettings &>/dev/null; then

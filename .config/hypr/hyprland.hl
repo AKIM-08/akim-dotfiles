@@ -10,7 +10,8 @@ exec-once = ~/.config/swaync/start.sh
 # The bar: Waybar, or the Dock / Island programs for those themes (see the script)
 exec-once = ~/.config/waybar/scripts/launch.sh
 exec-once = sh -c 'sleep 30 && hypridle'
-exec-once = hyprctl setcursor Nordzy-cursors 28
+# Mouse pointer theme chosen in Settings -> Mouse & keyboard (scripts/cursors.py)
+exec-once = python3 ~/.config/hypr/scripts/cursors.py restore
 exec-once = wl-paste --type text --watch cliphist store
 exec-once = wl-paste --type image --watch cliphist store
 exec-once = ~/.config/hypr/scripts/battery-hibernate-watch.sh
