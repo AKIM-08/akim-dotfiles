@@ -160,8 +160,9 @@ Settings → Power → When idle. On battery it also hibernates before running e
 
 **Boot screens.** The boot menu (GRUB) shows your wallpaper with the entries in a dark column, and
 the start-up animation (Plymouth) shows it blurred with a spinning ring and your name (the one set
-on your account). The installer sets them up; after changing wallpaper, Settings → Wallpaper →
-Boot screens → *Sync* updates them (asks for your password), *Reset* goes back to Debian's.
+on your account). The installer sets them up. In Settings → Wallpaper → Boot screens, *Follow the wallpaper*
+updates them by themselves after each wallpaper change (asks for your password once, to allow only
+that update without it), *Sync* updates them now, *Reset* goes back to Debian's.
 
 **Updating.** `akim-update` updates the dotfiles and kitty; `kitty-update` updates only kitty.
 See [Update](#update).

@@ -2,7 +2,11 @@
 # boot-screens-root.sh - put the boot menu and start-up theme in place (run as root by boot-screens.py)
 #
 #   boot-screens-root.sh install <folder made by boot-screens.py> <WIDTHxHEIGHT>
-#   boot-screens-root.sh reset
+#   boot-screens-root.sh reset                 (also removes the auto-follow rule)
+#   boot-screens-root.sh auto-on <user>        let <user> run "install" and "reset" without a
+#                                              password: a root-owned copy of this script in
+#                                              /usr/local/lib/akim-dotfiles + a sudo rule for it only
+#   boot-screens-root.sh auto-off              remove that copy and rule
 #
 # Only copies the expected image / theme files, never runs anything from that folder.
 # Lines it adds to /etc/default/grub end with "# akim-dotfiles"; lines it replaces are kept as
@@ -17,6 +21,8 @@ PLY_DIR=/usr/share/plymouth/themes/akim
 MARK="# akim-dotfiles"
 WAS="#akim-dotfiles-was: "
 SPLASH_FLAG=/etc/default/grub.akim-splash
+INSTALLED=/usr/local/lib/akim-dotfiles/boot-screens-root.sh
+SUDOERS=/etc/sudoers.d/akim-boot-screens
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
@@ -39,9 +45,19 @@ undo_grub_lines() {
     fi
 }
 
+auto_off() { rm -f "$SUDOERS" "$INSTALLED"; rmdir /usr/local/lib/akim-dotfiles 2>/dev/null || true; }
+
 case "$1" in
 install)
     src="$2"; mode="$3"
+    # Through the password-free rule: only the folders boot-screens.py makes in /tmp
+    if [ -n "${SUDO_USER:-}" ] && [ "$0" = "$INSTALLED" ]; then
+        case "$src" in /tmp/boot-screens-*) ;; *) echo "refused: $src" >&2; exit 2 ;; esac
+        case "$src" in *..*) echo "refused: $src" >&2; exit 2 ;; esac
+        [ -L "$src" ] && { echo "refused: $src" >&2; exit 2; }
+    fi
+    # keep the root-owned copy current when following the wallpaper
+    if [ -f "$INSTALLED" ] && [ "$0" != "$INSTALLED" ]; then cp "$0" "$INSTALLED"; chmod 755 "$INSTALLED"; fi
     [ -d "$src/grub" ] && [ -d "$src/plymouth" ] || { echo "missing theme folder" >&2; exit 2; }
     printf '%s' "$mode" | grep -Eq '^[0-9]{3,5}x[0-9]{3,5}$' || { echo "bad resolution: $mode" >&2; exit 2; }
     have update-grub || { echo "update-grub not found (only Debian's GRUB is supported)" >&2; exit 3; }
@@ -74,6 +90,7 @@ install)
     echo "Boot screens installed: you'll see them at the next start."
     ;;
 reset)
+    auto_off
     undo_grub_lines
     rm -rf "$GRUB_DIR"
     if have plymouth-set-default-theme && [ "$(plymouth-set-default-theme 2>/dev/null)" = akim ]; then
@@ -86,8 +103,35 @@ reset)
     have update-grub && update-grub >/dev/null 2>&1
     echo "Boot screens back to Debian's."
     ;;
+auto-on)
+    user="$2"
+    printf '%s' "$user" | grep -Eq '^[a-z_][a-z0-9_-]*$' && id "$user" >/dev/null 2>&1 \
+        || { echo "unknown user: $user" >&2; exit 2; }
+    mkdir -p /usr/local/lib/akim-dotfiles
+    cp "$0" "$INSTALLED"
+    chown root:root "$INSTALLED"; chmod 755 "$INSTALLED"
+    tmp=$(mktemp)
+    {
+        echo "# akim-dotfiles: the boot screens follow the wallpaper (Settings -> Wallpaper -> Boot screens)."
+        echo "# Allows only the root-owned $INSTALLED: \"install\" from /tmp/boot-screens-*, and \"reset\"."
+        echo "$user ALL=(root) NOPASSWD: /bin/sh $INSTALLED install /tmp/boot-screens-* *, /bin/sh $INSTALLED reset"
+    } > "$tmp"
+    if visudo -cf "$tmp" >/dev/null; then
+        install -m 440 -o root -g root "$tmp" "$SUDOERS"
+        rm -f "$tmp"
+        echo "The boot screens now follow your wallpaper."
+    else
+        rm -f "$tmp"
+        echo "could not create the sudo rule" >&2
+        exit 5
+    fi
+    ;;
+auto-off)
+    auto_off
+    echo "The boot screens no longer follow your wallpaper."
+    ;;
 *)
-    echo "usage: boot-screens-root.sh install <folder> <WIDTHxHEIGHT> | reset" >&2
+    echo "usage: boot-screens-root.sh install <folder> <WIDTHxHEIGHT> | reset | auto-on <user> | auto-off" >&2
     exit 2
     ;;
 esac

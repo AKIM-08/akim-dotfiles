@@ -924,6 +924,10 @@ background_tasks() {
         if command -v gsettings &>/dev/null; then
             gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11'
         fi
+
+        # Boot screens follow the wallpaper when that's switched on in Settings (waits until
+        # the wallpaper stays the same for a while, then rebuilds at the lowest priority)
+        python3 "$SCRIPT_DIR/boot-screens.py" auto
     ) >/dev/null 2>&1 &
     disown
 }

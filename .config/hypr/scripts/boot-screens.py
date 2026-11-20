@@ -3,7 +3,13 @@
 
     boot-screens.py sync     build both from the current wallpaper, its colors and your name, then
                              install them (asks for your password: they live in system folders)
-    boot-screens.py reset    back to Debian's boot menu and start-up screen
+    boot-screens.py reset    back to Debian's boot menu and start-up screen (also stops following)
+    boot-screens.py auto-on  follow the wallpaper: asks for your password once to allow this one
+                             update without it (a sudo rule for the root-owned copy of
+                             boot-screens-root.sh), then syncs
+    boot-screens.py auto-off stop following the wallpaper (removes that rule)
+    boot-screens.py auto     run after each wallpaper change: when following, waits until the
+                             wallpaper stays the same for a minute, then syncs at the lowest priority
     add --sudo to use sudo in a terminal instead of the graphical password prompt (the installer)
 
 Boot menu: the wallpaper with a dark column on the left holding the entries (accent stripe on the
@@ -24,6 +30,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -31,6 +38,9 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 HOME = Path.home()
 SCRIPTS = Path(__file__).resolve().parent
 ROOT_SCRIPT = SCRIPTS / "boot-screens-root.sh"
+INSTALLED = "/usr/local/lib/akim-dotfiles/boot-screens-root.sh"     # root-owned copy (auto-on)
+AUTO_FLAG = HOME / ".config" / "hypr" / "boot-screens-auto"
+RUNTIME = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp"))
 
 
 # ------------------------------------------------------------------------------ inputs
@@ -292,10 +302,12 @@ word = Sprite(word_image);
 word.SetX(W / 2 - word_image.GetWidth() / 2);
 word.SetY(H / 2 + H * 0.01);
 
-angle = 0;
+# (inside a function, a variable only keeps its value between frames as global.<name>)
+global.angle = 0;
 fun refresh() {
-    angle = angle + 0.11;
-    ring.SetImage(ring_image.Rotate(angle));
+    global.angle = global.angle + 0.11;
+    if (global.angle > 6.2832) global.angle = global.angle - 6.2832;
+    ring.SetImage(ring_image.Rotate(global.angle));
 }
 Plymouth.SetRefreshFunction(refresh);
 
@@ -345,28 +357,78 @@ Plymouth.SetDisplayNormalFunction(display_normal);
 
 
 # ------------------------------------------------------------------------------ main
-def root_cmd(args, use_sudo):
-    return (["sudo"] if use_sudo else ["pkexec"]) + ["/bin/sh", str(ROOT_SCRIPT)] + args
+def build(work):
+    W, H = screen_size()
+    wall, pal, name = wallpaper(), palette(), display_name()
+    build_grub(work / "grub", wall, pal, name, W, H)
+    build_plymouth(work / "plymouth", wall, pal, name, W, H)
+    os.chmod(work, 0o755)
+    return f"{W}x{H}"
+
+
+def run_root(args, how):
+    """how: 'pkexec' (graphical password), 'sudo' (terminal), 'auto' (the password-free rule)."""
+    if how == "auto":
+        cmd = ["nice", "-n", "19", "ionice", "-c", "3", "sudo", "-n", "/bin/sh", INSTALLED] + args
+    else:
+        cmd = [how, "/bin/sh", str(ROOT_SCRIPT)] + args
+    return subprocess.run(cmd, stdout=subprocess.DEVNULL if how == "auto" else None,
+                          stderr=subprocess.DEVNULL if how == "auto" else None).returncode
+
+
+def sync(how):
+    work = Path(tempfile.mkdtemp(prefix="boot-screens-", dir="/tmp"))
+    try:
+        mode = build(work)
+        return run_root(["install", str(work), mode], how)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def auto():
+    """After a wallpaper change: sync once the wallpaper has stayed the same for a minute."""
+    if not AUTO_FLAG.exists() or not Path(INSTALLED).exists():
+        return 0
+    stamp = RUNTIME / "boot-screens.pending"
+    token = f"{os.getpid()}-{time.time()}"
+    stamp.write_text(token)
+    time.sleep(60)
+    try:
+        if stamp.read_text() != token:          # another wallpaper came after this one
+            return 0
+    except OSError:
+        return 0
+    import fcntl
+    with open(RUNTIME / "boot-screens.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        return sync("auto")
 
 
 def main():
     args = [a for a in sys.argv[1:] if a != "--sudo"]
-    use_sudo = "--sudo" in sys.argv
-    if args[:1] == ["reset"]:
-        sys.exit(subprocess.run(root_cmd(["reset"], use_sudo)).returncode)
-    if args[:1] != ["sync"]:
-        sys.exit(__doc__)
-    W, H = screen_size()
-    wall, pal, name = wallpaper(), palette(), display_name()
-    work = Path(tempfile.mkdtemp(prefix="boot-screens-"))
-    try:
-        build_grub(work / "grub", wall, pal, name, W, H)
-        build_plymouth(work / "plymouth", wall, pal, name, W, H)
-        os.chmod(work, 0o755)
-        r = subprocess.run(root_cmd(["install", str(work), f"{W}x{H}"], use_sudo))
-        sys.exit(r.returncode)
-    finally:
-        shutil.rmtree(work, ignore_errors=True)
+    how = "sudo" if "--sudo" in sys.argv else "pkexec"
+    cmd = args[0] if args else ""
+    if cmd == "sync":
+        sys.exit(sync(how))
+    if cmd == "reset":
+        r = run_root(["reset"], how)
+        if r == 0:
+            AUTO_FLAG.unlink(missing_ok=True)
+        sys.exit(r)
+    if cmd == "auto-on":
+        r = run_root(["auto-on", pwd.getpwuid(os.getuid()).pw_name], how)
+        if r != 0:
+            sys.exit(r)
+        AUTO_FLAG.touch()
+        sys.exit(sync("auto"))
+    if cmd == "auto-off":
+        r = run_root(["auto-off"], how)
+        if r == 0:
+            AUTO_FLAG.unlink(missing_ok=True)
+        sys.exit(r)
+    if cmd == "auto":
+        sys.exit(auto())
+    sys.exit(__doc__)
 
 
 if __name__ == "__main__":

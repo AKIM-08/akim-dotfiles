@@ -926,7 +926,7 @@ class Settings(Gtk.Window):
         status = label("", "dim", wrap=True)
         busy = {"on": False}
 
-        def go(cmd, working):
+        def go(cmd, working, failed=None):
             if busy["on"]:
                 return
             busy["on"] = True
@@ -942,20 +942,43 @@ class Settings(Gtk.Window):
                 if r is not None and r.returncode == 0:
                     lines = r.stdout.strip().splitlines()
                     status.set_text(lines[-1] if lines else "Done.")
+                    follow.handler_block(follow_id)
+                    follow.set_active(auto_flag.exists())
+                    follow.handler_unblock(follow_id)
                 elif r is not None and r.returncode in (126, 127):
                     status.set_text("Cancelled.")
+                    failed and failed()
                 else:
                     err = ((r.stderr or r.stdout).strip().splitlines() or ["unknown error"])[-1] if r is not None else "failed"
                     status.set_text(f"Could not change the boot screens: {err}")
+                    failed and failed()
             in_background(work, done)
+
+        auto_flag = HYPR / "boot-screens-auto"
+        follow = Gtk.Switch()
+        follow.set_active(auto_flag.exists())
+
+        def flip_back():
+            follow.handler_block(follow_id)
+            follow.set_active(auto_flag.exists())
+            follow.handler_unblock(follow_id)
+
+        def on_follow(w, _p):
+            if w.get_active():
+                go("auto-on", "Making the boot screens from your wallpaper… (about a minute)", flip_back)
+            else:
+                go("auto-off", "Stopping…", flip_back)
+        follow_id = follow.connect("notify::active", on_follow)
 
         buttons = Gtk.Box(spacing=8)
         buttons.pack_start(button("Sync", lambda: go("sync", "Making the boot screens from your wallpaper… (about a minute)")), False, False, 0)
         buttons.pack_start(button("Reset", lambda: go("reset", "Going back to Debian's boot screens… (about a minute)")), False, False, 0)
         return group(
             row("Boot menu and start-up animation",
-                "Use the current wallpaper, its colors and your name. Sync again after changing wallpaper. "
-                "Asks for your password", buttons),
+                "Use the current wallpaper, its colors and your name. Asks for your password", buttons),
+            row("Follow the wallpaper",
+                "Update them by themselves a minute after you change wallpaper. Asks for your password "
+                "once, to allow only this update without it", follow),
             row("", "", status),
         )
 
