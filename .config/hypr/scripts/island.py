@@ -183,6 +183,15 @@ def hypr(cmd: str) -> str:
         return ""
 
 
+def die_with_parent():
+    """For watcher subprocesses: the kernel stops them when this program ends, however it ends."""
+    try:
+        import ctypes
+        ctypes.CDLL("libc.so.6", use_errno=True).prctl(1, 15)   # PR_SET_PDEATHSIG, SIGTERM
+    except (OSError, AttributeError):
+        pass
+
+
 def read_battery():
     for bat in sorted(Path("/sys/class/power_supply").glob("BAT*")):
         try:
@@ -1413,7 +1422,7 @@ class Island(Gtk.Window):
         rule = "type='method_call',interface='org.freedesktop.Notifications',member='Notify'"
         while True:
             try:
-                proc = subprocess.Popen(["dbus-monitor", "--session", rule], stdout=subprocess.PIPE,
+                proc = subprocess.Popen(["dbus-monitor", "--session", rule], preexec_fn=die_with_parent, stdout=subprocess.PIPE,
                                         stderr=subprocess.DEVNULL, text=True, errors="replace")
             except OSError:
                 return
@@ -1471,7 +1480,7 @@ class Island(Gtk.Window):
         fmt = "{{status}}\t{{title}}\t{{artist}}\t{{mpris:artUrl}}\t{{mpris:length}}"
         while True:
             try:
-                proc = subprocess.Popen(["playerctl", "--follow", "metadata", "--format", fmt],
+                proc = subprocess.Popen(["playerctl", "--follow", "metadata", "--format", fmt], preexec_fn=die_with_parent,
                                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, errors="replace")
             except OSError:
                 return

@@ -129,6 +129,15 @@ def layer(win, namespace, layer_kind, anchors=(), keyboard=False, exclusive=-1):
         GtkLayerShell.set_anchor(win, e, True)
 
 
+def die_with_parent():
+    """For watcher subprocesses: the kernel stops them when this program ends, however it ends."""
+    try:
+        import ctypes
+        ctypes.CDLL("libc.so.6", use_errno=True).prctl(1, 15)   # PR_SET_PDEATHSIG, SIGTERM
+    except (OSError, AttributeError):
+        pass
+
+
 def click_through(win, keep=None):
     """No input at all, or only inside `keep` (a widget)."""
     if keep is None:
@@ -305,7 +314,8 @@ class Widgets(Gtk.Window):
         while self.alive:
             try:
                 self.proc = subprocess.Popen(["playerctl", "--follow", "metadata", "--format", fmt],
-                                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, errors="replace")
+                                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, errors="replace",
+                                             preexec_fn=die_with_parent)
             except OSError:
                 return
             for line in self.proc.stdout:
@@ -661,6 +671,9 @@ def main():
         except (OSError, ValueError):
             pass
     PID_FILE.write_text(str(os.getpid()))
+    import signal
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, sig, lambda: (Gtk.main_quit(), False)[1])
     try:
         Extras()
         Gtk.main()

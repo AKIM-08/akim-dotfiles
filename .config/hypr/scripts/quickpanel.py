@@ -687,7 +687,7 @@ class QuickPanel(Gtk.Window):
             return
         try:
             proc = subprocess.Popen(["pactl", "subscribe"], stdout=subprocess.PIPE, text=True,
-                                    stderr=subprocess.DEVNULL)
+                                    stderr=subprocess.DEVNULL, preexec_fn=die_with_parent)
         except Exception:
             return
         self.audio_proc = proc                      # stopped in main() when the panel closes
@@ -698,6 +698,15 @@ class QuickPanel(Gtk.Window):
                 if now - last > 0.15:
                     last = now
                     GLib.idle_add(self.refresh_fast_once)
+
+
+def die_with_parent():
+    """For watcher subprocesses: the kernel stops them when this program ends, however it ends."""
+    try:
+        import ctypes
+        ctypes.CDLL("libc.so.6", use_errno=True).prctl(1, 15)   # PR_SET_PDEATHSIG, SIGTERM
+    except (OSError, AttributeError):
+        pass
 
 
 def main():
@@ -712,6 +721,9 @@ def main():
     PID_FILE.write_text(str(os.getpid()))
     win = None
     try:
+        # Closing with the shortcut sends SIGTERM: quit the main loop so `finally` runs
+        import signal
+        GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, lambda: (Gtk.main_quit(), False)[1])
         win = QuickPanel()
         win.show_all()
         win.media.set_visible(False)
