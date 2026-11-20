@@ -4,7 +4,7 @@
 # Run as root through pkexec by Settings -> Language & region:
 #   pkexec /bin/sh ~/.config/hypr/scripts/set-locale.sh fr_FR.UTF-8
 # Enables the locale in /etc/locale.gen, generates it and makes it the default for every new
-# login (/etc/default/locale). The change applies after logging out and back in.
+# login (/etc/default/locale). Settings then runs apply-locale-live.sh for the running session.
 
 set -e
 

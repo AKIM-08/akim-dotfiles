@@ -1373,9 +1373,11 @@ class Settings(Gtk.Window):
 
             def done(r):
                 if r is not None and r.returncode == 0:
-                    status.set_text("Done. Log out and back in to use the new language. Folder names "
-                                    "(Pictures, Downloads…) keep their current names.")
-                    notify("Language changed: log out and back in to apply it")
+                    spawn(["bash", str(SCRIPTS / "apply-locale-live.sh"), loc])
+                    status.set_text("Done. Apps you open from now on use the new language; reopen the ones "
+                                    "already open. The login and lock screens follow at the next login. "
+                                    "Folder names (Pictures, Downloads…) keep their current names.")
+                    notify("Language changed: apps you open now use it")
                 elif r is not None and r.returncode in (126, 127):
                     status.set_text("Cancelled.")
                 else:
@@ -1400,7 +1402,7 @@ class Settings(Gtk.Window):
 
         return [
             section("Language"),
-            group(row("System language", "Menus and apps in this language after the next login",
+            group(row("System language", "New apps use it right away; open ones once reopened",
                       dropdown(langs, current, set_language)),
                   row("", "", status)),
             section("Keyboard"),

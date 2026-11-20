@@ -149,8 +149,9 @@ Settings → Appearance → Wallpaper.
 **Terminal prompt.** `prompt-style blocks`, `prompt-style frame` or `prompt-style right`, or
 Settings → Appearance → Terminal. `fastfetch` shows the system dashboard.
 
-**Language.** Settings → Language & region changes the system language (asks for your password,
-applies at the next login) and the keyboard layout (immediately; two layouts switch with
+**Language.** Settings → Language & region changes the system language (asks for your password;
+apps you open afterwards use it at once, apps already open once reopened, the login screen at the
+next login) and the keyboard layout (immediately; two layouts switch with
 `Alt + Shift`).
 
 **Idle.** By default the screen dims after 10 minutes, locks and turns off after 15, and the
