@@ -1156,8 +1156,9 @@ class Settings(Gtk.Window):
         return [group(row("Pointer speed", "-1 slowest · 0 default · 1 fastest",
                           slider(cur, -1.0, 1.0, lambda v: f"{v:+.2f}", apply, step=0.05, delay=300))),
                 section("Pointer"),
-                group(row("Theme", "Wallpaper: recolored with every wallpaper. Capitaine and Oreo Spark are built "
-                                   "the first time you pick them (about a minute)",
+                group(row("Theme", "Wallpaper: in each wallpaper's accent. Capitaine, Oreo Spark and Wallpaper are "
+                                   "built the first time (a notification says when); windows already open may keep "
+                                   "the old pointer until reopened",
                           segmented([("capitaine", "Capitaine"), ("oreo-spark", "Oreo Spark"),
                                      ("wallpaper", "Wallpaper"), ("breeze", "Breeze")], theme,
                                     lambda v: set_pointer("theme", v))),
