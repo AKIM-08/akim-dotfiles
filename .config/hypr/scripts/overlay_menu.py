@@ -315,6 +315,7 @@ class Overlay(Gtk.Window):
         scroll.add(self.listbox)
         self.results.pack_start(scroll, True, True, 0)
         self.empty = lab("", "empty", xalign=0.5)
+        self.empty.set_no_show_all(True)             # shown only when there is nothing to list
         self.results.pack_start(self.empty, False, False, 0)
         outer.pack_start(self.results, False, False, 0)
         self.content.add(outer)
@@ -382,7 +383,7 @@ class Overlay(Gtk.Window):
                     title, sub = "Image", info
                 else:
                     box.pack_start(lab("\U000f0337" if link else "\U000f09a8", "glyph", xalign=0.5), False, False, 0)
-                    title, sub = " ".join(text.split())[:140], ("Link" if link else f"{len(text)} characters")
+                    title, sub = " ".join(text.split())[:140], ("Link" if link else "Text")
                 texts = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
                 texts.set_valign(Gtk.Align.CENTER)
                 texts.pack_start(lab(title, ellipsize=True), False, False, 0)
