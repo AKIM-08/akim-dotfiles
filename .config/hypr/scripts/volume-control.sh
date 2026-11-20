@@ -5,7 +5,7 @@
 # itself from the notification); a short notification otherwise
 osd() {
     local fifo="${XDG_RUNTIME_DIR:-/tmp}/desktop-osd.fifo"
-    [ -p "$fifo" ] || return 1
+    [ -p "$fifo" ] && [ -e "${fifo%.fifo}.on" ] || return 1
     pgrep -f "hypr/scripts/island\.py" >/dev/null 2>&1 && return 1
     timeout 0.3 sh -c 'echo "$1" > "$2"' _ "$*" "$fifo" 2>/dev/null
 }

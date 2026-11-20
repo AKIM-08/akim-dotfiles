@@ -921,23 +921,36 @@ class Settings(Gtk.Window):
 
     def desktop_extras_rows(self):
         path = HYPR / "desktop-extras.json"
+        cfg = {"osd": True, "charging": True, "clock": False, "song": False, "calendar": False}
         try:
-            cfg = {"osd": True, "widgets": True, "charging": True, **json.loads(path.read_text(encoding="utf-8"))}
+            saved = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            cfg = {"osd": True, "widgets": True, "charging": True}
+            saved = {}
+        if "widgets" in saved:
+            for k in ("clock", "song", "calendar"):
+                saved.setdefault(k, bool(saved["widgets"]))
+            saved.pop("widgets")
+        cfg.update(saved)
 
         def setter(key):
             def apply(v):
                 cfg[key] = bool(v)
                 path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
             return apply
+        extras = str(SCRIPTS / "desktop-extras.py")
+        preview = Gtk.Box(spacing=8)
+        preview.pack_start(button("Charging", lambda: spawn(["python3", extras, "test-charging"])), False, False, 0)
+        preview.pack_start(button("Low", lambda: spawn(["python3", extras, "test-low"])), False, False, 0)
         return [
-            row("Desktop widgets", "Clock, date, the song playing and a calendar on the wallpaper",
-                switch(cfg["widgets"], setter("widgets"))),
+            row("Clock & date", "A big clock and the date on the wallpaper, under your windows",
+                switch(cfg["clock"], setter("clock"))),
+            row("Now playing", "The song playing, with its cover", switch(cfg["song"], setter("song"))),
+            row("Calendar", "This month, today highlighted", switch(cfg["calendar"], setter("calendar"))),
             row("Volume & brightness pop-up", "A small level bar near the bottom instead of a notification",
                 switch(cfg["osd"], setter("osd"))),
             row("Charging animation", "A ring when the charger is plugged in, and a warning when the battery is low",
                 switch(cfg["charging"], setter("charging"))),
+            row("Preview", "Show the charging ring or the low-battery warning now", preview),
         ]
 
     def page_lock(self):

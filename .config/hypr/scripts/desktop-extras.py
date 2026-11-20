@@ -40,8 +40,9 @@ SCRIPTS = Path(__file__).resolve().parent
 CONFIG = HOME / ".config" / "hypr" / "desktop-extras.json"
 COLORS = HOME / ".cache" / "wal" / "colors.json"
 PID_FILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "desktop-extras.pid"
-DEFAULTS = {"osd": True, "widgets": True, "charging": True}
+DEFAULTS = {"osd": True, "charging": True, "clock": False, "song": False, "calendar": False}
 OSD_FIFO = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "desktop-osd.fifo"
+OSD_ON = OSD_FIFO.with_suffix(".on")        # exists while the pop-up is switched on
 LOW, CRITICAL = 15, 5
 
 
@@ -55,9 +56,13 @@ def run(cmd, timeout=3):
 
 def read_config():
     try:
-        return {**DEFAULTS, **json.loads(CONFIG.read_text(encoding="utf-8"))}
+        saved = json.loads(CONFIG.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return dict(DEFAULTS)
+        saved = {}
+    if "widgets" in saved:                  # older single switch for all the widgets
+        for k in ("clock", "song", "calendar"):
+            saved.setdefault(k, bool(saved["widgets"]))
+    return {**DEFAULTS, **saved}
 
 
 def palette():
@@ -90,6 +95,17 @@ def battery():
         try:
             return int((bat / "capacity").read_text()), (bat / "status").read_text().strip(), bat.name
         except (OSError, ValueError):
+            continue
+    return None
+
+
+def on_ac():
+    """True / False when the laptop says whether the charger is plugged in, None if it can't."""
+    for ps in Path("/sys/class/power_supply").iterdir() if Path("/sys/class/power_supply").is_dir() else []:
+        try:
+            if (ps / "type").read_text().strip() == "Mains":
+                return (ps / "online").read_text().strip() == "1"
+        except OSError:
             continue
     return None
 
@@ -138,6 +154,7 @@ class Flash(Gtk.Window):
         self.ev.connect("button-press-event", self.on_click)
         self.add(self.ev)
         self.on_click_action = None
+        self.subtitle = None
         self.hide_at = 0
         self.t0 = 0
         self.tick = None
@@ -198,6 +215,8 @@ class Widgets(Gtk.Window):
         self.date.get_style_context().add_class("w-date")
         left.pack_start(self.clock, False, False, 0)
         left.pack_start(self.date, False, False, 0)
+        self.clock.set_no_show_all(True)
+        self.date.set_no_show_all(True)
         self.song = Gtk.Box(spacing=12)
         self.song.get_style_context().add_class("w-card")
         self.song.set_halign(Gtk.Align.START)
@@ -227,15 +246,36 @@ class Widgets(Gtk.Window):
         self.cal.set_valign(Gtk.Align.END)
         self.cal.set_margin_end(70)
         self.cal.set_margin_bottom(80)
+        self.cal.set_no_show_all(True)
         grid.add_overlay(self.cal)
         self.add(grid)
         self.connect("size-allocate", lambda *_: click_through(self))
         self.cal_day = None
+        self.song_on = False
+        self.last_song = None
+        self.alive = True
+        self.proc = None
+        self.connect("destroy", self.on_destroy)
         self.tick()
         GLib.timeout_add(1000, self.tick)
         threading.Thread(target=self.watch_song, daemon=True).start()
 
+    def show_parts(self, cfg):
+        """Which widgets are switched on in Settings."""
+        for w in (self.clock, self.date):
+            w.set_visible(cfg["clock"])
+        self.cal.set_visible(cfg["calendar"])
+        self.song_on = cfg["song"]
+        self.set_song(self.last_song)
+
+    def on_destroy(self, *_):
+        self.alive = False
+        if self.proc:
+            self.proc.terminate()
+
     def tick(self):
+        if not self.alive:
+            return False
         self.clock.set_text(time.strftime("%H:%M"))
         self.date.set_text(time.strftime("%A %-d %B"))
         if self.cal_day != time.strftime("%j"):
@@ -262,19 +302,23 @@ class Widgets(Gtk.Window):
 
     def watch_song(self):
         fmt = "{{status}}\t{{title}}\t{{artist}}\t{{mpris:artUrl}}"
-        while True:
+        while self.alive:
             try:
-                p = subprocess.Popen(["playerctl", "--follow", "metadata", "--format", fmt],
-                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, errors="replace")
+                self.proc = subprocess.Popen(["playerctl", "--follow", "metadata", "--format", fmt],
+                                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, errors="replace")
             except OSError:
                 return
-            for line in p.stdout:
+            for line in self.proc.stdout:
                 f = line.rstrip("\n").split("\t")
-                GLib.idle_add(self.set_song, f if len(f) == 4 and f[0] in ("Playing", "Paused") and f[1] else None)
+                if self.alive:
+                    GLib.idle_add(self.set_song, f if len(f) == 4 and f[0] in ("Playing", "Paused") and f[1] else None)
             time.sleep(3)
 
     def set_song(self, f):
-        if not f:
+        if not self.alive:
+            return False
+        self.last_song = f
+        if not f or not self.song_on:
             self.song.hide()
             return False
         self.title.set_text(f[1])
@@ -414,9 +458,11 @@ class Extras:
         self.osd = Osd(self)
         self.widgets = None
         self.last_bat = battery()
+        self.last_ac = on_ac()
         self.warned = set()
         self.apply_config()
         GLib.timeout_add(2000, self.poll)
+        GLib.timeout_add(700, self.check_battery)
         threading.Thread(target=osd_reader, args=(self.on_osd,), daemon=True).start()
 
     def css(self):
@@ -448,19 +494,21 @@ class Extras:
         self.provider = prov
 
     def apply_config(self):
-        if self.cfg["widgets"] and self.widgets is None:
+        want = self.cfg["clock"] or self.cfg["song"] or self.cfg["calendar"]
+        if want and self.widgets is None:
             self.widgets = Widgets(self)
             self.widgets.show_all()
-        elif not self.cfg["widgets"] and self.widgets is not None:
+        elif not want and self.widgets is not None:
             self.widgets.destroy()
             self.widgets = None
-        # The volume / brightness scripts only send here while the FIFO exists
+        if self.widgets:
+            self.widgets.show_parts(self.cfg)
+        # The volume / brightness scripts only send here while this file exists
         try:
             if self.cfg["osd"]:
-                if not OSD_FIFO.exists():
-                    os.mkfifo(OSD_FIFO, 0o600)
-            elif OSD_FIFO.is_fifo():
-                OSD_FIFO.unlink()
+                OSD_ON.touch()
+            else:
+                OSD_ON.unlink(missing_ok=True)
         except OSError:
             pass
 
@@ -474,6 +522,11 @@ class Extras:
                 self.osd.show_level("brightness", int(words[1]))
             elif kind == "mic":
                 self.osd.show_level("mic", 0, words[1:2] == ["1"])
+            elif kind == "test-charging":
+                bat = battery() or (80, "Charging", "BAT0")
+                self.show_ring(bat[0], False, f"{bat[0]}% · charging", "Preview")
+            elif kind == "test-low":
+                self.show_ring(12, True, "Battery 12%", "Preview · click for Power saver")
         except (IndexError, ValueError):
             pass
         return False
@@ -498,29 +551,45 @@ class Extras:
             self.css()
             if self.widgets:
                 self.widgets.calendar()
-        self.check_battery()
         return True
 
     # -------------------------------------------------------------- charging / low battery
     def check_battery(self):
+        """Every 0.7 s (two small file reads): charger plugged in, or battery getting low."""
         bat = battery()
+        ac = on_ac()
+        prev_bat, prev_ac = self.last_bat, self.last_ac
+        self.last_bat, self.last_ac = bat, ac
         if not bat or not self.cfg["charging"]:
-            self.last_bat = bat
-            return
+            return True
         cap, status, name = bat
-        prev = self.last_bat
-        self.last_bat = bat
-        if prev and prev[1] not in ("Charging", "Full") and status == "Charging":
+        if ac is not None and prev_ac is not None:
+            plugged = ac and not prev_ac                          # the charger reports itself
+        else:
+            plugged = bool(prev_bat) and prev_bat[1] == "Discharging" and status in ("Charging", "Full", "Not charging")
+        if plugged:
             self.warned.clear()
-            left = time_left(name, "full")
-            self.show_ring(cap, False, f"{cap}% · charging", f"Full in {left}" if left else "")
-        elif status == "Discharging":
+            if status == "Full" or cap >= 99:
+                self.show_ring(cap, False, "Fully charged", "")
+            else:
+                # the time estimate needs a moment after plugging in
+                GLib.timeout_add(1500, self.show_charging, name)
+                self.show_ring(cap, False, f"{cap}% · charging", "")
+        elif status == "Discharging" and not ac:
             for level in (LOW, CRITICAL):
                 if cap <= level and level not in self.warned:
                     self.warned.add(level)
                     left = time_left(name, "empty")
                     self.show_ring(cap, True, f"Battery {cap}%", (f"{left} left · " if left else "") + "click for Power saver")
                     break
+        return True
+
+    def show_charging(self, name):
+        left = time_left(name, "full")
+        if left and self.flash.get_visible() and self.flash.subtitle is not None:
+            self.flash.subtitle.set_text(f"Full in {left}")
+            self.flash.subtitle.show()
+        return False
 
     def show_ring(self, cap, low, title, sub):
         f = self.flash
@@ -567,15 +636,24 @@ class Extras:
         tl = Gtk.Label(label=title)
         tl.get_style_context().add_class("big")
         f.card.pack_start(tl, False, False, 0)
-        if sub:
-            sl = Gtk.Label(label=sub)
-            sl.get_style_context().add_class("sub")
-            f.card.pack_start(sl, False, False, 0)
+        sl = Gtk.Label(label=sub)
+        sl.get_style_context().add_class("sub")
+        sl.set_no_show_all(not sub)
+        f.card.pack_start(sl, False, False, 0)
+        f.subtitle = sl
         action = (lambda: subprocess.Popen([str(SCRIPTS / "power-mode.sh"), "power-saver"])) if low else None
         f.show_for(5.0 if low else 2.8, clickable=action)
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] in ("test-charging", "test-low"):
+        # Preview from Settings: ask the running copy to show it
+        if not OSD_FIFO.is_fifo():
+            sys.exit("desktop-extras isn't running")
+        fd = os.open(OSD_FIFO, os.O_WRONLY | os.O_NONBLOCK)
+        os.write(fd, (sys.argv[1] + "\n").encode())
+        os.close(fd)
+        return
     if PID_FILE.exists():                       # one at a time: a new start replaces the old one
         try:
             os.kill(int(PID_FILE.read_text().strip()), 15)
@@ -591,6 +669,7 @@ def main():
             if PID_FILE.read_text().strip() == str(os.getpid()):
                 PID_FILE.unlink()
                 OSD_FIFO.unlink()
+                OSD_ON.unlink(missing_ok=True)
         except OSError:
             pass
 
