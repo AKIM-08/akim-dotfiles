@@ -1,5 +1,5 @@
 #!/bin/bash
-# hypridle: lock session and turn display off after 15 min idle
+# idle.py (hypridle): lock the session and turn the display off
 
 pidof hyprlock >/dev/null || hyprlock &
 hyprctl dispatch dpms off

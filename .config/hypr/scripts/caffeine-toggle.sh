@@ -16,9 +16,8 @@ if [ -f "$STATE_FILE" ]; then
     pkill -f "systemd-inhibit --why=Caffeine" 2>/dev/null || true
 
     # Restart hypridle
-    if ! pgrep -x hypridle >/dev/null; then
-        hypridle & disown
-    fi
+    # (with your idle times from Settings -> Power)
+    python3 "$HOME/.config/hypr/scripts/idle.py" start
 
     rm -f "$STATE_FILE"
 

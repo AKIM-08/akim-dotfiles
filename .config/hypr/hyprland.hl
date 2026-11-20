@@ -9,7 +9,7 @@ exec-once = awww-daemon
 exec-once = ~/.config/swaync/start.sh
 # The bar: Waybar, or the Dock / Island programs for those themes (see the script)
 exec-once = ~/.config/waybar/scripts/launch.sh
-exec-once = sh -c 'sleep 30 && hypridle'
+exec-once = sh -c 'sleep 30 && python3 ~/.config/hypr/scripts/idle.py start'   # idle times: Settings -> Power
 # Mouse pointer theme chosen in Settings -> Mouse & keyboard (scripts/cursors.py)
 exec-once = python3 ~/.config/hypr/scripts/cursors.py restore
 exec-once = wl-paste --type text --watch cliphist store

@@ -1259,7 +1259,39 @@ class Settings(Gtk.Window):
         caffeine = (HOME / ".cache" / "caffeine_active").exists()
         rows.append(row("Caffeine", "Keep the screen awake (no lock, no sleep)",
                         switch(caffeine, lambda on: spawn(["bash", str(SCRIPTS / "caffeine-toggle.sh")]))))
-        return [group(*rows)]
+        return [group(*rows)] + self.idle_sections()
+
+    def idle_sections(self):
+        """Dim / lock / sleep times, separately on battery and plugged in (scripts/idle.py)."""
+        import idle
+        times = idle.read_times()
+        choices = [("0", "Never")] + [(str(m), f"{m} min" if m < 60 else "1 hour")
+                                      for m in (1, 2, 3, 5, 10, 15, 20, 30, 45, 60)]
+        pending = {}
+
+        def setter(src, action):
+            def apply(v):
+                times[src][action] = int(v)
+                idle.save_times(times)
+                # restart hypridle once the choices settle (each restart resets the idle clock)
+                if pending.get("t"):
+                    GLib.source_remove(pending["t"])
+                pending["t"] = GLib.timeout_add(600, lambda: (pending.pop("t", None),
+                                                              spawn(["python3", str(SCRIPTS / "idle.py"), "start"]), False)[2])
+            return apply
+
+        def rows_for(src):
+            def pick(action):
+                value = str(times[src][action])
+                items = choices if any(v == value for v, _ in choices) else choices + [(value, f"{value} min")]
+                return dropdown(items, value, setter(src, action))
+            return group(
+                row("Dim the screen", "", pick("dim")),
+                row("Lock and turn off the screen", "", pick("lock")),
+                row("Sleep", "Suspend; on battery it also hibernates before running empty", pick("sleep")),
+            )
+        return [section("When idle · on battery"), rows_for("battery"),
+                section("When idle · plugged in"), rows_for("ac")]
 
     # -------------------------------------------------------------- Mouse
     def page_mouse(self):

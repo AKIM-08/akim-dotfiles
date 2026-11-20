@@ -153,9 +153,12 @@ Settings → Appearance → Terminal. `fastfetch` shows the system dashboard.
 applies at the next login) and the keyboard layout (immediately; two layouts switch with
 `Alt + Shift`).
 
-**Idle.** After 10 minutes the screen dims, after 15 it locks and turns off, after 20 the laptop
-sleeps. On battery it hibernates before running empty (needs swap). Times are in
-`~/.config/hypr/hypridle.conf`.
+**Idle.** By default the screen dims after 10 minutes, locks and turns off after 15, and the
+laptop sleeps after 20. Set each time separately on battery and plugged in (or *Never*) in
+Settings → Power → When idle. On battery it also hibernates before running empty (needs swap).
+
+**Updating.** `akim-update` updates the dotfiles and kitty; `kitty-update` updates only kitty.
+See [Update](#update).
 
 ## Customising
 

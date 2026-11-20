@@ -20,7 +20,7 @@ REPO=$(cd "$(dirname "$SELF")/.." && pwd)
 # Same list as USER_STATE in install/common.sh: choices made in Settings and your own overrides
 USER_STATE=(
     hypr/user-settings.hl hypr/user-apps.hl hypr/user-binds.hl hypr/cursor-theme
-    hypr/power-menu-style hypr/wallpaper-transition hypr/wallpaper-picker-style hypr/desktop-extras.json hypr/nightlight
+    hypr/power-menu-style hypr/wallpaper-transition hypr/wallpaper-picker-style hypr/desktop-extras.json hypr/nightlight hypr/idle.json
     hypr/hyprlock/active.conf
     waybar/layout.json
 )
@@ -170,6 +170,10 @@ if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
     if changed swaync/; then
         swaync-client -R >/dev/null 2>&1; swaync-client -rs >/dev/null 2>&1
         restarted+=("notifications")
+    fi
+    if changed scripts/idle.py; then
+        python3 "$HOME/.config/hypr/scripts/idle.py" start >/dev/null 2>&1
+        restarted+=("idle times")
     fi
     if changed scripts/desktop-extras.py; then
         setsid -f python3 "$HOME/.config/hypr/scripts/desktop-extras.py" >/dev/null 2>&1
