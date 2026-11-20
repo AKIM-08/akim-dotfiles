@@ -4,7 +4,7 @@
 # - Full toggle support (SUPER+P opens and closes menu, SUPER+SHIFT+P captures region)
 # - Clean transparent marquee selection
 # - Persistent on-screen red bounding box during region video recording
-# - Audio source selection: Device / System Audio, Microphone, Both, or No Audio
+# - Audio source selection: system sound, system sound + microphone, or no sound
 
 set -euo pipefail
 
