@@ -24,6 +24,7 @@ REC_FILE="$VID_DIR/recording-${TIMESTAMP}.mp4"
 LOOPBACK_FILE="/tmp/wf_loopback_module.id"
 MIC_VOL_FILE="/tmp/akimrec_mic_volume"
 SINK_SAVE_FILE="/tmp/akimrec_default_sink"
+MUTED_SINK_FILE="/tmp/akimrec_muted_sink"
 
 # Slurp appearance: Dark dim outside, crisp white border, 100% transparent inside
 SLURP_ARGS=(-d -b "#00000055" -c "#ffffff" -s "#00000000" -w 2)
@@ -146,33 +147,38 @@ real_mic() {
     pactl list short sources 2>/dev/null | awk '$2 !~ /\.monitor$/ { print $2; exit }'
 }
 
-# Echo cancellation for the microphone: the laptop's mic also hears its speakers. PipeWire's
-# echo canceller removes what the speakers play from the mic signal. While recording, sound is
-# played through it (it forwards to your real output), and the cleaned mic is recorded.
-# Sets MIC_CLEAN to the cleaned microphone, or leaves it empty when it can't be set up.
-setup_echo_cancel() {
-    MIC_CLEAN=""
-    local mic="$1" sink="$2" id
+# True when sound goes to headphones or Bluetooth (the microphone can't hear those)
+output_is_headphones() {
+    local def
+    def=$(pactl get-default-sink 2>/dev/null)
+    [[ "$def" == bluez* ]] && return 0
+    pactl list sinks 2>/dev/null | awk -v d="$def" '
+        /^[[:space:]]*Name:/ { cur = $2 }
+        cur == d && /Active Port:/ { print tolower($0) }' | grep -qE "headphone|headset"
+}
+
+# Recording only the microphone on the laptop's speakers: the mic would hear them, so they are
+# muted until the recording stops (nothing is changed with headphones or Bluetooth)
+mute_speakers_for_mic() {
     command -v pactl &>/dev/null || return
-    [ -n "$sink" ] || sink=$(pactl get-default-sink 2>/dev/null)
-    [ -n "$mic" ] && [ -n "$sink" ] || return
-    id=$(pactl load-module module-echo-cancel aec_method=webrtc \
-        source_master="$mic" sink_master="$sink" \
-        source_name=akimrec_ec_source sink_name=akimrec_ec_sink \
-        source_properties=device.description=Microphone-echo-cancelled \
-        sink_properties=device.description=Recording-echo-reference 2>/dev/null) || return
-    echo "$id" >> "$LOOPBACK_FILE"
-    pactl get-default-sink > "$SINK_SAVE_FILE" 2>/dev/null
-    pactl set-default-sink akimrec_ec_sink 2>/dev/null
-    # Move what is already playing, so the canceller hears it too
-    pactl list short sink-inputs 2>/dev/null | awk '{print $1}' | while read -r si; do
-        pactl move-sink-input "$si" akimrec_ec_sink 2>/dev/null || true
-    done
-    MIC_CLEAN="akimrec_ec_source"
+    output_is_headphones && return
+    local def
+    def=$(pactl get-default-sink 2>/dev/null)
+    [ -n "$def" ] || return
+    if pactl get-sink-mute "$def" 2>/dev/null | grep -q "no"; then
+        pactl set-sink-mute "$def" 1 2>/dev/null && echo "$def" > "$MUTED_SINK_FILE"
+        notify-send -e -a "Screen Recorder" -u low -t 3000 "Speakers muted" \
+            "So the microphone only records your voice. They come back when the recording stops." 2>/dev/null
+    fi
 }
 
 cleanup_loopback() {
-    # The default output goes back to the real one (playing streams follow it)
+    # Speakers muted for a microphone recording come back
+    if [ -f "$MUTED_SINK_FILE" ] && command -v pactl &>/dev/null; then
+        pactl set-sink-mute "$(cat "$MUTED_SINK_FILE")" 0 2>/dev/null
+        rm -f "$MUTED_SINK_FILE"
+    fi
+    # (Older versions changed the default output for an echo canceller: put it back)
     if [ -f "$SINK_SAVE_FILE" ] && command -v pactl &>/dev/null; then
         local orig
         orig=$(cat "$SINK_SAVE_FILE")
@@ -414,18 +420,10 @@ print(f'{mon_target} {mic_target} {sink_name}')
         MIC_NAME="@DEFAULT_AUDIO_SOURCE@"
     fi
 
-    # Optimize microphone hardware volume to eliminate fan clipping
+    # Make sure the microphone isn't muted (its volume is left as you set it)
     case "$audio_choice" in
         *"Microphone"*|*"Both"*)
-            if command -v wpctl &>/dev/null; then
-                wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0 2>/dev/null || true
-                local cur_vol
-                cur_vol=$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null | awk '{print $2}' || echo "0.60")
-                if awk "BEGIN {exit !($cur_vol > 0.70)}"; then
-                    echo "$cur_vol" > "$MIC_VOL_FILE"          # put back when the recording stops
-                    wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 0.65 2>/dev/null || true
-                fi
-            fi
+            command -v wpctl &>/dev/null && wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0 2>/dev/null
             ;;
     esac
 
@@ -436,21 +434,23 @@ print(f'{mon_target} {mic_target} {sink_name}')
             AUDIO_TARGET="$MON_NAME"
             ;;
         *"Microphone"*)
-            # Only your voice: a real microphone, with the speakers' sound cancelled out of it
+            # Only your voice, at full quality: the real microphone, nothing processed. The
+            # laptop speakers are muted meanwhile so the microphone can't hear them.
             MIC_NAME=$(real_mic)
-            setup_echo_cancel "$MIC_NAME" "$SINK_NAME"
-            AUDIO_TARGET="${MIC_CLEAN:-$MIC_NAME}"
+            mute_speakers_for_mic
+            AUDIO_TARGET="$MIC_NAME"
             ;;
         *"Both"*)
             # A silent "Recording mix" device that receives the system sound and the microphone;
             # the recorder records that mix. Nothing is played back, so you don't hear yourself.
+            MIC_NAME=$(real_mic)
             if [ -n "$MIC_NAME" ] && command -v pactl &>/dev/null; then
                 local ids=() id
                 id=$(pactl load-module module-null-sink sink_name=akimrec_mix \
                     sink_properties=device.description=Recording-mix 2>/dev/null) && ids+=("$id")
-                id=$(pactl load-module module-loopback source="$MON_NAME" sink=akimrec_mix latency_msec=30 \
+                id=$(pactl load-module module-loopback source="$MON_NAME" sink=akimrec_mix latency_msec=60 \
                     source_dont_move=true sink_dont_move=true 2>/dev/null) && ids+=("$id")
-                id=$(pactl load-module module-loopback source="$MIC_NAME" sink=akimrec_mix latency_msec=30 \
+                id=$(pactl load-module module-loopback source="$MIC_NAME" sink=akimrec_mix latency_msec=60 \
                     source_dont_move=true sink_dont_move=true 2>/dev/null) && ids+=("$id")
                 printf '%s\n' "${ids[@]}" > "$LOOPBACK_FILE"
                 # A new device must not become the default output
