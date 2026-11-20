@@ -391,6 +391,9 @@ elif [ -x /usr/sbin/gdm ]; then
     echo "/usr/sbin/gdm" | sudo tee /etc/X11/default-display-manager >/dev/null
 fi
 
+# 10b. Newer kitty (official build) when Debian's is too old for the scrollbar
+bash "$(dirname "${BASH_SOURCE[0]}")/kitty-latest.sh" || warn "Kept Debian's kitty (no scrollbar)"
+
 # 11. Set Kitty as default system terminal emulator
 echo "--> Configuring Kitty as default terminal emulator..."
 if command -v kitty &>/dev/null; then

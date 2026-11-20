@@ -104,7 +104,7 @@ while IFS=$'\t' read -r status path rest; do
     fi
     for c in "${changes[@]}"; do
         st=${c%%	*}; f=${c#*	}
-        case "$f" in install/update.sh|install/rollback.sh) continue ;; install/*|install.sh) installer=true; continue ;; esac
+        case "$f" in install/update.sh|install/rollback.sh|install/kitty-latest.sh) continue ;; install/*|install.sh) installer=true; continue ;; esac
         dest=$(target_of "$f")
         [ -n "$dest" ] || continue
         rel=${f#.config/}
