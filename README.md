@@ -106,7 +106,7 @@ Puts back the configuration you had before the first install (the oldest backup 
 | `Super + F` | Files (Nautilus) |
 | `Super + B` | Web browser |
 | `Super + A` | Close the window |
-| `Alt + Tab` | Window overview: hold Alt, tap Tab to move, let go to jump; type to find a window |
+| `Alt + Tab` | Window overview (carousel): hold Alt, tap Tab to move, let go to jump; type to find a window |
 | `Super + W` | Wallpaper picker |
 | `Super + Alt + ←` / `→` | Previous / next wallpaper |
 | `Super + N` | Quick panel |

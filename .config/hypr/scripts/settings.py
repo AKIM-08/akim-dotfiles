@@ -1143,9 +1143,21 @@ class Settings(Gtk.Window):
             group(row("Style", "", segmented([("radial", "Radial"), ("cards", "Cards")], style,
                                              lambda v: style_file.write_text(v + "\n", encoding="utf-8"))),
                   row("Open it", "", button("Power menu", lambda: spawn([str(SCRIPTS / "snmenu-toggle.sh")])))),
+            section("Window overview (Alt + Tab)"),
+            group(row("Style", "Carousel: slanted cards, the chosen window large in the middle · All windows: every window on one screen",
+                      segmented([("carousel", "Carousel"), ("grid", "All windows")], self.overview_style(),
+                                lambda v: (HYPR / "overview-style").write_text(v + "\n", encoding="utf-8")))),
             section("Effects"),
             group(row("Animations", "Window and workspace animations; off is snappier and saves battery", switch(anim, set_anim))),
         ]
+
+    @staticmethod
+    def overview_style():
+        try:
+            v = (HYPR / "overview-style").read_text(encoding="utf-8").strip()
+        except OSError:
+            v = ""
+        return v if v in ("carousel", "grid") else "carousel"
 
     def page_terminal(self):
         style_file = HOME / ".config" / "zsh-prompt-style"

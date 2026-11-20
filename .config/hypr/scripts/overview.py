@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""overview.py - every open window as a picture, on one screen (Alt + Tab).
+"""overview.py - every open window as a picture (Alt + Tab).
+
+Two looks, chosen in Settings -> Appearance -> Menus (~/.config/hypr/overview-style):
+    carousel   slanted cards, the chosen window large in the middle (default)
+    grid       every window on one screen
 
 Hold Alt and tap Tab to move (Shift + Tab goes back), let go of Alt to jump to that window: a quick
 Alt + Tab goes back to the previous window. Arrows move too, Enter or a click jumps, typing keeps
@@ -12,6 +16,7 @@ Normally shown by desktop-extras.py (already running, so it opens at once): over
 "overview" to its FIFO. Run on its own (python3 overview.py) when desktop-extras isn't running.
 """
 
+import cairo
 import json
 import math
 import os
@@ -36,6 +41,25 @@ HOME = Path.home()
 CACHE = HOME / ".cache" / "overview"
 COLORS = HOME / ".cache" / "wal" / "colors.json"
 SNAP_SCALE = 0.4
+STYLE_FILE = HOME / ".config" / "hypr" / "overview-style"
+
+
+def read_style():
+    try:
+        v = STYLE_FILE.read_text(encoding="utf-8").strip()
+    except OSError:
+        v = ""
+    return v if v in ("carousel", "grid") else "carousel"
+
+
+def rounded(cr, x, y, w, h, r):
+    r = min(r, w / 2, h / 2)
+    cr.new_sub_path()
+    cr.arc(x + w - r, y + r, r, -math.pi / 2, 0)
+    cr.arc(x + w - r, y + h - r, r, 0, math.pi / 2)
+    cr.arc(x + r, y + h - r, r, math.pi / 2, math.pi)
+    cr.arc(x + r, y + r, r, math.pi, 3 * math.pi / 2)
+    cr.close_path()
 
 
 # ------------------------------------------------------------------------------ Hyprland
@@ -224,12 +248,19 @@ class Overview(Gtk.Window):
         self.empty = Gtk.Label(label="No windows open")
         self.empty.get_style_context().add_class("ov-empty")
         holder = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.canvas = Gtk.DrawingArea()
+        self.canvas.connect("draw", self.draw_carousel)
+        self.canvas.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.SCROLL_MASK |
+                               Gdk.EventMask.SMOOTH_SCROLL_MASK)
+        self.canvas.connect("button-press-event", self.on_canvas_click)
+        self.canvas.connect("scroll-event", self.on_scroll)
+        holder.pack_start(self.canvas, True, True, 0)
         holder.pack_start(self.grid, True, True, 0)
         holder.pack_start(self.empty, True, True, 0)
         col.pack_start(self.search, False, False, 0)
         col.pack_start(self.chips, False, False, 0)
         col.pack_start(holder, True, True, 0)
-        hint = Gtk.Label(label="Hold Alt, Tab to move · let go to jump · type to find · 1 – 9 a workspace · Esc closes")
+        hint = self.hint = Gtk.Label(label="Hold Alt, Tab to move · let go to jump · type to find · 1 – 9 a workspace · Esc closes")
         hint.get_style_context().add_class("ov-hint")
         col.pack_start(hint, False, False, 0)
         root.add(col)
@@ -242,6 +273,10 @@ class Overview(Gtk.Window):
         self.ws_filter = None
         self.sticky = False
         self.opened = 0
+        self.style = "carousel"
+        self.pos = 0.0                  # carousel: animated position (follows self.sel)
+        self.anim = None
+        self.icons = {}
 
     # -------------------------------------------------------------- open / close
     def open(self):
@@ -274,10 +309,14 @@ class Overview(Gtk.Window):
                               "ws": ws, "ws_name": c["workspace"].get("name", str(ws)), "pix": pix,
                               "size": c["size"]})
         self.text, self.ws_filter, self.sticky = "", None, False
+        self.style = read_style()
         self.sel = 1 if len(self.wins) > 1 else 0
+        self.pos = float(self.sel)
         self.opened = time.monotonic()
         self.rebuild()
         self.show_all()
+        self.canvas.set_visible(self.style == "carousel")
+        self.grid.set_visible(self.style == "grid")
         self.update_search()
         self.empty.set_visible(not self.shown)
         self.present()
@@ -351,6 +390,11 @@ class Overview(Gtk.Window):
         self.sel = max(0, min(self.sel, len(self.shown) - 1))
         n = len(self.shown)
         self.tiles = []
+        if self.style == "carousel":
+            self.pos = min(self.pos, max(0, n - 1))
+            self.empty.set_visible(n == 0)
+            self.canvas.queue_draw()
+            return
         if n:
             geo = self.get_screen().get_monitor_geometry(0) if self.get_screen() else None
             sw, sh = (geo.width, geo.height) if geo else (1920, 1080)
@@ -403,6 +447,9 @@ class Overview(Gtk.Window):
         return ev
 
     def highlight(self):
+        if self.style == "carousel":
+            self.start_anim()
+            return
         for i, t in enumerate(self.tiles):
             ctx = t.box.get_style_context()
             (ctx.add_class if i == self.sel else ctx.remove_class)("sel")
@@ -444,7 +491,8 @@ class Overview(Gtk.Window):
             self.move(1 if k == Gdk.KEY_Right else -1)
         elif k in (Gdk.KEY_Down, Gdk.KEY_Up):
             self.sticky = True
-            self.move(getattr(self, "cols", 1) * (1 if k == Gdk.KEY_Down else -1))
+            step = 1 if self.style == "carousel" else getattr(self, "cols", 1)
+            self.move(step * (1 if k == Gdk.KEY_Down else -1))
         elif k in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
             self.jump()
         elif k == Gdk.KEY_BackSpace:
@@ -464,6 +512,130 @@ class Overview(Gtk.Window):
                 self.update_search()
                 self.sel = 0
                 self.rebuild()
+        return True
+
+    # -------------------------------------------------------------- carousel
+    def start_anim(self):
+        if self.anim is None:
+            self.anim = self.canvas.add_tick_callback(self.step_anim)
+        self.canvas.queue_draw()
+
+    def step_anim(self, *_):
+        d = self.sel - self.pos
+        self.pos += d * 0.28
+        if abs(d) < 0.004:
+            self.pos = float(self.sel)
+            self.canvas.queue_draw()
+            self.anim = None
+            return False
+        self.canvas.queue_draw()
+        return True
+
+    def icon_for(self, cls, size):
+        key = (cls, size)
+        if key not in self.icons:
+            self.icons[key] = app_icon(cls, size)
+        return self.icons[key]
+
+    def card_geometry(self, W, H):
+        cw = min(W * 0.42, H * 0.62 * 16 / 9)
+        return cw, cw * 9 / 16, W / 2, H * 0.46
+
+    def draw_carousel(self, _w, cr):
+        if self.style != "carousel" or not self.shown:
+            return False
+        W, H = self.canvas.get_allocated_width(), self.canvas.get_allocated_height()
+        p = palette()
+        acc = tuple(int(p["accent"].lstrip("#")[i:i + 2], 16) / 255 for i in (0, 2, 4))
+        cw, ch, cx, cy = self.card_geometry(W, H)
+        n = len(self.shown)
+        near = [i for i in range(n) if abs(i - self.pos) < 3.4]
+        for i in sorted(near, key=lambda i: -abs(i - self.pos)):          # far ones first
+            d = i - self.pos
+            ad = min(abs(d), 3.4)
+            s = 1 - ad * 0.17
+            alpha = max(0.0, 1 - ad * 0.24)
+            cr.save()
+            cr.translate(cx + d * W * 0.2, cy)
+            cr.transform(cairo.Matrix(1, 0, -0.14 * max(-1, min(1, d)), 1, 0, 0))   # slant, toward the middle
+            cr.scale(s, s)
+            self.draw_card(cr, self.shown[i], -cw / 2, -ch / 2, cw, ch, alpha, abs(d) < 0.5, acc)
+            cr.restore()
+        w = self.shown[self.sel]
+        name = w["class"].split(".")[-1].capitalize() or "Window"
+        self.draw_text(cr, f"{name} · {w['title']}" if w["title"] and w["title"] != name else name,
+                       W / 2, cy + ch / 2 + 48, 20, 1.0, True)
+        self.draw_text(cr, f"workspace {w['ws_name']}   ·   {self.sel + 1} / {n}", W / 2, cy + ch / 2 + 78, 13, 0.7, False)
+        return False
+
+    def draw_card(self, cr, w, x, y, cw, ch, alpha, chosen, acc):
+        cr.push_group()
+        rounded(cr, x, y, cw, ch, 18)
+        cr.set_source_rgba(0.07, 0.08, 0.12, 0.92)
+        cr.fill_preserve()
+        cr.save()
+        cr.clip()
+        pix = w["pix"]
+        if pix is not None:
+            k = min(cw / pix.get_width(), ch / pix.get_height())          # whole window, centered
+            pw, ph = pix.get_width() * k, pix.get_height() * k
+            cr.translate(x + (cw - pw) / 2, y + (ch - ph) / 2)
+            cr.scale(k, k)
+            Gdk.cairo_set_source_pixbuf(cr, pix, 0, 0)
+            cr.paint()
+        else:
+            icon = self.icon_for(w["class"], int(ch * 0.4))
+            if icon is not None:
+                Gdk.cairo_set_source_pixbuf(cr, icon, x + (cw - icon.get_width()) / 2, y + (ch - icon.get_height()) / 2)
+                cr.paint()
+        cr.restore()
+        if chosen:
+            rounded(cr, x - 3, y - 3, cw + 6, ch + 6, 21)
+            cr.set_source_rgba(*acc, 1)
+            cr.set_line_width(4)
+            cr.stroke()
+        cr.pop_group_to_source()
+        cr.paint_with_alpha(alpha)
+
+    def draw_text(self, cr, text, x, y, size, alpha, bold):
+        cr.select_font_face("Inter", cairo.FONT_SLANT_NORMAL,
+                            cairo.FONT_WEIGHT_BOLD if bold else cairo.FONT_WEIGHT_NORMAL)
+        cr.set_font_size(size)
+        if len(text) > 90:
+            text = text[:88] + "…"
+        ext = cr.text_extents(text)
+        cr.move_to(x - ext.width / 2 - ext.x_bearing, y)
+        cr.set_source_rgba(0, 0, 0, 0.5 * alpha)
+        cr.rel_move_to(0, 1)
+        cr.show_text(text)
+        cr.move_to(x - ext.width / 2 - ext.x_bearing, y)
+        cr.set_source_rgba(1, 1, 1, alpha)
+        cr.show_text(text)
+
+    def on_canvas_click(self, _w, e):
+        if not self.shown:
+            return True
+        W = self.canvas.get_allocated_width()
+        cw, ch, cx, cy = self.card_geometry(W, self.canvas.get_allocated_height())
+        if abs(e.x - cx) <= cw / 2 and abs(e.y - cy) <= ch / 2:
+            self.jump()                                  # the big one in the middle
+        else:
+            step = round((e.x - cx) / (W * 0.2))
+            if step:
+                self.sticky = True
+                self.sel = max(0, min(len(self.shown) - 1, self.sel + step))
+                self.highlight()
+        return True
+
+    def on_scroll(self, _w, e):
+        dx = dy = 0
+        ok, dx, dy = e.get_scroll_deltas() if e.direction == Gdk.ScrollDirection.SMOOTH else (False, 0, 0)
+        if e.direction in (Gdk.ScrollDirection.DOWN, Gdk.ScrollDirection.RIGHT) or dy > 0.3 or dx > 0.3:
+            self.sticky = True
+            self.move(1)
+        elif e.direction in (Gdk.ScrollDirection.UP, Gdk.ScrollDirection.LEFT) or dy < -0.3 or dx < -0.3:
+            self.sticky = True
+            self.move(-1)
         return True
 
     def on_release(self, _w, e):
