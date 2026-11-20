@@ -8,7 +8,7 @@
                                              record / stop, color picker
     overlay_menu.py power        Super + F12 tiles: performance / balanced / power saver
     overlay_menu.py bartheme     Super + Shift + T  a picture of each bar style on your wallpaper
-    overlay_menu.py audio        (recording) pill bar to pick the sound; prints sys / mic / both / none
+    overlay_menu.py audio        (recording) pill bar to pick the sound; prints sys / both / none
 
 Esc, a click outside, or the same shortcut again closes it. Colors follow the wallpaper.
 GTK 3 on a layer-shell overlay: no window, no border, Hyprland fades it in
@@ -210,7 +210,7 @@ class Overlay(Gtk.Window):
             if k in (Gdk.KEY_Left, Gdk.KEY_Right, Gdk.KEY_Tab, Gdk.KEY_ISO_Left_Tab):
                 step = -1 if k in (Gdk.KEY_Left, Gdk.KEY_ISO_Left_Tab) else 1
                 self.pick_audio((self.audio_sel + step) % len(self.audio_opts))
-            elif Gdk.KEY_1 <= k <= Gdk.KEY_4:
+            elif Gdk.KEY_1 <= k < Gdk.KEY_1 + len(self.audio_opts):
                 self.pick_audio(k - Gdk.KEY_1)
                 self.start_recording()
             elif k in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_space):
@@ -606,8 +606,8 @@ class Overlay(Gtk.Window):
     AUDIO_CHOICE = HOME / ".cache" / "record-audio-choice"
 
     def build_audio(self):
-        self.audio_opts = [("sys", "\U000f04c3", "System sound"), ("mic", "\U000f036c", "Microphone"),
-                           ("both", "\U000f04c3 \U000f036c", "Both"), ("none", "\U000f075f", "No sound")]
+        self.audio_opts = [("sys", "\U000f04c3", "System sound"), ("both", "\U000f04c3 \U000f036c", "System + mic"),
+                           ("none", "\U000f075f", "No sound")]
         try:
             last = self.AUDIO_CHOICE.read_text().strip()
         except OSError:

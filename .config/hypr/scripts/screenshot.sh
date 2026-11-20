@@ -209,7 +209,6 @@ toggle_recording() {
 
     # 1. Ask for Audio Choice via quick rofi menu
     local opt_sys="󰓃  Device / System Audio (Desktop Sounds)"
-    local opt_mic="󰍬  Microphone (Voice - Noise Filtered)"
     local opt_both="󰓃󰍬 Both (System Audio + Microphone)"
     local opt_none="󰝟  No Audio (Muted Video)"
 
@@ -219,13 +218,12 @@ toggle_recording() {
         key=$(python3 "$HOME/.config/hypr/scripts/overlay_menu.py" audio 2>/dev/null | tail -1)
         case "$key" in
             sys)  audio_choice="$opt_sys" ;;
-            mic)  audio_choice="$opt_mic" ;;
             both) audio_choice="$opt_both" ;;
             none) audio_choice="$opt_none" ;;
             *)    audio_choice="" ;;
         esac
     else
-        audio_choice=$(printf "%s\n%s\n%s\n%s" "$opt_sys" "$opt_mic" "$opt_both" "$opt_none" | \
+        audio_choice=$(printf "%s\n%s\n%s" "$opt_sys" "$opt_both" "$opt_none" | \
             rofi -dmenu -i -p "󰍬 Audio Source" -theme "$HOME/.config/rofi/screenshot.rasi" || true)
     fi
 
@@ -367,7 +365,7 @@ print(f'{mon_target} {mic_target} {sink_name}')
 
     # Optimize microphone hardware volume to eliminate fan clipping
     case "$audio_choice" in
-        *"Microphone"*|*"Both"*)
+        *"Both"*)
             if command -v wpctl &>/dev/null; then
                 wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0 2>/dev/null || true
                 local cur_vol
@@ -385,14 +383,6 @@ print(f'{mon_target} {mic_target} {sink_name}')
     case "$audio_choice" in
         *"Device / System"*)
             AUDIO_TARGET="$MON_NAME"
-            ;;
-        *"Microphone"*)
-            AUDIO_TARGET="$MIC_NAME"
-            if [ -z "$AUDIO_TARGET" ] || [[ "$AUDIO_TARGET" == *".monitor"* ]] || [[ "$AUDIO_TARGET" == *"output"* ]]; then
-                if command -v pactl &>/dev/null; then
-                    AUDIO_TARGET=$(pactl get-default-source 2>/dev/null || true)
-                fi
-            fi
             ;;
         *"Both"*)
             # A silent "Recording mix" device that receives the system sound and the microphone;
