@@ -196,7 +196,7 @@ if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
         python3 "$HOME/.config/hypr/scripts/idle.py" start >/dev/null 2>&1
         restarted+=("idle times")
     fi
-    if changed scripts/desktop-extras.py; then
+    if changed scripts/desktop-extras.py || changed scripts/overview.py || changed scripts/screens.py; then
         setsid -f python3 "$HOME/.config/hypr/scripts/desktop-extras.py" >/dev/null 2>&1
         restarted+=("desktop widgets")
     fi

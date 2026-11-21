@@ -554,7 +554,19 @@ class Extras:
 
     # -------------------------------------------------------------- overview + screens
     def on_overview(self, kind):
+        import importlib
         import overview
+        # overview.py changed since it was loaded (an update): use the new version
+        try:
+            mtime = Path(overview.__file__).stat().st_mtime
+        except OSError:
+            mtime = 0
+        if self.overview is not None and mtime != getattr(self, "overview_mtime", mtime) \
+                and not self.overview.get_visible():
+            self.overview.destroy()
+            self.overview = None
+            overview = importlib.reload(overview)
+        self.overview_mtime = mtime
         if self.overview is None:
             self.overview = overview.Overview()
         ov = self.overview
