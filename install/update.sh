@@ -49,6 +49,27 @@ update_kitty() {
     bash "$REPO/install/kitty-latest.sh" --update --quiet || warn "kitty update failed (try: kitty-update)"
 }
 
+# Older installers set WaylandEnable=false in GDM, which hides Hyprland from the login screen's
+# session menu. Offer to undo it (needs the password, so it asks first; never silently).
+check_gdm() {
+    local bad=() f
+    for f in /etc/gdm3/daemon.conf /etc/gdm3/custom.conf; do
+        [ -f "$f" ] && grep -q '^WaylandEnable=false' "$f" && bad+=("$f")
+    done
+    [ ${#bad[@]} -gt 0 ] || return 0
+    warn "The login screen hides Hyprland (WaylandEnable=false in ${bad[*]}), set by an older installer."
+    if [ -t 0 ]; then
+        printf '  Fix it now? It asks for your password. [Y/n] '
+        read -r answer
+        case "$answer" in [nN]*) ;; *)
+            sudo sed -i 's/^WaylandEnable=false/#WaylandEnable=false/' "${bad[@]}" \
+                && say "  ${G}Fixed:${N} Hyprland shows in the session menu after the next restart."
+            return 0 ;;
+        esac
+    fi
+    say "  To fix it: sudo sed -i 's/^WaylandEnable=false/#WaylandEnable=false/' ${bad[*]}"
+}
+
 # --------------------------------------------------------------------------- phase 1: pull
 if [ "${1:-}" != "--apply" ]; then
     mode="${1:-}"
@@ -59,7 +80,7 @@ if [ "${1:-}" != "--apply" ]; then
     behind=$(git rev-list --count "HEAD..$upstream" 2>/dev/null || echo 0)
     if [ "$behind" -eq 0 ]; then
         say "${G}Dotfiles already up to date.${N}"
-        [ "$mode" = "--check" ] || [ "$mode" = "--dry-run" ] || update_kitty
+        [ "$mode" = "--check" ] || [ "$mode" = "--dry-run" ] || { update_kitty; check_gdm; }
         exit 0
     fi
     say "$behind new change(s):"
@@ -204,4 +225,5 @@ changed scripts/settings.py && running "scripts/settings.py" && say "Close and r
 $installer && warn "The installer changed too (new packages or system setup). When you have a moment:
     cd $REPO && ./install.sh"
 update_kitty
+check_gdm
 say "${G}Done.${N}"
